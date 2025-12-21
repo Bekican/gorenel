@@ -26,6 +26,13 @@ func main() {
 		}
 	}()
 
+	monitor := server.NewMonitoringServer(tm)
+	go func() {
+		if err := monitor.Start(); err != nil {
+			log.Fatalf("Monitoring server hatası : %v", err)
+		}
+	}()
+
 	listener, err := net.Listen("tcp", protocol.ControlPort)
 	if err != nil {
 		log.Fatalf("Port dinlenemdi : %v", err)
