@@ -13,6 +13,7 @@ type Message struct {
 type RegisterRequest struct {
 	ClientID string `json:"client_id"`
 	Version  string `json:"version"`
+	APIKey   string `json:"api_key"`
 }
 
 type RegisterResponse struct {
@@ -39,10 +40,11 @@ func ReadMessage(r io.Reader) (*Message, error) {
 	return &msg, nil
 }
 
-func NewRegisterMessage(clientId, version string) Message {
+func NewRegisterMessage(clientId, version, apiKey string) Message {
 	req := RegisterRequest{
 		ClientID: clientId,
 		Version:  version,
+		APIKey:   apiKey,
 	}
 	payload, _ := json.Marshal(req)
 
