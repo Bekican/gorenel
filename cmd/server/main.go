@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	log.Println("🚀 Gorenel Server başlatılıyor...")
+	log.Println(" Gorenel Server başlatılıyor...")
 
 	// Core components
 	tm := server.NewTunnelManager()
@@ -24,9 +24,9 @@ func main() {
 	// HTTP Proxy'yi başlat (Port 8080)
 	proxy := server.NewHTTPProxy(tm)
 	go func() {
-		log.Println("🌐 HTTP Proxy başlatılıyor...")
+		log.Println(" HTTP Proxy başlatılıyor...")
 		if err := proxy.Start(); err != nil {
-			log.Fatalf("❌ HTTP Proxy hatası: %v", err)
+			log.Fatalf(" HTTP Proxy hatası: %v", err)
 		}
 	}()
 
@@ -34,35 +34,35 @@ func main() {
 	monitor := server.NewMonitoringServer(tm)
 	go func() {
 		if err := monitor.Start(); err != nil {
-			log.Fatalf("❌ Monitoring server hatası: %v", err)
+			log.Fatalf(" Monitoring server hatası: %v", err)
 		}
 	}()
 
 	// Control Port'u dinle (Client'lar buraya bağlanacak)
 	listener, err := net.Listen("tcp", protocol.ControlPort)
 	if err != nil {
-		log.Fatalf("❌ Port dinlenemedi: %v", err)
+		log.Fatalf(" Port dinlenemedi: %v", err)
 	}
 	defer listener.Close()
 
 	cizgi := strings.Repeat("=", 60)
-	log.Printf("✅ Control port dinleniyor: %s", protocol.ControlPort)
-	log.Printf("✅ HTTP Proxy dinleniyor: %s", protocol.ProxyPort)
-	log.Printf("✅ Monitoring endpoint: http://localhost:9090/metrics")
-	log.Printf("🔐 Authentication: ENABLED")
-	log.Printf("🚦 Rate Limiting: ENABLED")
-	log.Println("📡 Client bağlantıları bekleniyor...")
+	log.Printf("Control port dinleniyor: %s", protocol.ControlPort)
+	log.Printf(" HTTP Proxy dinleniyor: %s", protocol.ProxyPort)
+	log.Printf("Monitoring endpoint: http://localhost:9090/metrics")
+	log.Printf("Authentication: ENABLED")
+	log.Printf("Rate Limiting: ENABLED")
+	log.Println(" Client bağlantıları bekleniyor...")
 	log.Println(cizgi)
 
 	// Her client için ayrı goroutine
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
-			log.Printf("⚠️ Bağlantı hatası: %v", err)
+			log.Printf(" Bağlantı hatası: %v", err)
 			continue
 		}
 
-		log.Printf("🔗 Yeni bağlantı: %s", conn.RemoteAddr())
+		log.Printf("Yeni bağlantı: %s", conn.RemoteAddr())
 		go handleClient(conn, tm, authManager)
 	}
 }
@@ -73,12 +73,12 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	// 1. REGISTER mesajını oku
 	msg, err := protocol.ReadMessage(conn)
 	if err != nil {
-		log.Printf("❌ Mesaj okunamadı: %v", err)
+		log.Printf("Mesaj okunamadı: %v", err)
 		return
 	}
 
 	if msg.Type != protocol.MsgTypeRegister {
-		log.Printf("⚠️ Beklenmeyen mesaj tipi: %s", msg.Type)
+		log.Printf(" Beklenmeyen mesaj tipi: %s", msg.Type)
 		errMsg := protocol.NewErrorMessage(400, "İlk mesaj REGISTER olmalı")
 		protocol.WriteMessage(conn, errMsg)
 		return
@@ -89,7 +89,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	// Parse REGISTER request
 	var regReq protocol.RegisterRequest
 	if err := json.Unmarshal([]byte(msg.Payload), &regReq); err != nil {
-		log.Printf("❌ REGISTER parse edilemedi: %v", err)
+		log.Printf(" REGISTER parse edilemedi: %v", err)
 		errMsg := protocol.NewErrorMessage(400, "Invalid REGISTER payload")
 		protocol.WriteMessage(conn, errMsg)
 		return
@@ -98,13 +98,13 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	// AUTH: API key kontrolü
 	apiKey, err := authManager.ValidateKey(regReq.APIKey)
 	if err != nil {
-		log.Printf("🚫 Authentication başarısız: %v", err)
+		log.Printf(" Authentication başarısız: %v", err)
 		errMsg := protocol.NewErrorMessage(401, fmt.Sprintf("Authentication failed: %v", err))
 		protocol.WriteMessage(conn, errMsg)
 		return
 	}
 
-	log.Printf("✅ Authentication başarılı: %s (User: %s)", regReq.APIKey[:8]+"...", apiKey.UserID)
+	log.Printf(" Authentication başarılı: %s (User: %s)", regReq.APIKey[:8]+"...", apiKey.UserID)
 	authManager.IncrementUsage(regReq.APIKey)
 
 	// 2. Subdomain üret
@@ -114,7 +114,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	// 3. Client'a subdomain'i bildir
 	response := protocol.NewRegisteredMessage(subdomain, fullURL)
 	if err := protocol.WriteMessage(conn, response); err != nil {
-		log.Printf("❌ Cevap gönderilemedi: %v", err)
+		log.Printf(" Cevap gönderilemedi: %v", err)
 		return
 	}
 
@@ -126,19 +126,19 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 
 	session, err := yamux.Server(conn, yamuxConfig)
 	if err != nil {
-		log.Printf("❌ Yamux session başlatılamadı: %v", err)
+		log.Printf(" Yamux session başlatılamadı: %v", err)
 		return
 	}
 	defer session.Close()
 
-	log.Printf("🎯 Yamux session başlatıldı: %s", subdomain)
+	log.Printf(" Yamux session başlatıldı: %s", subdomain)
 
 	// 5. Session'ı kaydet
 	tm.RegisterTunnel(subdomain, session)
 	defer tm.RemoveTunnel(subdomain)
 
 	cizgi := strings.Repeat("=", 60)
-	log.Printf("📊 Aktif tünel sayısı: %d", tm.Count())
+	log.Printf(" Aktif tünel sayısı: %d", tm.Count())
 	log.Println(cizgi)
 
 	// 6. Session kapanana kadar bekle
