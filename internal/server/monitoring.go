@@ -45,7 +45,7 @@ func (m *MonitoringServer) Start() error {
 	return http.ListenAndServe(":9090", mux)
 }
 
-// healthHandler
+// healthHandler -- healthCheck
 func (m *MonitoringServer) healthHandler(w http.ResponseWriter, r *http.Request) {
 	uptime := time.Since(ServerStartTime)
 
@@ -75,6 +75,11 @@ func (m *MonitoringServer) metricsHandler(w http.ResponseWriter, r *http.Request
 		"bandwidth": map[string]interface{}{
 			"bytes_in":  atomic.LoadInt64(&TotalBytesIn),
 			"bytes_out": atomic.LoadInt64(&TotalBytesOut),
+		},
+
+		"websocket": map[string]interface{}{
+			"connections": atomic.LoadInt64(&WebSocketConnections),
+			"messages":    atomic.LoadInt64(&WebSocketMessages),
 		},
 		"system": map[string]interface{}{
 			"goroutines":   runtime.NumGoroutine(),

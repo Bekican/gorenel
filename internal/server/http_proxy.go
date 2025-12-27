@@ -7,15 +7,19 @@ import (
 	"strings"
 
 	"github.com/Bekican/gorenel/internal/protocol"
+	"github.com/hashicorp/yamux"
 )
 
 type HTTPProxy struct {
 	tunnelManager *TunnelManager
+	rateLimiter   *RateLimiter
 }
 
 func NewHTTPProxy(tm *TunnelManager) *HTTPProxy {
 	return &HTTPProxy{
 		tunnelManager: tm,
+
+		rateLimiter: NewRateLimiter(100, 10),
 	}
 }
 
@@ -31,18 +35,24 @@ func (p *HTTPProxy) Start() error {
 }
 
 func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	//metricsler eklendi
+
 	IncrementRequest()
 	IncrementActiveConnections()
 	defer DecrementActiveConnections()
 
-	//örnek : bekir123.tunnel.local:8080 -> bekir123
 	host := r.Host
 	subdomain := extractSubdomain(host)
 
 	if subdomain == "" {
 		http.Error(w, "Invalid subdomain", http.StatusBadRequest)
 		log.Printf("Geçersiz host : %s", host)
+		return
+	}
+
+	// RateLimiter kontrolü
+	if !p.rateLimiter.Allow(subdomain, 1) {
+		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		log.Printf("Ratelimit aşıldı : %s", subdomain)
 		return
 	}
 
@@ -55,6 +65,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if IsWebSocketUpgrade(r) {
+		p.HandleWebSocket(w, r, session, subdomain)
+		return
+	}
+
 	stream, err := session.Open()
 	if err != nil {
 		log.Printf("[HTTP] Stream open error: %v", err)
@@ -63,15 +78,19 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer stream.Close()
 
+	var streamID uint32
+
+	if ys, ok := interface{}(stream).(*yamux.Stream); ok {
+		streamID = ys.StreamID()
+	}
+	log.Printf("Stream açıldı : %s (ID:%d)", subdomain, streamID)
+
 	if err := r.Write(stream); err != nil {
 		log.Printf("[HTTP] Request forwarding failed: %v", err)
 		http.Error(w, "Upstream error", http.StatusBadGateway)
 		return
 	}
 
-	log.Printf("[HTTP] %s %s -> %s", r.Method, r.URL.Path, subdomain)
-
-	// Backend'den gelen ham yanıtı client'a ilet
 	io.Copy(w, stream)
 
 	log.Printf("İstek tamamlandı : %s %s", r.Method, r.URL.Path)

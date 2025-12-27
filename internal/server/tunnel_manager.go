@@ -42,6 +42,7 @@ func (tm *TunnelManager) RemoveTunnel(subdomain string) {
 
 	delete(tm.tunnels, subdomain)
 	log.Printf("[TunnelManager] Tünel silindi : %s", subdomain)
+
 }
 
 func (tm *TunnelManager) Count() int {

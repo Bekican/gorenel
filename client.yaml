@@ -1,5 +1,6 @@
 server : "localhost:7000"
 
+api_key : "demo-key-12345"
 
 port : 3000
 
