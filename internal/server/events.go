@@ -155,6 +155,7 @@ func generateEventID() string {
 	return time.Now().Format("20060102150405") + "-" + randomstring(8)
 }
 
+// bu fonksiyondaki güvenlik açığını tespit ettim,değiştiricem
 func randomstring(n int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
 	b := make([]byte, n)
