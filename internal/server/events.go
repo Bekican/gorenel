@@ -1,6 +1,8 @@
 package server
 
 import (
+	"encoding/json"
+	"log"
 	"sync"
 	"time"
 )
@@ -65,4 +67,99 @@ func NewEventStream(bufferSize int) *EventStream {
 	return es
 }
 
-//event yayınlıyoruz
+// event yayınlıyoruz
+func (es *EventStream) publish(event *RequestEvent) {
+	select {
+	case es.events <- event:
+		es.mu.Lock()
+		es.TotalEvents++
+		es.mu.Unlock()
+	default:
+		es.mu.Lock()
+		es.DroppedEvents++
+		es.mu.Unlock()
+	}
+}
+
+// yeni consumer ekleme fonksiyonumuz
+func (es *EventStream) Subscribe(consumer EventConsumer) {
+	es.subMu.Lock()
+	defer es.subMu.Unlock()
+
+	es.subscribers = append(es.subscribers, consumer)
+}
+
+// dispatcher
+func (es *EventStream) dispatcher() {
+	for {
+		select {
+		case event := <-es.events:
+			es.subMu.RLock()
+			for _, consumer := range es.subscribers {
+				go func(c EventConsumer, e *RequestEvent) {
+					if err := c.Consume(e); err != nil {
+						log.Printf("Error processing event: %v", err)
+					}
+				}(consumer, event)
+			}
+			es.subMu.RUnlock()
+
+		case <-es.done:
+			return
+		}
+	}
+}
+
+// streami kapatma fonksiyonu
+func (es *EventStream) Close() {
+	close(es.done)
+	close(es.events)
+}
+
+// stream istatistiklerini gördüğümüz fonksiyon
+func (es *EventStream) Stats() map[string]interface{} {
+	es.mu.RLock()
+	defer es.mu.RUnlock()
+
+	es.subMu.RLock()
+	defer es.subMu.RUnlock()
+
+	return map[string]interface{}{
+		"total_events":   es.TotalEvents,
+		"dropped_events": es.DroppedEvents,
+		"buffer_size":    cap(es.events),
+		"buffer_usage":   len(es.events),
+		"subscribers":    len(es.subscribers),
+	}
+}
+
+// yeni request event oluşturuyoruz
+func NewRequestEvent(subdomain, method, path, userAgent, clientIP string) *RequestEvent {
+	return &RequestEvent{
+		EventID:   generateEventID(),
+		Timestamp: time.Now(),
+		Subdomain: subdomain,
+		Method:    method,
+		Path:      path,
+		UserAgent: userAgent,
+		ClientIP:  clientIP,
+	}
+}
+
+// event'i jsona çeviriyoruz
+func (e *RequestEvent) ToJSON() ([]byte, error) {
+	return json.Marshal(e)
+}
+
+func generateEventID() string {
+	return time.Now().Format("20060102150405") + "-" + randomstring(8)
+}
+
+func randomstring(n int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
+	}
+	return string(b)
+}
