@@ -52,4 +52,17 @@ type EventConsumer interface {
 	Name() string
 }
 
-//yeni event streeam oluşturuyoruz
+// yeni event streeam oluşturuyoruz
+func NewEventStream(bufferSize int) *EventStream {
+	es := &EventStream{
+		events:      make(chan *RequestEvent, bufferSize),
+		subscribers: make([]EventConsumer, 0),
+		done:        make(chan struct{}),
+	}
+
+	go es.dispatcher()
+
+	return es
+}
+
+//event yayınlıyoruz
