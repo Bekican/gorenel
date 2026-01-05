@@ -1,8 +1,10 @@
 package server
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"log"
+	"math/big"
 	"sync"
 	"time"
 )
@@ -152,15 +154,23 @@ func (e *RequestEvent) ToJSON() ([]byte, error) {
 }
 
 func generateEventID() string {
-	return time.Now().Format("20060102150405") + "-" + randomstring(8)
+	randomPart, err := randomstring(8)
+	if err != nil {
+		return time.Now().Format("20060102150405") + "-fallback"
+	}
+	return time.Now().Format("20060102150405" + "-" + randomPart)
 }
 
-// bu fonksiyondaki güvenlik açığını tespit ettim,değiştiricem
-func randomstring(n int) string {
+// bu fonksiyondaki güvenlik açığını tespit edildi,değiştirildi
+func randomstring(n int) (string, error) {
 	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
-	b := make([]byte, n)
-	for i := range b {
-		b[i] = charset[time.Now().UnixNano()%int64(len(charset))]
+	result := make([]byte, n)
+	for i := range result {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		result[i] = charset[num.Int64()]
 	}
-	return string(b)
+	return string(result), nil
 }
