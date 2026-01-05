@@ -161,7 +161,7 @@ func generateEventID() string {
 	return time.Now().Format("20060102150405" + "-" + randomPart)
 }
 
-// bu fonksiyondaki güvenlik açığını tespit edildi,değiştirildi
+// bu fonksiyondaki güvenlik açığı tespit edildi,değiştirildi
 func randomstring(n int) (string, error) {
 	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
 	result := make([]byte, n)
