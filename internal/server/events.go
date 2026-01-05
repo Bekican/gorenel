@@ -158,7 +158,7 @@ func generateEventID() string {
 	if err != nil {
 		return time.Now().Format("20060102150405") + "-fallback"
 	}
-	return time.Now().Format("20060102150405" + "-" + randomPart)
+	return time.Now().Format("20060102150405") + "-" + randomPart
 }
 
 // bu fonksiyondaki güvenlik açığı tespit edildi,değiştirildi
