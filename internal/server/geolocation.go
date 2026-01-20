@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -31,19 +33,61 @@ type GeoLocator struct {
 }
 
 // yeni geolocator oluşturuyoruz
+func NewGeoLocator(useCache bool) *GeoLocator {
+	return &GeoLocator{
+		cache:    make(map[string]*GeoLocation),
+		useCache: useCache,
+		apiUrl:   "http://ip-api.com/json/",
+	}
+}
+
+// Lookup-ip konumu bulma
 func (g *GeoLocator) Lookup(ip string) (*GeoLocation, error) {
 	if isLocalIP(ip) {
 		return &GeoLocation{
 			Country:     "Local",
-			CountryCode: "Lo",
+			CountryCode: "L0",
 			City:        "Localhost",
 		}, nil
 	}
+	g.callMu
 	if g.useCache {
 		if loc := g.getFromCache(ip); loc != nil {
 			return loc, nil
 		}
 	}
+	g.callMu.Lock()
+	if time.Since(g.lastCall) < 4*time.Second {
+		g.callMu.Unlock()
 
-	//rate limiting
+		return &GeoLocation{Country: "Unknown"}, nil
+	}
+	g.lastCall = time.Now()
+	g.callMu.Unlock()
+
+	loc, err := g.fetchFromAPI(ip)
+
+	if err != nil {
+		return nil, err
+	}
+	if g.useCache {
+		g.saveToCache(ip, loc)
+	}
+	return loc, nil
+}
+
+func (g *GeoLocator) fetchFromAPI(ip string) (*GeoLocation, error) {
+	resp, err := http.Get(g.apiUrl + ip)
+
+	if err != nil {
+		return nil, fmt.Errorf("API isteği başarısız oldu: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var apiResp struct {
+		Status      string `json:"status"`
+		Country     string `json:"country"`
+		CountryCode string `json:"countryCode"`
+	}
+
 }
