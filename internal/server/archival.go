@@ -46,4 +46,30 @@ func NewDataArchiver(archiveDir string, rotateInterval time.Duration, retentionD
 		return nil, err
 	}
 	go da.periodicMaintenance()
+
+	return da, nil
+}
+
+// eventconsumer interface
+func (da *DataArchiver) Consume(event *RequestEvent) error {
+	da.fileMu.Lock()
+	defer da.fileMu.Unlock()
+	//logların eski dosyaya yazılmaması için / rotateFileLocked -> zaten işlem yapıysoun
+	if time.Since(da.fileStartTime) > da.rotateInterval {
+		if err := da.rotateFileLocked(); err != nil {
+			return err
+		}
+	}
+
+	//eventi yazdırıyoruz.
+	if err := da.encoder.Encode(event); err != nil {
+		return fmt.Errorf("event yazılamadı :%w", err)
+	}
+
+	da.eventsInFile++
+	da.mu.Lock()
+	da.TotalArchived++
+	da.mu.Unlock()
+
+	return nil
 }
