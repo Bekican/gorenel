@@ -1,0 +1,182 @@
+# Default values for gorenel
+# This is a YAML-formatted file.
+
+# Gorenel Server Configuration
+server:
+  replicaCount: 3  # High availability
+  
+  image:
+    repository: ghcr.io/yourusername/gorenel
+    tag: latest
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: LoadBalancer
+    controlPort: 7000
+    httpPort: 80
+    httpsPort: 443
+    monitoringPort: 9090
+    annotations: {}
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  # Node affinity
+  nodeSelector: {}
+  tolerations: []
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                    - gorenel
+            topologyKey: kubernetes.io/hostname
+
+# Configuration
+config:
+  baseDomain: "tunnel.example.com"
+  logLevel: "info"
+  retentionDays: 30
+  batchSize: 1000
+  flushInterval: "5m"
+
+# TLS/SSL Configuration
+tls:
+  enabled: true
+  secretName: gorenel-tls
+  certManager:
+    enabled: true
+    issuer: letsencrypt-prod
+    email: your@email.com
+
+# Persistence (for logs and archives)
+persistence:
+  enabled: true
+  storageClass: "standard"
+  accessMode: ReadWriteOnce
+  size: 100Gi
+  annotations: {}
+
+# Monitoring
+monitoring:
+  prometheus:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+      interval: 30s
+  
+  grafana:
+    enabled: true
+    adminPassword: "admin"
+    dashboards:
+      enabled: true
+
+# Database (ClickHouse for analytics)
+clickhouse:
+  enabled: true
+  replicaCount: 3
+  persistence:
+    enabled: true
+    size: 500Gi
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 8Gi
+    requests:
+      cpu: 1000m
+      memory: 4Gi
+
+# Redis (for session storage)
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: true
+    password: "changeme"
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+
+# Ingress
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/websocket-services: gorenel
+  hosts:
+    - host: "*.tunnel.example.com"
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: gorenel-wildcard-tls
+      hosts:
+        - "*.tunnel.example.com"
+
+# Security
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+podSecurityContext:
+  fsGroup: 1000
+
+# Network Policies
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gorenel
+      ports:
+        - protocol: TCP
+          port: 7000
+        - protocol: TCP
+          port: 8080
+  egress:
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 53  # DNS
+        - protocol: UDP
+          port: 53
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# RBAC
+rbac:
+  create: true

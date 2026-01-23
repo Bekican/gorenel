@@ -1,0 +1,188 @@
+{
+  "dashboard": {
+    "title": "Gorenel - System Overview",
+    "tags": ["gorenel", "tunnel", "analytics"],
+    "timezone": "browser",
+    "schemaVersion": 36,
+    "version": 1,
+    "refresh": "5s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Tunnels",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "gorenel_tunnels_active",
+            "legendFormat": "Active Tunnels",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {"color": "green", "value": null},
+                {"color": "yellow", "value": 80},
+                {"color": "red", "value": 90}
+              ]
+            },
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Request Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 18, "x": 6, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(gorenel_requests_total[5m])",
+            "legendFormat": "Requests/sec",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "reqps", "logBase": 1, "show": true},
+          {"format": "short", "logBase": 1, "show": true}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Response Time (p50, p95, p99)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(gorenel_response_time_bucket[5m]))",
+            "legendFormat": "p50",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(gorenel_response_time_bucket[5m]))",
+            "legendFormat": "p95",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(gorenel_response_time_bucket[5m]))",
+            "legendFormat": "p99",
+            "refId": "C"
+          }
+        ],
+        "yaxes": [
+          {"format": "ms", "logBase": 1, "show": true},
+          {"format": "short", "logBase": 1, "show": true}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Bandwidth",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(gorenel_bytes_in_total[5m])",
+            "legendFormat": "Inbound",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(gorenel_bytes_out_total[5m])",
+            "legendFormat": "Outbound",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "Bps", "logBase": 1, "show": true},
+          {"format": "short", "logBase": 1, "show": true}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Top Countries",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "topk(5, gorenel_geo_country_total)",
+            "legendFormat": "{{country}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Top Paths",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 16, "x": 8, "y": 16},
+        "targets": [
+          {
+            "expr": "topk(10, rate(gorenel_path_total[5m]))",
+            "legendFormat": "{{path}}",
+            "refId": "A",
+            "format": "table"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Error Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "rate(gorenel_errors_total[5m])",
+            "legendFormat": "Errors/sec",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "logBase": 1, "show": true},
+          {"format": "short", "logBase": 1, "show": true}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [10], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "name": "High Error Rate",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 8,
+        "title": "Memory Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes{job=\"gorenel\"}",
+            "legendFormat": "RSS",
+            "refId": "A"
+          },
+          {
+            "expr": "go_memstats_alloc_bytes{job=\"gorenel\"}",
+            "legendFormat": "Alloc",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "logBase": 1, "show": true},
+          {"format": "short", "logBase": 1, "show": true}
+        ]
+      }
+    ]
+  }
+}
