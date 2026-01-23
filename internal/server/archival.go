@@ -122,4 +122,57 @@ func (da *DataArchiver) rotateFileLocked() error {
 	return nil
 }
 
-//periyodik rotation ve cleanup
+// periyodik rotation ve cleanup
+func (da *DataArchiver) periodicMaintenance() {
+	//rotateticker
+	rotateTicker := time.NewTicker(da.rotateInterval)
+	defer rotateTicker.Stop()
+	//cleanticker
+	cleanupTicker := time.NewTicker(24 * time.Hour)
+	defer cleanupTicker.Stop()
+
+	for {
+		select {
+		case <-rotateTicker.C:
+			if err := da.rotateFile(); err != nil {
+				log.Printf("File rotation hatası: %v", err)
+			}
+		case <-cleanupTicker.C:
+			da.cleanup()
+		case <-da.done:
+			return
+		}
+	}
+}
+
+// eski archive dosyalarını siliyoruz
+func (da *DataArchiver) cleanup() {
+	cutoff := time.Now().AddDate(0, 0, -da.retentionDays)
+
+	files, err := filepath.Glob(filepath.Join(da.archiveDir, "archive_*.jsonl.gz"))
+	if err != nil {
+		log.Printf("Archive dosyaları okunamadı : %v", err)
+		return
+	}
+
+	deletedCount := 0
+	for _, file := range files {
+		info, err := os.Stat(file)
+		if err != nil {
+			continue
+		}
+		//retention süresine bakıyoruz geçmişse siliyoruz
+		if info.ModTime().Before(cutoff) {
+			if err := os.Remove(file); err != nil {
+				log.Printf("Dosya silinemedi: %s", file)
+			} else {
+				deletedCount++
+			}
+		}
+	}
+	if deletedCount > 0 {
+		log.Printf("%d eski archive dosyaları silindi(retention:%d gün)", deletedCount, da.retentionDays)
+	}
+}
+
+//archiver'ı kapatıyoruz
