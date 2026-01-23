@@ -4,7 +4,9 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -73,3 +75,51 @@ func (da *DataArchiver) Consume(event *RequestEvent) error {
 
 	return nil
 }
+
+func (da *DataArchiver) Name() string {
+	return "DataArchiver"
+}
+
+func (da *DataArchiver) rotateFile() error {
+	da.fileMu.Lock()
+	defer da.fileMu.Unlock()
+
+	return da.rotateFileLocked()
+}
+
+// rotateFileLocked
+func (da *DataArchiver) rotateFileLocked() error {
+	if da.gzipWriter != nil {
+		da.gzipWriter.Close()
+	}
+	if da.currentFile != nil {
+		da.currentFile.Close()
+		log.Printf("archive dosyası kapatıldı : %d events", da.eventsInFile)
+	}
+
+	//yeni dosya oluşturuyoruz
+	filename := fmt.Sprintf("archive_%s.jsonl.gz", time.Now().Format("20060102_150405"))
+	filepath := filepath.Join(da.archiveDir, filename)
+
+	file, err := os.Create(filepath)
+	if err != nil {
+		return fmt.Errorf("archive dosyası oluşturulamadı: %w", err)
+	}
+	gzipWriter := gzip.NewWriter(file)
+
+	da.currentFile = file
+	da.gzipWriter = gzipWriter
+	da.encoder = json.NewEncoder(gzipWriter)
+	da.eventsInFile = 0
+	da.fileStartTime = time.Now()
+
+	da.mu.Lock()
+	da.TotalFiles++
+	da.mu.Unlock()
+
+	log.Printf("Yeni archive dosyası: %s", filename)
+
+	return nil
+}
+
+//periyodik rotation ve cleanup
