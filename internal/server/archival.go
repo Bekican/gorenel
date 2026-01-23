@@ -4,6 +4,7 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -175,4 +176,83 @@ func (da *DataArchiver) cleanup() {
 	}
 }
 
-//archiver'ı kapatıyoruz
+// archiver'ı kapatıyoruz
+func (da *DataArchiver) Close() error {
+	close(da.done)
+
+	da.fileMu.Lock()
+	defer da.fileMu.Unlock()
+
+	if da.gzipWriter != nil {
+		da.gzipWriter.Close()
+	}
+
+	if da.currentFile != nil {
+		da.currentFile.Close()
+	}
+
+	return nil
+}
+
+// istatistikler
+func (da *DataArchiver) Stats() map[string]interface{} {
+	da.mu.RLock()
+	defer da.mu.RUnlock()
+
+	da.fileMu.Lock()
+	currentEvents := da.eventsInFile
+	da.fileMu.Unlock()
+
+	return map[string]interface{}{
+		"total_archived":    da.TotalArchived,
+		"total_files":       da.TotalFiles,
+		"current_file_size": currentEvents,
+		"rotate_interval":   da.rotateInterval.String(),
+		"retention_days":    da.retentionDays,
+	}
+}
+
+// AWS S3'e nasıl export edilir onu anlatıyoruz - sorumluluk almıyoruz
+func (da *DataArchiver) ExportToS3(bucketName string) string {
+	return fmt.Sprintf(`
+# S3'e upload için (AWS CLI):
+aws s3 sync %s s3://%s/gorenel-archives/ \
+  --storage-class GLACIER \
+  --exclude "*" \
+  --include "archive_*.jsonl.gz"
+
+# Glacier'a direct upload (cost-effective):
+aws s3 cp %s s3://%s/gorenel-archives/ \
+  --recursive \
+  --storage-class DEEP_ARCHIVE
+`, da.archiveDir, bucketName, da.archiveDir, bucketName)
+}
+
+// archiveden eventleri okuyoruz
+func RestoreFromArchive(archiveFile string) ([]*RequestEvent, error) {
+	file, err := os.Open(archiveFile)
+	if err != nil {
+		return nil, fmt.Errorf("archive açılamadı : %w", err)
+	}
+	defer file.Close()
+	gzipReader, err := gzip.NewReader(file)
+	if err != nil {
+		return nil, fmt.Errorf("gzip okunamadı : %w", err)
+	}
+	defer gzipReader.Close()
+
+	decoder := json.NewDecoder(gzipReader)
+	events := make([]*RequestEvent, 0)
+
+	for {
+		var event RequestEvent
+		if err := decoder.Decode(&event); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("event decode edilemedi: %w", err)
+		}
+		events = append(events, &event)
+	}
+	return events, nil
+}
