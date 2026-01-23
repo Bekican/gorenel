@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"strings"
+	"time"
 
 	"github.com/Bekican/gorenel/internal/protocol"
 	"github.com/Bekican/gorenel/internal/server"
@@ -21,8 +22,34 @@ func main() {
 	tm := server.NewTunnelManager()
 	authManager := server.NewAuthManager()
 
+	//eventStreaming
+	eventStream := server.NewEventStream(1000)
+	defer eventStream.Close()
+	//analytics engine
+	analyticsEngine := server.NewAnalyticsEngine(24 * time.Hour)
+	eventStream.Subscribe(analyticsEngine)
+
+	//batch logger
+	batchLogger, err := server.NewBatchLogger("./logs/batches", 1000, 5*time.Minute)
+	if err != nil {
+		log.Fatalf("Batch logger başlatılamadı : %v", err)
+	}
+	defer batchLogger.Close()
+	eventStream.Subscribe(batchLogger)
+
+	//Data archive
+	archiver, err := server.NewDataArchiver("./logs/archives", 1*time.Hour, 30)
+	if err != nil {
+		log.Fatalf("Data archiver başlatılamadı : %v", err)
+	}
+	defer archiver.Close()
+	eventStream.Subscribe(archiver)
+
+	//Geo location service
+	geoLocator := server.NewGeoLocator(true)
 	// HTTP Proxy'yi başlat (Port 8080)
-	proxy := server.NewHTTPProxy(tm)
+
+	proxy := server.NewHTTPProxy(tm, eventStream, geoLocator)
 	go func() {
 		log.Println(" HTTP Proxy başlatılıyor...")
 		if err := proxy.Start(); err != nil {
@@ -31,7 +58,7 @@ func main() {
 	}()
 
 	// Monitoring server'ı başlat (Port 9090)
-	monitor := server.NewMonitoringServer(tm)
+	monitor := server.NewMonitoringServer(tm, analyticsEngine)
 	go func() {
 		if err := monitor.Start(); err != nil {
 			log.Fatalf(" Monitoring server hatası: %v", err)
