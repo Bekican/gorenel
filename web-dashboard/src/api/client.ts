@@ -99,9 +99,9 @@ export class RealtimeClient {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   private url: string;
-  private onMessage: (data: any) => void;
+  private onMessage: (data: unknown) => void;
 
-  constructor(url: string, onMessage: (data: any) => void) {
+  constructor(url: string, onMessage: (data: unknown) => void) {
     this.url = url;
     this.onMessage = onMessage;
   }
@@ -162,7 +162,7 @@ export class RealtimeClient {
     }
   }
 
-  send(data: any) {
+  send(data: unknown) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(data));
     }
