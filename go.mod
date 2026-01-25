@@ -1,6 +1,6 @@
 module github.com/Bekican/gorenel
 
-go 1.24
+go 1.21
 
 require (
 	github.com/hashicorp/yamux v0.1.2

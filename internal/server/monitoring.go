@@ -37,18 +37,38 @@ func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine) *MonitoringServ
 func (m *MonitoringServer) Start() error {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/health", m.healthHandler)
+	mux.HandleFunc("/health", m.corsMiddleware(m.healthHandler))
 
-	mux.HandleFunc("/metrics", m.metricsHandler)
+	mux.HandleFunc("/metrics", m.corsMiddleware(m.metricsHandler))
 
-	mux.HandleFunc("/info", m.infoHandler)
+	mux.HandleFunc("/info", m.corsMiddleware(m.infoHandler))
 
-	mux.HandleFunc("/analytics", m.analyticsHandler)
+	mux.HandleFunc("/analytics", m.corsMiddleware(m.analyticsHandler))
 
-	mux.HandleFunc("/api/analytics/realtime", m.realtimeAnalyticsHandler)
+	mux.HandleFunc("/api/analytics/realtime", m.corsMiddleware(m.realtimeAnalyticsHandler))
 
 	log.Println("Monitoring serverı başlatılıyor: :9090")
 	return http.ListenAndServe(":9090", mux)
+}
+
+// corsMiddleware adds CORS headers to allow cross-origin requests
+func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Allow requests from any origin (for development)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Max-Age", "3600")
+
+		// Handle preflight requests
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Call the next handler
+		next(w, r)
+	}
 }
 
 // healthHandler -- healthCheck
