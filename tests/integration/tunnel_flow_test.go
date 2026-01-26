@@ -61,7 +61,8 @@ func TestFullTunnelFlow(t *testing.T) {
 	// Step 5: Simulate HTTP request through tunnel
 	// This would involve setting up the full HTTP proxy chain
 	// For now, we test that the stream is open and functional
-	assert.True(t, !stream.IsClosed(), "Stream should be open")
+	assert.NotNil(t, stream)
+	assert.False(t, clientSession.IsClosed(), "Client session should be open")
 
 	stream.Close()
 }
@@ -114,7 +115,8 @@ func TestConcurrentTunnels(t *testing.T) {
 	numTunnels := 10
 
 	// Create multiple Yamux sessions concurrently
-	sessions := make([]*yamux.Session, numTunnels)
+	clientSessions := make([]*yamux.Session, numTunnels)
+	serverSessions := make([]*yamux.Session, numTunnels)
 	done := make(chan error, numTunnels)
 
 	for i := 0; i < numTunnels; i++ {
@@ -125,7 +127,8 @@ func TestConcurrentTunnels(t *testing.T) {
 				return
 			}
 
-			sessions[index] = clientSession
+			serverSessions[index] = serverSession
+			clientSessions[index] = clientSession
 
 			// Keep session alive
 			time.Sleep(100 * time.Millisecond)
@@ -142,7 +145,7 @@ func TestConcurrentTunnels(t *testing.T) {
 
 	// Verify all sessions are open
 	openCount := 0
-	for _, session := range sessions {
+	for _, session := range clientSessions {
 		if session != nil && !session.IsClosed() {
 			openCount++
 		}
@@ -151,7 +154,12 @@ func TestConcurrentTunnels(t *testing.T) {
 	assert.Equal(t, numTunnels, openCount, "All tunnels should be open")
 
 	// Cleanup
-	for _, session := range sessions {
+	for _, session := range clientSessions {
+		if session != nil {
+			session.Close()
+		}
+	}
+	for _, session := range serverSessions {
 		if session != nil {
 			session.Close()
 		}

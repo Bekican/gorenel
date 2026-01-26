@@ -87,12 +87,34 @@ run-client:
 	@echo "${YELLOW}🚀 Starting client in dev mode...${NC}"
 	go run cmd/client/main.go start --port 3000 --verbose
 
-# Run tests
+# Testing
 test:
 	@echo "${YELLOW}🧪 Running tests...${NC}"
-	go test -v -race -coverprofile=coverage.out ./...
+	go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
 	go tool cover -html=coverage.out -o coverage.html
 	@echo "${GREEN}✅ Tests completed. Coverage report: coverage.html${NC}"
+
+test-unit:
+	@echo "${YELLOW}Running unit tests...${NC}"
+	go test -v -race ./tests/unit/...
+
+test-integration:
+	@echo "${YELLOW}Running integration tests...${NC}"
+	go test -v -race ./tests/integration/...
+
+test-short:
+	@echo "${YELLOW}Running short tests only...${NC}"
+	go test -v -short ./...
+
+test-coverage:
+	@echo "${YELLOW}Generating coverage report...${NC}"
+	go test -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+
+benchmark:
+	@echo "${YELLOW}Running benchmarks...${NC}"
+	go test -bench=. -benchmem ./tests/...
 
 # Clean build artifacts
 clean:
