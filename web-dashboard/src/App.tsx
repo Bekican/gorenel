@@ -144,7 +144,7 @@ function App() {
           </div>
 
           {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
             {analytics?.time_series && (
               <>
                 <RealtimeChart
@@ -164,7 +164,7 @@ function App() {
           </div>
 
           {/* Tunnels and Geo */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in-up" style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
             <TunnelsList tunnels={MOCK_TUNNELS} />
             {analytics?.top_countries && (
               <GeoMap data={analytics.top_countries} />
