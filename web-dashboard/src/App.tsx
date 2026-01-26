@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { Activity, Zap, Users, TrendingUp, AlertCircle } from 'lucide-react';
-import { MetricCard } from './components/MetricCard';
-import { RealtimeChart } from './components/RealtimeChart';
-import { TunnelsList } from './components/TunnelsList';
-import { GeoMap } from './components/GeoMap';
 import { api, type Metrics, type AnalyticsSnapshot } from './api/client';
 import './index.css';
+
+// Lazy load components
+const MetricCard = React.lazy(() => import('./components/MetricCard').then(module => ({ default: module.MetricCard })));
+const RealtimeChart = React.lazy(() => import('./components/RealtimeChart').then(module => ({ default: module.RealtimeChart })));
+const TunnelsList = React.lazy(() => import('./components/TunnelsList').then(module => ({ default: module.TunnelsList })));
+const GeoMap = React.lazy(() => import('./components/GeoMap').then(module => ({ default: module.GeoMap })));
 
 // Mock tunnels data (replace with real data from your API)
 const MOCK_TUNNELS = [
@@ -48,10 +50,10 @@ function App() {
     };
 
     fetchData();
-    
+
     // Poll every 5 seconds
     const interval = setInterval(fetchData, 5000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -104,70 +106,76 @@ function App() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Metrics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <MetricCard
-            title="Active Tunnels"
-            value={metrics?.tunnels.active_count || 0}
-            subtitle="Currently running"
-            icon={Activity}
-            color="blue"
-          />
-          <MetricCard
-            title="Total Requests"
-            value={(analytics?.total_requests || 0).toLocaleString()}
-            subtitle="All time"
-            icon={TrendingUp}
-            color="green"
-            trend={{ value: 12.5, isPositive: true }}
-          />
-          <MetricCard
-            title="Active Connections"
-            value={metrics?.requests.active_connections || 0}
-            subtitle="Current connections"
-            icon={Users}
-            color="purple"
-          />
-          <MetricCard
-            title="Avg Response Time"
-            value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(2)}ms`}
-            subtitle="P95 latency"
-            icon={Zap}
-            color="orange"
-          />
-        </div>
+        <Suspense fallback={
+          <div className="flex justify-center p-8">
+            <Activity className="w-8 h-8 text-primary-400 animate-spin" />
+          </div>
+        }>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <MetricCard
+              title="Active Tunnels"
+              value={metrics?.tunnels.active_count || 0}
+              subtitle="Currently running"
+              icon={Activity}
+              color="blue"
+            />
+            <MetricCard
+              title="Total Requests"
+              value={(analytics?.total_requests || 0).toLocaleString()}
+              subtitle="All time"
+              icon={TrendingUp}
+              color="green"
+              trend={{ value: 12.5, isPositive: true }}
+            />
+            <MetricCard
+              title="Active Connections"
+              value={metrics?.requests.active_connections || 0}
+              subtitle="Current connections"
+              icon={Users}
+              color="purple"
+            />
+            <MetricCard
+              title="Avg Response Time"
+              value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(2)}ms`}
+              subtitle="P95 latency"
+              icon={Zap}
+              color="orange"
+            />
+          </div>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {analytics?.time_series && (
-            <>
-              <RealtimeChart
-                data={analytics.time_series}
-                metric="requests"
-                title="Request Rate"
-                color="#3b82f6"
-              />
-              <RealtimeChart
-                data={analytics.time_series}
-                metric="avg_latency_ms"
-                title="Average Latency"
-                color="#10b981"
-              />
-            </>
-          )}
-        </div>
+          {/* Charts Row */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {analytics?.time_series && (
+              <>
+                <RealtimeChart
+                  data={analytics.time_series}
+                  metric="requests"
+                  title="Request Rate"
+                  color="#3b82f6"
+                />
+                <RealtimeChart
+                  data={analytics.time_series}
+                  metric="avg_latency_ms"
+                  title="Average Latency"
+                  color="#10b981"
+                />
+              </>
+            )}
+          </div>
 
-        {/* Tunnels and Geo */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TunnelsList tunnels={MOCK_TUNNELS} />
-          {analytics?.top_countries && (
-            <GeoMap data={analytics.top_countries} />
-          )}
-        </div>
+          {/* Tunnels and Geo */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <TunnelsList tunnels={MOCK_TUNNELS} />
+            {analytics?.top_countries && (
+              <GeoMap data={analytics.top_countries} />
+            )}
+          </div>
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-dark-500 text-sm">
-          <p>Gorenel v1.0.0 • Powered by Go & React</p>
-        </div>
+          {/* Footer */}
+          <div className="mt-8 text-center text-dark-500 text-sm">
+            <p>Gorenel v1.0.0 • Powered by Go & React</p>
+          </div>
+        </Suspense>
       </main>
     </div>
   );

@@ -29,8 +29,10 @@ export default {
           600: '#475569',
           700: '#334155',
           800: '#1e293b',
+
           900: '#0f172a',
-        }
+        },
+        border: '#334155',
       },
       animation: {
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
