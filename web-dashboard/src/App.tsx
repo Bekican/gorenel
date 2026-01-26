@@ -59,10 +59,10 @@ function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="text-center">
-          <Activity className="w-12 h-12 text-primary-400 animate-spin mx-auto mb-4" />
-          <p className="text-dark-400">Loading dashboard...</p>
+          <Activity className="w-12 h-12 text-primary-500 animate-spin mx-auto mb-4" />
+          <p className="text-neutral-500">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -70,34 +70,34 @@ function App() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="text-center max-w-md">
-          <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
-          <p className="text-white text-lg mb-2">Connection Error</p>
-          <p className="text-dark-400 text-sm">{error}</p>
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-neutral-900 text-lg mb-2">Connection Error</p>
+          <p className="text-neutral-500 text-sm">{error}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-neutral-50 font-sans text-neutral-900">
       {/* Header */}
-      <header className="bg-dark-800 border-b border-dark-700">
+      <header className="bg-white border-b border-neutral-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-cyan-500 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl shadow-sm flex items-center justify-center">
                 <Zap className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">Gorenel Dashboard</h1>
-                <p className="text-sm text-dark-400">Production Monitoring</p>
+                <h1 className="text-xl font-bold text-neutral-900 tracking-tight">Gorenel Dashboard</h1>
+                <p className="text-sm text-neutral-500">Production Monitoring</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-              <span className="text-sm text-dark-300">Live</span>
+            <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-sm font-medium text-green-700">Live System</span>
             </div>
           </div>
         </div>
@@ -108,7 +108,7 @@ function App() {
         {/* Metrics Cards */}
         <Suspense fallback={
           <div className="flex justify-center p-8">
-            <Activity className="w-8 h-8 text-primary-400 animate-spin" />
+            <Activity className="w-8 h-8 text-primary-500 animate-spin" />
           </div>
         }>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -151,13 +151,13 @@ function App() {
                   data={analytics.time_series}
                   metric="requests"
                   title="Request Rate"
-                  color="#3b82f6"
+                  color="#10b981"
                 />
                 <RealtimeChart
                   data={analytics.time_series}
                   metric="avg_latency_ms"
                   title="Average Latency"
-                  color="#10b981"
+                  color="#f59e0b"
                 />
               </>
             )}
@@ -172,7 +172,7 @@ function App() {
           </div>
 
           {/* Footer */}
-          <div className="mt-8 text-center text-dark-500 text-sm">
+          <div className="mt-12 border-t border-neutral-200 pt-8 text-center text-neutral-400 text-sm">
             <p>Gorenel v1.0.0 • Powered by Go & React</p>
           </div>
         </Suspense>

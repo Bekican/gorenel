@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Copy, ExternalLink } from 'lucide-react';
+import { Activity, Copy, ExternalLink, Server } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Tunnel {
@@ -43,22 +43,27 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels }) => {
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="text-lg font-semibold text-white">Active Tunnels</h3>
-          <p className="text-sm text-dark-400">{tunnels.length} tunnel(s) running</p>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary-50 rounded-lg">
+            <Server className="w-5 h-5 text-primary-600" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-neutral-900">Active Tunnels</h3>
+            <p className="text-sm text-neutral-500">{tunnels.length} tunnel(s) running</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Activity className="w-5 h-5 text-green-400 animate-pulse" />
-          <span className="text-sm text-green-400 font-medium">Live</span>
+        <div className="flex items-center gap-2 bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
+          <Activity className="w-4 h-4 text-green-600 animate-pulse" />
+          <span className="text-xs text-green-700 font-medium">Live</span>
         </div>
       </div>
 
       <div className="space-y-3">
         {tunnels.length === 0 ? (
-          <div className="text-center py-12">
-            <Activity className="w-12 h-12 text-dark-600 mx-auto mb-4" />
-            <p className="text-dark-400 mb-2">No active tunnels</p>
-            <p className="text-sm text-dark-500">
+          <div className="text-center py-12 bg-neutral-50 rounded-lg border border-neutral-100 dashed border-2">
+            <Activity className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
+            <p className="text-neutral-600 font-medium mb-1">No active tunnels</p>
+            <p className="text-sm text-neutral-400">
               Start a tunnel from the CLI to see it here
             </p>
           </div>
@@ -66,52 +71,61 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels }) => {
           tunnels.map((tunnel) => (
             <div
               key={tunnel.id}
-              className="bg-dark-900 border border-dark-700 rounded-lg p-4 hover:border-primary-500/50 transition-colors duration-200"
+              className="bg-white border border-neutral-200 rounded-xl p-4 hover:shadow-md hover:border-primary-300 transition-all duration-200 group"
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-primary-400 font-semibold">
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="font-mono text-primary-700 font-bold bg-primary-50 px-2 py-0.5 rounded text-sm">
                       {tunnel.subdomain}
                     </span>
                     <span className={getStatusColor(tunnel.status)}>
                       {tunnel.status}
                     </span>
                   </div>
-                  <div className="flex items-center gap-4 text-sm text-dark-400">
-                    <span>localhost:{tunnel.localPort}</span>
-                    <span>•</span>
-                    <span>{tunnel.requestCount} requests</span>
+                  <div className="flex items-center gap-3 text-sm text-neutral-500 mt-2">
+                    <span className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-300"></span>
+                      localhost:{tunnel.localPort}
+                    </span>
+                    <span className="text-neutral-300">•</span>
+                    <span className="flex items-center gap-1">
+                      {tunnel.requestCount.toLocaleString()} requests
+                    </span>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-2">
+
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => copyToClipboard(tunnel.publicUrl)}
-                    className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
+                    className="p-2 hover:bg-neutral-100 rounded-lg transition-colors text-neutral-400 hover:text-neutral-700"
                     title="Copy URL"
                   >
-                    <Copy className="w-4 h-4 text-dark-400 hover:text-white" />
+                    <Copy className="w-4 h-4" />
                   </button>
                   <a
                     href={tunnel.publicUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-2 hover:bg-dark-700 rounded-lg transition-colors"
+                    className="p-2 hover:bg-neutral-100 rounded-lg transition-colors text-neutral-400 hover:text-neutral-700"
                     title="Open in new tab"
                   >
-                    <ExternalLink className="w-4 h-4 text-dark-400 hover:text-white" />
+                    <ExternalLink className="w-4 h-4" />
                   </a>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs text-dark-500">
+              <div className="flex items-center justify-between text-xs text-neutral-400 pt-3 border-t border-neutral-100 mt-3">
                 <span>
                   Started {formatDistanceToNow(new Date(tunnel.startedAt), { addSuffix: true })}
                 </span>
-                <div className="flex items-center gap-4">
-                  <span>↓ {formatBytes(tunnel.bandwidth.in)}</span>
-                  <span>↑ {formatBytes(tunnel.bandwidth.out)}</span>
+                <div className="flex items-center gap-3 font-mono">
+                  <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                    ↓ {formatBytes(tunnel.bandwidth.in)}
+                  </span>
+                  <span className="flex items-center gap-1 text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                    ↑ {formatBytes(tunnel.bandwidth.out)}
+                  </span>
                 </div>
               </div>
             </div>

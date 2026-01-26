@@ -38,22 +38,29 @@ export const RealtimeChart: React.FC<RealtimeChartProps> = ({ data, metric, titl
   return (
     <div className="card">
       <div className="flex items-center gap-2 mb-6">
-        <TrendingUp className="w-5 h-5 text-primary-400" />
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <div className="p-2 bg-primary-50 rounded-lg">
+          <TrendingUp className="w-5 h-5 text-primary-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-neutral-900">{title}</h3>
       </div>
 
       <ResponsiveContainer width="100%" height={250}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
           <XAxis
             dataKey="timestamp"
             tickFormatter={formatTime}
-            stroke="#64748b"
+            stroke="#9ca3af"
             style={{ fontSize: '12px' }}
+            tickLine={false}
+            axisLine={false}
+            dy={10}
           />
           <YAxis
-            stroke="#64748b"
+            stroke="#9ca3af"
             style={{ fontSize: '12px' }}
+            tickLine={false}
+            axisLine={false}
             tickFormatter={(value) => {
               if (metric === 'avg_latency_ms') return `${value}ms`;
               if (metric === 'bytes_in' || metric === 'bytes_out') return formatBytes(value);
@@ -62,11 +69,14 @@ export const RealtimeChart: React.FC<RealtimeChartProps> = ({ data, metric, titl
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#1e293b',
-              border: '1px solid #334155',
+              backgroundColor: '#ffffff',
+              border: '1px solid #e5e7eb',
               borderRadius: '0.5rem',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              color: '#111827'
             }}
-            labelStyle={{ color: '#cbd5e1' }}
+            itemStyle={{ color: '#111827' }}
+            labelStyle={{ color: '#6b7280', marginBottom: '4px' }}
             formatter={(value: number | undefined) => [formatValue(value ?? 0), title]}
             labelFormatter={(label) => formatTime(String(label))}
           />
@@ -74,9 +84,9 @@ export const RealtimeChart: React.FC<RealtimeChartProps> = ({ data, metric, titl
             type="monotone"
             dataKey={metric}
             stroke={color}
-            strokeWidth={2}
+            strokeWidth={3}
             dot={false}
-            activeDot={{ r: 4 }}
+            activeDot={{ r: 6, strokeWidth: 0 }}
           />
         </LineChart>
       </ResponsiveContainer>

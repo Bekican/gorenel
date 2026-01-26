@@ -22,19 +22,19 @@ const colorClasses = {
 };
 
 const iconBgColors = {
-  blue: "bg-blue-500/10",
-  green: "bg-green-500/10",
-  purple: "bg-purple-500/10",
-  orange: "bg-orange-500/10",
-  red: "bg-red-500/10",
+  blue: "bg-blue-50",
+  green: "bg-green-50",
+  purple: "bg-purple-50",
+  orange: "bg-orange-50",
+  red: "bg-red-50",
 };
 
 const iconTextColors = {
-  blue: "text-blue-400",
-  green: "text-green-400",
-  purple: "text-purple-400",
-  orange: "text-orange-400",
-  red: "text-red-400",
+  blue: "text-blue-600",
+  green: "text-green-600",
+  purple: "text-purple-600",
+  orange: "text-orange-600",
+  red: "text-red-600",
 };
 
 export const MetricCard: React.FC<MetricCardProps> = ({
@@ -53,15 +53,14 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
       <div className="relative">
         <div className="flex items-start justify-between mb-4">
-          <div className={`p-3 rounded-xl ${iconBgColors[color]}`}>
+          <div className={`p-3 rounded-xl ${iconBgColors[color]} shadow-sm`}>
             <Icon className={`w-6 h-6 ${iconTextColors[color]}`} />
           </div>
 
           {trend && (
             <div
-              className={`flex items-center gap-1 text-sm font-medium ${
-                trend.isPositive ? "text-green-400" : "text-red-400"
-              }`}
+              className={`flex items-center gap-1 text-sm font-medium ${trend.isPositive ? "text-green-600" : "text-red-600"
+                }`}
             >
               {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
             </div>
@@ -69,9 +68,9 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         </div>
 
         <div className="space-y-1">
-          <p className="text-3xl font-bold text-white tracking-tight">{value}</p>
-          <p className="text-sm text-dark-400 font-medium">{title}</p>
-          {subtitle && <p className="text-xs text-dark-500">{subtitle}</p>}
+          <p className="text-3xl font-bold text-neutral-900 tracking-tight">{value}</p>
+          <p className="text-sm text-neutral-500 font-medium">{title}</p>
+          {subtitle && <p className="text-xs text-neutral-400">{subtitle}</p>}
         </div>
       </div>
     </div>
