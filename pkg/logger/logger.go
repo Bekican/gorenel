@@ -3,6 +3,7 @@ package logger
 import (
 	"os"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -102,4 +103,52 @@ func newLogger(cfg *Config) (*zap.Logger, error) {
 	return zap.New(core, opts...), nil
 }
 
-//request id'ye göre child logger oluşturma
+// request id'ye göre child logger oluşturma - hangi request?
+func WithRequestID(requestID string) *zap.Logger {
+	return Log.With(zap.String("request_id", requestID))
+}
+
+// request id'nin yanına user etiketi atıyoruz
+func WithFields(fields ...zap.Field) *zap.Logger {
+	return Log.With(fields...)
+}
+
+// olaya göre log oluştur
+func Debug(msg string, fields ...zap.Field) {
+	Log.Debug(msg, fields...)
+}
+
+func Info(msg string, fields ...zap.Field) {
+	Log.Info(msg, fields...)
+}
+
+func Warn(msg string, fields ...zap.Field) {
+	Log.Warn(msg, fields...)
+}
+
+func Error(msg string, fields ...zap.Field) {
+	Log.Error(msg, fields...)
+}
+
+func Fatal(msg string, fields ...zap.Field) {
+	Log.Fatal(msg, fields...)
+}
+
+// bellek kapanırken içerde log kaldıysa diske yazdıryoruz ki ramde log kalmasın
+func Sync() error {
+	if Log != nil {
+		return Log.Sync()
+	}
+	return nil
+}
+
+// http trafiğini izliyoruz
+func LogRequest(method, path string, statusCode int, duration time.Duration, requestID string) {
+	Log.Info("http_request",
+		zap.String("method", method),
+		zap.String("path", path),
+		zap.Int("status_code", statusCode),
+		zap.Duration("duration", duration),
+		zap.String("request_id", requestID),
+	)
+}
