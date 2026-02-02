@@ -1,0 +1,68 @@
+package middleware
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/Bekican/gorenel/pkg/errors"
+	"github.com/Bekican/gorenel/pkg/logger" // Assuming you implemented logger from previous step
+	"go.uber.org/zap"
+)
+
+// ErrorResponse structure for JSON output
+type ErrorResponse struct {
+	Code      int    `json:"code"`
+	Message   string `json:"message"`
+	RequestID string `json:"request_id,omitempty"`
+}
+
+// ErrorHandler wraps a handler that returns an error
+// Instead of standard http.HandlerFunc, we use a signature that returns error
+type HandlerFunc func(w http.ResponseWriter, r *http.Request) error
+
+// Wrapper converts our custom HandlerFunc to http.HandlerFunc
+func ErrorWrapper(h HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := h(w, r)
+		if err != nil {
+			HandleError(w, r, err)
+		}
+	}
+}
+
+// HandleError processes the error and sends JSON response
+func HandleError(w http.ResponseWriter, r *http.Request, err error) {
+	var appErr *errors.AppError
+	var statusCode int
+	var message string
+
+	// Check if it's our custom AppError
+	if e, ok := err.(*errors.AppError); ok {
+		appErr = e
+		statusCode = e.Code
+		message = e.Message
+	} else {
+		// Unknown error (panic or standard error) -> Treat as 500
+		statusCode = http.StatusInternalServerError
+		message = "Internal Server Error"
+	}
+
+	// Log the error (with internal details if available)
+	logger.Error("request_failed",
+		zap.String("path", r.URL.Path),
+		zap.Int("status", statusCode),
+		zap.Error(err),
+	)
+
+	// Send JSON response
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
+	resp := ErrorResponse{
+		Code:      statusCode,
+		Message:   message,
+		RequestID: w.Header().Get("X-Request-ID"), // Assuming RequestID middleware runs before
+	}
+
+	json.NewEncoder(w).Encode(resp)
+}

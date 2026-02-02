@@ -1,0 +1,37 @@
+package main
+
+import (
+	"net/http"
+
+	"github.com/Bekican/gorenel/pkg/errors"
+	"github.com/Bekican/gorenel/pkg/middleware" // Adjust import path
+)
+
+// Example Handler using the new error system
+func GetUserHandler(w http.ResponseWriter, r *http.Request) error {
+	userID := r.URL.Query().Get("id")
+
+	if userID == "" {
+		// Return 400 Bad Request
+		return errors.NewBadRequest("User ID is required")
+	}
+
+	if userID == "999" {
+		// Simulate DB error -> 500 Internal Error
+		// User sees "Internal server error", Log shows "db connection failed"
+		return errors.NewInternalError(fmt.Errorf("db connection failed"))
+	}
+
+	// Success
+	w.Write([]byte("User found: " + userID))
+	return nil
+}
+
+func main() {
+	mux := http.NewServeMux()
+
+	// Wrap the handler with ErrorWrapper
+	mux.HandleFunc("/user", middleware.ErrorWrapper(GetUserHandler))
+
+	http.ListenAndServe(":8080", mux)
+}
