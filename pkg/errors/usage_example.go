@@ -1,15 +1,10 @@
-package main
+package errors
 
 import (
 	"database/sql"
 	"fmt"
 	"net/http"
-
-	"github.com/Bekican/gorenel/pkg/errors"
-	"github.com/Bekican/gorenel/pkg/middleware"
 )
-
-// --- Real World Scenarios ---
 
 // 1. Validation Failures (Frontend Form Error)
 func RegisterUserHandler(w http.ResponseWriter, r *http.Request) error {
@@ -28,7 +23,7 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) error {
 
 	// If validation fails, return structured 422 error
 	if len(fieldErrors) > 0 {
-		return errors.ValidationError("Kayıt formu geçersiz.", fieldErrors)
+		return ValidationError("Kayıt formu geçersiz.", fieldErrors)
 	}
 
 	return nil
@@ -45,13 +40,13 @@ func GetOrderHandler(w http.ResponseWriter, r *http.Request) error {
 			// Case 2a: Not Found (Low severity)
 			// User sees: "Sipariş bulunamadı"
 			// Log: WARN
-			return errors.NotFound("Sipariş sistemi üzerinde bulunamadı.", err)
+			return NotFound("Sipariş sistemi üzerinde bulunamadı.", err)
 		}
-		
+
 		// Case 2b: DB Connection Failed (High severity)
 		// User sees: "Bir hata oluştu, lütfen daha sonra tekrar deneyin."
 		// Log: ERROR with StackTrace and "sql: connection refused"
-		return errors.Internal(fmt.Errorf("database query failed: %w", err))
+		return Internal(fmt.Errorf("database query failed: %w", err))
 	}
 
 	w.Write([]byte(`{"order_id": 123}`))
@@ -60,7 +55,7 @@ func GetOrderHandler(w http.ResponseWriter, r *http.Request) error {
 
 // 3. Business Logic / Panic
 func RiskyHandler(w http.ResponseWriter, r *http.Request) error {
-	// If this panics, our middleware will catch it, log the stack, 
+	// If this panics, our middleware will catch it, log the stack,
 	// and return a refined 500 error to the user.
 	var list []string
 	fmt.Println(list[0]) // Panic: index out of range
@@ -80,13 +75,15 @@ func databaseQuery(id string) error {
 }
 
 // --- Setup ---
-func main() {
+// ExampleMain demonstrates how to use the error handling system
+// Note: This is an example function, not a real main() since we're in the errors package
+func ExampleMain() {
 	mux := http.NewServeMux()
 
 	// Apply wrapper to all handlers
-	mux.HandleFunc("/register", middleware.ErrorWrapper(RegisterUserHandler))
-	mux.HandleFunc("/order", middleware.ErrorWrapper(GetOrderHandler))
-	mux.HandleFunc("/risky", middleware.ErrorWrapper(RiskyHandler))
+	mux.HandleFunc("/register", ErrorWrapper(RegisterUserHandler))
+	mux.HandleFunc("/order", ErrorWrapper(GetOrderHandler))
+	mux.HandleFunc("/risky", ErrorWrapper(RiskyHandler))
 
 	http.ListenAndServe(":8080", mux)
 }
