@@ -2,67 +2,115 @@ package middleware
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"runtime/debug"
 
-	"github.com/Bekican/gorenel/pkg/errors"
-	"github.com/Bekican/gorenel/pkg/logger" // Assuming you implemented logger from previous step
+	errPkg "github.com/Bekican/gorenel/pkg/errors" // Alias to avoid name conflict
+	"github.com/Bekican/gorenel/pkg/logger"
 	"go.uber.org/zap"
 )
 
-// ErrorResponse structure for JSON output
-type ErrorResponse struct {
-	Code      int    `json:"code"`
-	Message   string `json:"message"`
-	RequestID string `json:"request_id,omitempty"`
-}
-
-// ErrorHandler wraps a handler that returns an error
-// Instead of standard http.HandlerFunc, we use a signature that returns error
+// HandlerFunc defines a handler that returns an error
 type HandlerFunc func(w http.ResponseWriter, r *http.Request) error
 
-// Wrapper converts our custom HandlerFunc to http.HandlerFunc
+// APIResponse Standard API wrapper to optional data payload
+type APIResponse struct {
+	Success bool              `json:"success"`
+	Data    interface{}       `json:"data,omitempty"`
+	Error   *errPkg.AppError  `json:"error,omitempty"`
+}
+
+// ErrorWrapper is a high-level middleware that:
+// 1. Catches Panics (Recovery)
+// 2. Handles custom AppErrors
+// 3. Formats JSON responses uniformly
 func ErrorWrapper(h HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Recovery Mechanism: Catch panics to prevent server crash
+		defer func() {
+			if rvr := recover(); rvr != nil {
+				// Log the panic with full stack trace using Zap
+				logger.Error("PANIC RECOVERED",
+					zap.Any("panic", rvr),
+					zap.String("stack", string(debug.Stack())),
+					zap.String("path", r.URL.Path),
+				)
+
+				// Return a generic 500 JSON to the user
+				writeJSON(w, http.StatusInternalServerError, &APIResponse{
+					Success: false,
+					Error: &errPkg.AppError{
+						Type:    errPkg.TypeInternal,
+						Message: "Sunucu tarafında beklenmeyen bir hata oluştu.",
+						Code:    http.StatusInternalServerError,
+					},
+				})
+			}
+		}()
+
+		// Execute the actual handler
 		err := h(w, r)
+
 		if err != nil {
-			HandleError(w, r, err)
+			handleAppError(w, r, err)
 		}
 	}
 }
 
-// HandleError processes the error and sends JSON response
-func HandleError(w http.ResponseWriter, r *http.Request, err error) {
-	var appErr *errors.AppError
-	var statusCode int
-	var message string
+// handleAppError processes different error types
+func handleAppError(w http.ResponseWriter, r *http.Request, err error) {
+	var appErr *errPkg.AppError
 
-	// Check if it's our custom AppError
-	if e, ok := err.(*errors.AppError); ok {
-		appErr = e
-		statusCode = e.Code
-		message = e.Message
-	} else {
-		// Unknown error (panic or standard error) -> Treat as 500
-		statusCode = http.StatusInternalServerError
-		message = "Internal Server Error"
+	// Check if the error is our custom AppError
+	if errors.As(err, &appErr) {
+		// Log logic:
+		// - 5xx errors -> Log as ERROR with stack trace
+		// - 4xx errors -> Log as INFO or WARN (don't pollute error logs with bad user input)
+		
+		logFields := []zap.Field{
+			zap.String("path", r.URL.Path),
+			zap.String("method", r.Method),
+			zap.Int("code", appErr.Code),
+			zap.String("error_type", string(appErr.Type)),
+		}
+
+		if appErr.Code >= 500 {
+			// Add stack trace and original error for debugging
+			logFields = append(logFields, zap.String("stack_trace", appErr.StackTrace()))
+			if appErr.Err != nil {
+				logFields = append(logFields, zap.String("original_error", appErr.Err.Error()))
+			}
+			logger.Error("Internal Server Error", logFields...)
+		} else {
+			// Just info for client errors
+			logFields = append(logFields, zap.String("message", appErr.Message))
+			logger.Warn("Client Error", logFields...)
+		}
+
+		// Send JSON response
+		writeJSON(w, appErr.Code, &APIResponse{
+			Success: false,
+			Error:   appErr,
+		})
+		return
 	}
 
-	// Log the error (with internal details if available)
-	logger.Error("request_failed",
+	// If it's a standard Go error (not AppError), treat as 500 Internal
+	logger.Error("Unhandled Error",
 		zap.String("path", r.URL.Path),
-		zap.Int("status", statusCode),
 		zap.Error(err),
 	)
 
-	// Send JSON response
+	writeJSON(w, http.StatusInternalServerError, &APIResponse{
+		Success: false,
+		Error:   errPkg.Internal(err),
+	})
+}
+
+// writeJSON helper to write secure JSON responses
+func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-
-	resp := ErrorResponse{
-		Code:      statusCode,
-		Message:   message,
-		RequestID: w.Header().Get("X-Request-ID"), // Assuming RequestID middleware runs before
-	}
-
-	json.NewEncoder(w).Encode(resp)
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(payload)
 }

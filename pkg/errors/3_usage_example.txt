@@ -1,37 +1,92 @@
 package main
 
 import (
+	"database/sql"
+	"fmt"
 	"net/http"
 
 	"github.com/Bekican/gorenel/pkg/errors"
-	"github.com/Bekican/gorenel/pkg/middleware" // Adjust import path
+	"github.com/Bekican/gorenel/pkg/middleware"
 )
 
-// Example Handler using the new error system
-func GetUserHandler(w http.ResponseWriter, r *http.Request) error {
-	userID := r.URL.Query().Get("id")
+// --- Real World Scenarios ---
 
-	if userID == "" {
-		// Return 400 Bad Request
-		return errors.NewBadRequest("User ID is required")
+// 1. Validation Failures (Frontend Form Error)
+func RegisterUserHandler(w http.ResponseWriter, r *http.Request) error {
+	// Assume we parsed the body...
+	username := r.FormValue("username")
+	email := r.FormValue("email")
+
+	// Perform validation
+	fieldErrors := make(map[string]string)
+	if len(username) < 3 {
+		fieldErrors["username"] = "Kullanıcı adı en az 3 karakter olmalı."
+	}
+	if email == "" {
+		fieldErrors["email"] = "Email adresi zorunludur."
 	}
 
-	if userID == "999" {
-		// Simulate DB error -> 500 Internal Error
-		// User sees "Internal server error", Log shows "db connection failed"
-		return errors.NewInternalError(fmt.Errorf("db connection failed"))
+	// If validation fails, return structured 422 error
+	if len(fieldErrors) > 0 {
+		return errors.ValidationError("Kayıt formu geçersiz.", fieldErrors)
 	}
 
-	// Success
-	w.Write([]byte("User found: " + userID))
 	return nil
 }
 
+// 2. Database/Internal Errors (Secure Handling)
+func GetOrderHandler(w http.ResponseWriter, r *http.Request) error {
+	orderID := r.URL.Query().Get("id")
+
+	// Simulate Database Call
+	err := databaseQuery(orderID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Case 2a: Not Found (Low severity)
+			// User sees: "Sipariş bulunamadı"
+			// Log: WARN
+			return errors.NotFound("Sipariş sistemi üzerinde bulunamadı.", err)
+		}
+		
+		// Case 2b: DB Connection Failed (High severity)
+		// User sees: "Bir hata oluştu, lütfen daha sonra tekrar deneyin."
+		// Log: ERROR with StackTrace and "sql: connection refused"
+		return errors.Internal(fmt.Errorf("database query failed: %w", err))
+	}
+
+	w.Write([]byte(`{"order_id": 123}`))
+	return nil // Success
+}
+
+// 3. Business Logic / Panic
+func RiskyHandler(w http.ResponseWriter, r *http.Request) error {
+	// If this panics, our middleware will catch it, log the stack, 
+	// and return a refined 500 error to the user.
+	var list []string
+	fmt.Println(list[0]) // Panic: index out of range
+
+	return nil
+}
+
+// --- Mock Database Helper ---
+func databaseQuery(id string) error {
+	if id == "404" {
+		return sql.ErrNoRows
+	}
+	if id == "500" {
+		return fmt.Errorf("connection refused")
+	}
+	return nil
+}
+
+// --- Setup ---
 func main() {
 	mux := http.NewServeMux()
 
-	// Wrap the handler with ErrorWrapper
-	mux.HandleFunc("/user", middleware.ErrorWrapper(GetUserHandler))
+	// Apply wrapper to all handlers
+	mux.HandleFunc("/register", middleware.ErrorWrapper(RegisterUserHandler))
+	mux.HandleFunc("/order", middleware.ErrorWrapper(GetOrderHandler))
+	mux.HandleFunc("/risky", middleware.ErrorWrapper(RiskyHandler))
 
 	http.ListenAndServe(":8080", mux)
 }

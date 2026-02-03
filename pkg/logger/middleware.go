@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 // response writer http.ResponseWriterı kapsıyor -> statusCode'u öğrenmek için
@@ -35,5 +36,33 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		//response headerına request id ekledik
 		w.Header().Set("X-Request-ID", requestID)
 
+		//log detaylandırması
+		wrapped := newResponseWriter(w)
+
+		reqLogger := WithRequestID(requestID)
+
+		//log request
+		reqLogger.Debug("request-started",
+			zap.String("method", r.Method),
+			zap.String("path", r.URL.Path),
+			zap.String("remote_addr", r.RemoteAddr),
+			zap.String("user_agent", r.UserAgent()),
+		)
+
+		//işlem isteği
+		next.ServeHTTP(wrapped, r)
+
+		//geçen zamanı hesaplama
+		duration := time.Since(start)
+
+		reqLogger.Info("request_completed",
+			zap.String("method", r.Method),
+			zap.String("path", r.URL.Path),
+			zap.Int("status_code", wrapped.statusCode),
+			zap.Duration("duration", duration),
+			zap.Int64("duration_ms", duration.Milliseconds()),
+		)
 	})
 }
+
+//hata öncesi önlem alınan fonksiyon
