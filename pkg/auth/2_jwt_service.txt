@@ -1,0 +1,74 @@
+package auth
+
+import (
+	"errors"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+)
+
+var (
+	// In production, load this from ENV variables!
+	jwtSecret = []byte("SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD")
+	issuer    = "gorenel.io"
+)
+
+// Claims extends standard jwt claims with our custom fields
+type Claims struct {
+	UserID string `json:"uid"`
+	Email  string `json:"sub"`
+	jwt.RegisteredClaims
+}
+
+// JWTService handles token operations
+type JWTService struct {
+	secretKey []byte
+	issuer    string
+}
+
+func NewJWTService(secret string) *JWTService {
+	return &JWTService{
+		secretKey: []byte(secret),
+		issuer:    issuer,
+	}
+}
+
+// GenerateToken creates a signed JWT for a user
+func (s *JWTService) GenerateToken(user *User) (string, error) {
+	expirationTime := time.Now().Add(24 * time.Hour) // 1 day validity
+
+	claims := &Claims{
+		UserID: user.ID,
+		Email:  user.Email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    s.issuer,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(s.secretKey)
+}
+
+// ValidateToken parses and validates the token string
+func (s *JWTService) ValidateToken(tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		// Verify signing method is HMAC (HS256)
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return s.secretKey, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, errors.New("invalid token")
+}
