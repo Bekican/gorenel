@@ -57,8 +57,8 @@ func GetOrderHandler(w http.ResponseWriter, r *http.Request) error {
 func RiskyHandler(w http.ResponseWriter, r *http.Request) error {
 	// If this panics, our middleware will catch it, log the stack,
 	// and return a refined 500 error to the user.
-	var list []string
-	fmt.Println(list[0]) // Panic: index out of range
+	list := []string{"example"}
+	fmt.Println(list[0])
 
 	return nil
 }
