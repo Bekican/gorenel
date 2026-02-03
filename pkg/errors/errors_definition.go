@@ -2,6 +2,7 @@ package errors
 
 import (
 	"fmt"
+	"net/http"
 	"runtime"
 	"strings"
 )
@@ -55,4 +56,37 @@ func captureStack() string {
 		sb.WriteString(fmt.Sprintf("%s:%d\n", file, line))
 	}
 	return sb.String()
+}
+
+// app error oluşturuyoruz yığına göre
+func New(errType ErrorType, code int, msg string, cause error) *AppError {
+	return &AppError{
+		Type:    errType,
+		Code:    code,
+		Message: msg,
+		Err:     cause,
+		stack:   captureStack(),
+	}
+}
+
+func NotFound(message string, cause error) *AppError {
+	return New(TypeNotFound, http.StatusNotFound, message, cause)
+}
+
+func BadRequest(message string, cause error) *AppError {
+	return New(TypeNotFound, http.StatusBadRequest, message, cause)
+}
+
+func Internal(cause error) *AppError {
+	return New(TypeInternal, http.StatusInternalServerError, "Bir hata oluştu lütfen daha sonra tekrar deneyin.", cause)
+}
+
+func ValidationError(message string, fields map[string]string) *AppError {
+	err := New(TypeValidation, http.StatusUnprocessableEntity, message, nil)
+	err.FieldErrors = fields
+	return err
+}
+
+func Unauthorized(message string) *AppError {
+	return New(TypeUnauthorized, http.StatusUnauthorized, message, nil)
 }
