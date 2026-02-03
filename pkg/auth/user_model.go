@@ -4,20 +4,18 @@ import (
 	"time"
 )
 
-// User represents a system user
 type User struct {
 	ID        string     `json:"id" db:"id"`
 	Email     string     `json:"email" db:"email"`
 	Name      string     `json:"name" db:"name"`
 	AvatarURL string     `json:"avatar_url,omitempty" db:"avatar_url"`
-	Provider  string     `json:"provider" db:"provider"`     // "google", "github"
+	Provider  string     `json:"provider" db:"provider"`
 	CreatedAt time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at" db:"updated_at"`
 	LastLogin *time.Time `json:"last_login,omitempty" db:"last_login"`
 }
 
-// UserRepository defines interface for data access
-// In production, you would implement this with SQL (Postgres/SQLite)
+// user repository
 type UserRepository interface {
 	GetByEmail(email string) (*User, error)
 	GetByID(id string) (*User, error)
@@ -25,7 +23,7 @@ type UserRepository interface {
 	UpdateLoginTime(id string) error
 }
 
-/* 
+/*
 -- SQL Migration Example (PostgreSQL) --
 
 CREATE TABLE users (
