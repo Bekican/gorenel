@@ -8,12 +8,12 @@ import (
 )
 
 func main() {
-	// Initialize logger with config
+	//loggerı başlatıyoruz
 	cfg := &logger.Config{
 		Level:       "debug",
 		OutputPath:  "stdout",
 		Development: true,
-		Encoding:    "console", // Use "json" for production
+		Encoding:    "console", //prodda json yap
 	}
 
 	if err := logger.Init(cfg); err != nil {
@@ -21,32 +21,28 @@ func main() {
 	}
 	defer logger.Sync()
 
-	// Example: Basic logging
 	logger.Info("server_starting",
 		zap.String("version", "1.0.0"),
 		zap.Int("port", 8080),
 	)
 
-	// Example: With context
 	reqLogger := logger.WithRequestID("abc-123")
 	reqLogger.Debug("processing_request",
 		zap.String("path", "/api/tunnels"),
 	)
 
-	// Example: Error logging
 	logger.Error("connection_failed",
 		zap.String("host", "example.com"),
 		zap.Int("port", 5432),
-		zap.Error(nil), // Pass actual error here
+		zap.Error(nil),
 	)
 
-	// Example: HTTP Server with middleware
+	//HTTP server middleware
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("OK"))
 	})
 
-	// Chain middlewares: Recovery -> Logging -> Handler
 	handler := logger.ChainMiddleware(mux,
 		logger.RecoveryMiddleware,
 		logger.LoggingMiddleware,
