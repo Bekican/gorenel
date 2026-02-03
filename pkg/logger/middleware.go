@@ -65,4 +65,30 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-//hata öncesi önlem alınan fonksiyon
+// hata öncesi önlem alınan fonksiyon
+func RecoveryMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				requestID := w.Header().Get("X-Request-ID")
+
+				Error("panic_recovered",
+					zap.Any("error", err),
+					zap.String("request_id", requestID),
+					zap.String("method", r.Method),
+				)
+
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
+}
+
+// middlewareleri birbirine bağlar.
+func ChainMiddleware(handler http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		handler = middlewares[i](handler)
+	}
+	return handler
+}
