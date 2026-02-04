@@ -6,12 +6,15 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"strings"
 	"time"
 
+	"github.com/Bekican/gorenel/internal/handler"
 	"github.com/Bekican/gorenel/internal/protocol"
 	"github.com/Bekican/gorenel/internal/server"
 	"github.com/Bekican/gorenel/internal/utils"
+	"github.com/Bekican/gorenel/pkg/auth"
 	"github.com/hashicorp/yamux"
 )
 
@@ -48,6 +51,15 @@ func main() {
 	//Geo location service
 	geoLocator := server.NewGeoLocator(true)
 	// HTTP Proxy'yi başlat (Port 8080)
+
+	// Auth components
+	jwtSvc := auth.NewJWTService("SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD")
+	userRepo := handler.NewInMemoryUserRepo()
+	authHandler := handler.NewAuthHandler(jwtSvc, userRepo)
+
+	// Auth endpoints
+	http.HandleFunc("/api/login", authHandler.Login)
+	http.HandleFunc("/api/register", authHandler.Register)
 
 	proxy := server.NewHTTPProxy(tm, eventStream, geoLocator)
 	go func() {

@@ -90,6 +90,17 @@ export const api = {
     const { data } = await apiClient.get<SystemInfo>('/info');
     return data;
   },
+
+  // Auth Functions
+  login: async (credentials: any) => {
+    const { data } = await apiClient.post('/api/login', credentials);
+    return data;
+  },
+
+  logout: async () => {
+    // We can clear cookies here or handle server-side
+    document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  },
 };
 
 // WebSocket for real-time updates

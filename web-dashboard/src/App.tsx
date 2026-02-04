@@ -8,6 +8,8 @@ const MetricCard = React.lazy(() => import('./components/MetricCard').then(modul
 const RealtimeChart = React.lazy(() => import('./components/RealtimeChart').then(module => ({ default: module.RealtimeChart })));
 const TunnelsList = React.lazy(() => import('./components/TunnelsList').then(module => ({ default: module.TunnelsList })));
 const GeoMap = React.lazy(() => import('./components/GeoMap').then(module => ({ default: module.GeoMap })));
+import { LoginPage } from './components/LoginPage';
+import { LogOut } from 'lucide-react';
 
 // Mock tunnels data (replace with real data from your API)
 const MOCK_TUNNELS = [
@@ -25,10 +27,31 @@ const MOCK_TUNNELS = [
 ];
 
 function App() {
+  const [user, setUser] = useState<any>(null);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check if user is already logged in (via cookies, etc)
+    const storedUser = localStorage.getItem('gorenel_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLoginSuccess = (userData: any) => {
+    setUser(userData);
+    localStorage.setItem('gorenel_user', JSON.stringify(userData));
+    setLoading(true); // Trigger re-fetch for dashboard data
+  };
+
+  const handleLogout = async () => {
+    await api.logout();
+    setUser(null);
+    localStorage.removeItem('gorenel_user');
+  };
 
   // Fetch data on mount and set up polling
   useEffect(() => {
@@ -51,11 +74,20 @@ function App() {
 
     fetchData();
 
-    // Poll every 5 seconds
-    const interval = setInterval(fetchData, 5000);
+    // Poll every 5 seconds if logged in
+    let interval: any;
+    if (user) {
+      interval = setInterval(fetchData, 5000);
+    }
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [user]);
+
+  if (!user) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
 
   if (loading) {
     return (
@@ -95,9 +127,18 @@ function App() {
                 <p className="text-sm text-neutral-500">Production Monitoring</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-sm font-medium text-green-700">Live System</span>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-sm font-medium text-green-700">Live System</span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                title="Çıkış Yap"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
