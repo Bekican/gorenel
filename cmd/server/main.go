@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Bekican/gorenel/internal/handler"
+	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/protocol"
 	"github.com/Bekican/gorenel/internal/server"
 	"github.com/Bekican/gorenel/internal/utils"
@@ -23,6 +24,9 @@ func main() {
 	// Core components
 	tm := server.NewTunnelManager()
 	authManager := server.NewAuthManager()
+
+	// Initialize Advanced Rate Limiter (60 req/min default)
+	rateLimiter := limiter.NewRateLimiter(60, 1*time.Minute)
 
 	//eventStreaming
 	eventStream := server.NewEventStream(1000)
@@ -49,14 +53,14 @@ func main() {
 
 	//Geo location service
 	geoLocator := server.NewGeoLocator(true)
-	// HTTP Proxy'yi başlat (Port 8080)
 
 	// Auth components
 	jwtSvc := auth.NewJWTService("SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD")
 	userRepo := handler.NewInMemoryUserRepo()
 	authHandler := handler.NewAuthHandler(jwtSvc, userRepo)
 
-	proxy := server.NewHTTPProxy(tm, eventStream, geoLocator)
+	// Proxy server (using shared limiter)
+	proxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter)
 	go func() {
 		log.Println(" HTTP Proxy başlatılıyor...")
 		if err := proxy.Start(); err != nil {
@@ -64,8 +68,8 @@ func main() {
 		}
 	}()
 
-	// Monitoring server'ı başlat (Port 9090)
-	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler)
+	// Monitoring server (using auth and shared limiter)
+	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter)
 	go func() {
 		if err := monitor.Start(); err != nil {
 			log.Fatalf(" Monitoring server hatası: %v", err)
@@ -84,11 +88,11 @@ func main() {
 	log.Printf(" HTTP Proxy dinleniyor: %s", protocol.ProxyPort)
 	log.Printf("Monitoring endpoint: http://localhost:9090/metrics")
 	log.Printf("Authentication: ENABLED")
-	log.Printf("Rate Limiting: ENABLED")
+	log.Printf("Rate Limiting: ADVANCED (Sliding Window)")
 	log.Println(" Client bağlantıları bekleniyor...")
 	log.Println(cizgi)
 
-	// Her client için ayrı goroutine
+	// Client handling
 	for {
 		conn, err := listener.Accept()
 		if err != nil {
@@ -176,21 +180,16 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	log.Println(cizgi)
 
 	// 6. Session kapanana kadar bekle
-	// HTTP Proxy stream açtığında client tarafı yakalayacak
 	for {
 		if session.IsClosed() {
 			<-session.CloseChan()
 			log.Printf("🔌 Session kapandı: %s", subdomain)
 			return
 		}
-
-		// Yamux kendi keepalive'ı yönetir
-		// Burada sadece session'ın açık olup olmadığını kontrol ediyoruz
 		_, err := session.AcceptStream()
 		if err != nil {
 			log.Printf("🔌 Client bağlantısı kesildi: %s", subdomain)
 			return
 		}
-		// Not: Stream'leri HTTP Proxy açıyor, biz kapatıyoruz
 	}
 }

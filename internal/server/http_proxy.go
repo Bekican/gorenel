@@ -123,21 +123,22 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/protocol"
 	"github.com/hashicorp/yamux"
 )
 
 type HTTPProxy struct {
 	tunnelManager *TunnelManager
-	rateLimiter   *RateLimiter
+	advancedRL    *limiter.RateLimiter
 	eventStream   *EventStream
 	geoLocator    *GeoLocator
 }
 
-func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator) *HTTPProxy {
+func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter) *HTTPProxy {
 	return &HTTPProxy{
 		tunnelManager: tm,
-		rateLimiter:   NewRateLimiter(100, 10),
+		advancedRL:    rl,
 		eventStream:   es,
 		geoLocator:    gl,
 	}
@@ -178,7 +179,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// RateLimiter kontrolü
-	if !p.rateLimiter.Allow(subdomain, 1) {
+	if !p.advancedRL.Allow(subdomain, 1) {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		log.Printf("Ratelimit aşıldı : %s", subdomain)
 		return
