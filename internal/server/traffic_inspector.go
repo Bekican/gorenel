@@ -64,7 +64,7 @@ func (ti *TrafficInspector) GetByID(id string) *CapturedRequest {
 }
 
 // geçmişte olan bir hatayı incelemeye almak için replay etmek
-func (ti *TrafficInspector) Replay(id string, client http.Client, targetBase string) (*http.Response, error) {
+func (ti *TrafficInspector) Replay(id string, client *http.Client, targetBase string) (*http.Response, error) {
 	captured := ti.GetByID(id)
 	if captured == nil {
 		return nil, http.ErrNoLocation

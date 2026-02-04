@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"runtime"
@@ -60,6 +61,12 @@ func (m *MonitoringServer) Start() error {
 	if m.authHandler != nil {
 		mux.HandleFunc("/api/login", m.corsMiddleware(m.authHandler.Login))
 		mux.HandleFunc("/api/register", m.corsMiddleware(m.authHandler.Register))
+	}
+
+	// Register Inspector Endpoints
+	if m.inspector != nil {
+		mux.HandleFunc("/api/inspector/history", m.corsMiddleware(rl(m.inspectorHistoryHandler)))
+		mux.HandleFunc("/api/inspector/replay", m.corsMiddleware(rl(m.inspectorReplayHandler)))
 	}
 
 	log.Println("Monitoring serverı başlatılıyor: :9090")
@@ -198,6 +205,46 @@ func (m *MonitoringServer) realtimeAnalyticsHandler(w http.ResponseWriter, r *ht
 	}
 	snapshot := m.analyticsEngine.GetSnapshot()
 	json.NewEncoder(w).Encode(snapshot)
+}
+
+// --- Inspector Handlers ---
+
+func (m *MonitoringServer) inspectorHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	if m.inspector == nil {
+		http.Error(w, "Inspector not initialized", http.StatusServiceUnavailable)
+		return
+	}
+	history := m.inspector.GetHistory()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(history)
+}
+
+func (m *MonitoringServer) inspectorReplayHandler(w http.ResponseWriter, r *http.Request) {
+	if m.inspector == nil {
+		http.Error(w, "Inspector not initialized", http.StatusServiceUnavailable)
+		return
+	}
+
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Missing request ID", http.StatusBadRequest)
+		return
+	}
+
+	// Replay target: usually the local proxy or direct to client
+	// For this simulation, we'll replay to the Proxy Port
+	client := &http.Client{Timeout: 10 * time.Second}
+	targetBase := "http://localhost:8080" // Proxy port
+
+	resp, err := m.inspector.Replay(id, client, targetBase)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Replay failed: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
 }
 
 // increment request

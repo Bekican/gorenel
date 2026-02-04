@@ -125,6 +125,7 @@ import (
 
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/protocol"
+	"github.com/google/uuid"
 	"github.com/hashicorp/yamux"
 )
 
@@ -218,17 +219,40 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Stream açıldı : %s (ID:%d)", subdomain, streamID)
 
+	// --- NEW: Traffic Capture (Request) ---
+	reqBody, _ := InterceptBody(r)
+	captured := &CapturedRequest{
+		ID:         uuid.New().String(),
+		Subdomain:  subdomain,
+		Method:     r.Method,
+		Path:       r.URL.Path,
+		ReqHeaders: r.Header,
+		ReqBody:    reqBody,
+		Timestamp:  startTime,
+	}
+
+	// Wrapper for response capture
+	captureWriter := NewResponseCaptureWriter(w)
+
 	if err := r.Write(stream); err != nil {
 		log.Printf("[HTTP] Request forwarding failed: %v", err)
 		http.Error(w, "Upstream error", http.StatusBadGateway)
 		return
 	}
 
-	// Response'u kopyala
-	// Not: io.Copy kopyalanan byte sayısını döner, bunu analytics'te kullanabiliriz
-	bytesReceived, err := io.Copy(w, stream)
+	// Response'u kopyala (using captureWriter)
+	bytesReceived, err := io.Copy(captureWriter, stream)
 	if err != nil {
 		log.Printf("Response copy error: %v", err)
+	}
+
+	// --- NEW: Traffic Capture (Finalize) ---
+	captured.RespHeaders = captureWriter.Header()
+	captured.RespBody = captureWriter.Body.Bytes()
+	captured.StatusCode = captureWriter.StatusCode
+	captured.Duration = time.Since(startTime)
+	if p.inspector != nil {
+		p.inspector.Record(captured)
 	}
 
 	// 2. İstatistikleri Hesapla ve Kaydet (Integration Kısmı Burası)
