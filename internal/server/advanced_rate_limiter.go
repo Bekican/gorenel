@@ -33,3 +33,46 @@ func NewAdvancedRateLmiter() *AdvancedRateLimiter {
 
 	return rl
 }
+
+func (rl *AdvancedRateLimiter) Allow(userID string) bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	tierID := rl.userTier[userID]
+	if tierID == "" {
+		tierID = "free"
+	}
+	quota := rl.tiers[userID]
+
+	log, exists := rl.usage[userID]
+
+	if !exists {
+		log = &UsageLog{TimeStamps: []time.Time{time.Now()}}
+		rl.usage[userID] = log
+		return true
+	}
+
+	now := time.Now()
+	cutoff := now.Add(-quota.WindowSize)
+
+	validRequests := []time.Time{}
+	for _, t := range log.TimeStamps {
+		if t.After(cutoff) {
+			validRequests = append(validRequests, t)
+		}
+	}
+	log.TimeStamps = validRequests
+
+	if len(log.TimeStamps) >= quota.Limit {
+		return false
+	}
+
+	log.TimeStamps = append(log.TimeStamps, now)
+	return true
+}
+
+func (rl *AdvancedRateLimiter) SetUserTier(userID, tierID string) {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	rl.userTier[userID] = tierID
+}
