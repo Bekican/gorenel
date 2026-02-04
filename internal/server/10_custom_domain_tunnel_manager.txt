@@ -1,0 +1,73 @@
+package server
+
+import (
+	"log"
+	"sync"
+	"github.com/hashicorp/yamux"
+)
+
+// Custom Domain desteği için TunnelManager güncellemesi
+// Artık hem subdomain (gorenel.io altı) hem de özel tanmlanmış domainler desteklenecek.
+
+type TunnelManager struct {
+	tunnels       map[string]*yamux.Session // subdomain -> session
+	customDomains map[string]string         // custom_domain -> subdomain (mapping)
+	mu            sync.RWMutex
+}
+
+func NewTunnelManager() *TunnelManager {
+	return &TunnelManager{
+		tunnels:       make(map[string]*yamux.Session),
+		customDomains: make(map[string]string),
+	}
+}
+
+// RegisterTunnel metodu artık opsiyonel bir customDomain almalı
+func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session, customDomain string) {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	tm.tunnels[subdomain] = session
+	
+	if customDomain != "" {
+		tm.customDomains[customDomain] = subdomain
+		log.Printf("Tünel kaydedildi: %s (Domain: %s)", subdomain, customDomain)
+	} else {
+		log.Printf("Tünel kaydedildi: %s", subdomain)
+	}
+}
+
+// Hem subdomain hem de custom domain ile tünel bulma desteği
+func (tm *TunnelManager) GetTunnel(host string) (*yamux.Session, bool) {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+
+	// 1. Önce host'u direkt subdomain mi diye kontrol et
+	if session, exists := tm.tunnels[host]; exists {
+		return session, true
+	}
+
+	// 2. Host veritabanımızdaki özel bir domain mi?
+	if sub, exists := tm.customDomains[host]; exists {
+		if session, exists := tm.tunnels[sub]; exists {
+			return session, true
+		}
+	}
+
+	return nil, false
+}
+
+func (tm *TunnelManager) RemoveTunnel(subdomain string) {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+
+	delete(tm.tunnels, subdomain)
+	
+	// Bu subdomain'e bağlı custom domaini de temizle (Ters arama ile)
+	for domain, sub := range tm.customDomains {
+		if sub == subdomain {
+			delete(tm.customDomains, domain)
+			break
+		}
+	}
+}
