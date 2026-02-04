@@ -4,9 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/golang-jwt/jwt"
 	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/oauth2/jwt"
 )
 
 var (

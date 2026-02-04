@@ -5,6 +5,7 @@ go 1.23.0
 toolchain go1.24.12
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/yamux v0.1.2
 	github.com/spf13/cobra v1.10.2
