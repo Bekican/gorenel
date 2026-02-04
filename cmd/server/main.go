@@ -28,6 +28,9 @@ func main() {
 	// Initialize Advanced Rate Limiter (60 req/min default)
 	rateLimiter := limiter.NewRateLimiter(60, 1*time.Minute)
 
+	// Initialize Traffic Inspector (keep last 100 requests)
+	inspector := server.NewTrafficInspector(100)
+
 	//eventStreaming
 	eventStream := server.NewEventStream(1000)
 	defer eventStream.Close()
@@ -59,8 +62,8 @@ func main() {
 	userRepo := handler.NewInMemoryUserRepo()
 	authHandler := handler.NewAuthHandler(jwtSvc, userRepo)
 
-	// Proxy server (using shared limiter)
-	proxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter)
+	// Proxy server (using shared limiter and inspector)
+	proxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector)
 	go func() {
 		log.Println(" HTTP Proxy başlatılıyor...")
 		if err := proxy.Start(); err != nil {
@@ -68,8 +71,8 @@ func main() {
 		}
 	}()
 
-	// Monitoring server (using auth and shared limiter)
-	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter)
+	// Monitoring server (using auth, shared limiter, and inspector)
+	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector)
 	go func() {
 		if err := monitor.Start(); err != nil {
 			log.Fatalf(" Monitoring server hatası: %v", err)

@@ -22,7 +22,7 @@ type CapturedRequest struct {
 }
 
 type TrafficInspector struct {
-	mu      *sync.RWMutex
+	mu      sync.RWMutex
 	history []*CapturedRequest
 	maxSize int
 }

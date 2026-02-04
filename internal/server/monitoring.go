@@ -31,14 +31,16 @@ type MonitoringServer struct {
 	analyticsEngine *AnalyticsEngine
 	authHandler     *handler.AuthHandler
 	advancedRL      *limiter.RateLimiter
+	inspector       *TrafficInspector
 }
 
-func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter) *MonitoringServer {
+func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector) *MonitoringServer {
 	return &MonitoringServer{
 		tunnelManager:   tm,
 		analyticsEngine: ae,
 		authHandler:     ah,
 		advancedRL:      rl,
+		inspector:       ti,
 	}
 }
 

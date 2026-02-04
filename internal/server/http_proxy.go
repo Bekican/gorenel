@@ -133,14 +133,16 @@ type HTTPProxy struct {
 	advancedRL    *limiter.RateLimiter
 	eventStream   *EventStream
 	geoLocator    *GeoLocator
+	inspector     *TrafficInspector
 }
 
-func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter) *HTTPProxy {
+func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector) *HTTPProxy {
 	return &HTTPProxy{
 		tunnelManager: tm,
 		advancedRL:    rl,
 		eventStream:   es,
 		geoLocator:    gl,
+		inspector:     ti,
 	}
 }
 
