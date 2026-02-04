@@ -85,7 +85,7 @@ run-server:
 # Run client in development
 run-client:
 	@echo "${YELLOW}🚀 Starting client in dev mode...${NC}"
-	go run cmd/client/main.go start --port 3000 --verbose
+	go run cmd/client/main.go start --port 3000 --api-key demo-key-12345 --verbose
 
 # Testing
 test:
