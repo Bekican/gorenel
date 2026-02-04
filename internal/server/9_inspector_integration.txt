@@ -1,0 +1,48 @@
+package server
+
+import (
+	"io"
+	"net/http"
+	"github.com/google/uuid"
+)
+
+// In HTTPProxy.ServeHTTP:
+func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    // ... basic checks ...
+
+    // 1. Capture Request Body
+    reqBody, _ := io.ReadAll(r.Body)
+    r.Body = io.NopCloser(bytes.NewReader(reqBody)) // Reset for proxying
+
+    captured := &CapturedRequest{
+        ID:        uuid.New().String(),
+        Subdomain: subdomain,
+        Method:    r.Method,
+        Path:      r.URL.Path,
+        ReqHeaders: r.Header,
+        ReqBody:   reqBody,
+        Timestamp: time.Now(),
+    }
+
+    // 2. Wrap Response Writer to catch Status and Body
+    // (Custom ResponseWriter implementation)
+    // p.inspector.Record(captured)
+}
+
+// In MonitoringServer.Start:
+func (m *MonitoringServer) Start() error {
+    // ...
+    mux.HandleFunc("/api/inspector/history", m.historyHandler)
+    mux.HandleFunc("/api/inspector/replay", m.replayHandler)
+    // ...
+}
+
+func (m *MonitoringServer) historyHandler(w http.ResponseWriter, r *http.Request) {
+    history := m.inspector.GetHistory()
+    json.NewEncoder(w).Encode(history)
+}
+
+func (m *MonitoringServer) replayHandler(w http.ResponseWriter, r *http.Request) {
+    id := r.URL.Query().Get("id")
+    // Replay logic calls p.inspector.Replay(...)
+}
