@@ -20,3 +20,16 @@ type AdvancedRateLimiter struct {
 	tiers    map[string]Quota
 	userTier map[string]string
 }
+
+func NewAdvancedRateLmiter() *AdvancedRateLimiter {
+	rl := &AdvancedRateLimiter{
+		usage:    make(map[string]*UsageLog),
+		tiers:    make(map[string]Quota),
+		userTier: make(map[string]string),
+	}
+
+	rl.tiers["free"] = Quota{Limit: 100, WindowSize: 1 * time.Hour}
+	rl.tiers["premium"] = Quota{Limit: 10000, WindowSize: 24 * time.Hour}
+
+	return rl
+}
