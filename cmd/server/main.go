@@ -6,7 +6,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/http"
 	"strings"
 	"time"
 
@@ -57,10 +56,6 @@ func main() {
 	userRepo := handler.NewInMemoryUserRepo()
 	authHandler := handler.NewAuthHandler(jwtSvc, userRepo)
 
-	// Auth endpoints
-	http.HandleFunc("/api/login", authHandler.Login)
-	http.HandleFunc("/api/register", authHandler.Register)
-
 	proxy := server.NewHTTPProxy(tm, eventStream, geoLocator)
 	go func() {
 		log.Println(" HTTP Proxy başlatılıyor...")
@@ -70,7 +65,7 @@ func main() {
 	}()
 
 	// Monitoring server'ı başlat (Port 9090)
-	monitor := server.NewMonitoringServer(tm, analyticsEngine)
+	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler)
 	go func() {
 		if err := monitor.Start(); err != nil {
 			log.Fatalf(" Monitoring server hatası: %v", err)

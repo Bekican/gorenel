@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"sync/atomic"
 	"time"
+
+	"github.com/Bekican/gorenel/internal/handler"
 )
 
 var (
@@ -25,12 +27,14 @@ func init() {
 type MonitoringServer struct {
 	tunnelManager   *TunnelManager
 	analyticsEngine *AnalyticsEngine
+	authHandler     *handler.AuthHandler
 }
 
-func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine) *MonitoringServer {
+func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler) *MonitoringServer {
 	return &MonitoringServer{
 		tunnelManager:   tm,
 		analyticsEngine: ae,
+		authHandler:     ah,
 	}
 }
 
@@ -46,6 +50,12 @@ func (m *MonitoringServer) Start() error {
 	mux.HandleFunc("/analytics", m.corsMiddleware(m.analyticsHandler))
 
 	mux.HandleFunc("/api/analytics/realtime", m.corsMiddleware(m.realtimeAnalyticsHandler))
+
+	// Register Auth Endpoints with CORS
+	if m.authHandler != nil {
+		mux.HandleFunc("/api/login", m.corsMiddleware(m.authHandler.Login))
+		mux.HandleFunc("/api/register", m.corsMiddleware(m.authHandler.Register))
+	}
 
 	log.Println("Monitoring serverı başlatılıyor: :9090")
 	return http.ListenAndServe(":9090", mux)
