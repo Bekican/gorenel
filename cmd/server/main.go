@@ -60,7 +60,8 @@ func main() {
 	// Auth components
 	jwtSvc := auth.NewJWTService("SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD")
 	userRepo := handler.NewInMemoryUserRepo()
-	authHandler := handler.NewAuthHandler(jwtSvc, userRepo)
+	// Placeholder OAuth for AuthHandler (OAuth is not used in tunnel registration)
+	authHandler := handler.NewAuthHandler(nil, jwtSvc, userRepo)
 
 	// Proxy server (using shared limiter and inspector)
 	proxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector)
@@ -175,8 +176,8 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	log.Printf(" Yamux session başlatıldı: %s", subdomain)
 
 	// 5. Session'ı kaydet
-	// --- STEP 1 UPDATE: 3. parametre (customDomain) eklendi ---
-	tm.RegisterTunnel(subdomain, session, "")
+	// --- STEP 3 UPDATE: regReq.CustomDomain artık 3. parametre olarak gönderiliyor ---
+	tm.RegisterTunnel(subdomain, session, regReq.CustomDomain)
 	defer tm.RemoveTunnel(subdomain)
 
 	cizgi := strings.Repeat("=", 60)

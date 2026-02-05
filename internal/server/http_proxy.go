@@ -158,28 +158,31 @@ func (p *HTTPProxy) Start() error {
 }
 
 func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// 1. Zaman sayacını başlat
 	startTime := time.Now()
 
 	IncrementRequest()
 	IncrementActiveConnections()
 	defer DecrementActiveConnections()
 
+	// Client IP'yi al
 	clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
 	if clientIP == "" {
 		clientIP = r.RemoteAddr
 	}
 
 	host := r.Host
-	// --- STEP 2 UPDATE: Host çözümleme mantığı genişletildi ---
+	// --- STEP 2 UPDATE: Host çözümleme ve Routing mantığı ---
+	// Artık targetKey (oranın subdomaini veya domaini) ve tipini ayırıyoruz.
 	targetKey, isCustom := resolveTargetKey(host)
 
 	if targetKey == "" {
 		http.Error(w, "Invalid host or subdomain", http.StatusBadRequest)
-		log.Printf("Geçersiz host: %s", host)
+		log.Printf("Geçersiz host denemesi: %s", host)
 		return
 	}
 
-	// RateLimiter kontrolü (targetKey üzerinden - subdomain ise subdomain, domain ise domain)
+	// RateLimiter kontrolü
 	if !p.advancedRL.Allow(targetKey, 1) {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 		log.Printf("Ratelimit aşıldı: %s", targetKey)
@@ -187,15 +190,15 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isCustom {
-		log.Printf("HTTP Özel Domain İstek: %s %s (Host:%s)", r.Method, r.URL.Path, host)
+		log.Printf("HTTP Özel Domain İstek: %s %s (Host: %s)", r.Method, r.URL.Path, host)
 	} else {
-		log.Printf("HTTP Subdomain İstek: %s %s (Subdomain:%s)", r.Method, r.URL.Path, targetKey)
+		log.Printf("HTTP Subdomain İstek: %s %s (Sub: %s)", r.Method, r.URL.Path, targetKey)
 	}
 
-	// Tüneli bul (Yeni TunnelManager artık hem subdomain hem custom domain ile bulabiliyor)
+	// Tüneli bul (TunnelManager artık host bilgisini akıllıca sorgular)
 	session, exists := p.tunnelManager.GetTunnel(host)
 	if !exists {
-		// Eğer tam host ile bulunamadıysa (custom domain değilse), subdomain olarak dene
+		// Eğer tam host ile bulunamadıysa, belki portsuz veya subdomain olarak denemek gerekebilir
 		session, exists = p.tunnelManager.GetTunnel(targetKey)
 	}
 
@@ -240,12 +243,13 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Response'u kopyalarken yakala
 	bytesReceived, err := io.Copy(captureWriter, stream)
 	if err != nil {
 		log.Printf("Response copy error: %v", err)
 	}
 
-	// Finalize Traffic Capture
+	// Traffic Capture Finalize
 	captured.RespHeaders = captureWriter.Header()
 	captured.RespBody = captureWriter.Body.Bytes()
 	captured.StatusCode = captureWriter.StatusCode
@@ -259,6 +263,27 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	p.publishEvent(targetKey, r, clientIP, captureWriter.StatusCode, responseTime, 0, bytesReceived, "")
 
 	log.Printf("İstek tamamlandı : %s %s (%v)", r.Method, r.URL.Path, responseTime)
+}
+
+// resolveTargetKey: Gelen host bilgisinin subdomain mi yoksa custom domain mi olduğunu ayırır.
+func resolveTargetKey(host string) (key string, isCustom bool) {
+	// Port bilgisini temizle (örn: :8080)
+	if idx := strings.Index(host, ":"); idx != -1 {
+		host = host[:idx]
+	}
+
+	// Eğer host ana tünel domaini ile bitiyorsa (örn: .gorenel.io)
+	// protocol.BaseDomain'in ".gorenel.io" formatında olduğunu varsayıyoruz (başına nokta eklenmiş hali)
+	if strings.HasSuffix(host, protocol.BaseDomain) {
+		parts := strings.Split(host, ".")
+		// parts: ["abc", "gorenel", "io"]
+		if len(parts) >= 3 {
+			return parts[0], false // Bu bir subdomaindir
+		}
+	}
+
+	// Eğer ana domain değilse, bu bir Custom Domain'dir
+	return host, true
 }
 
 func (p *HTTPProxy) publishEvent(subdomain string, r *http.Request, clientIP string, statusCode int, responseTime time.Duration, bytesIn, bytesOut int64, errorMsg string) {
@@ -286,27 +311,6 @@ func (p *HTTPProxy) publishEvent(subdomain string, r *http.Request, clientIP str
 	}
 }
 
-// resolveTargetKey helps to decide if the host is a subdomain or a custom domain.
-func resolveTargetKey(host string) (key string, isCustom bool) {
-	if idx := strings.Index(host, ":"); idx != -1 {
-		host = host[:idx]
-	}
-
-	// Ana domainimiz gorenel.io mu?
-	if strings.HasSuffix(host, protocol.BaseDomain) {
-		parts := strings.Split(host, ".")
-		// parts: ["subdomain", "gorenel", "io"] or ["gorenel", "io"]
-		if len(parts) >= 3 {
-			return parts[0], false // Subdomain (not custom)
-		}
-		return "", false
-	}
-
-	// Ana domainimiz değilse bu bir Custom Domaindir
-	return host, true
-}
-
-// Eski fonksiyonu yardımcı olması için saklayabiliriz veya temizleyebiliriz
 func extractSubdomain(host string) string {
 	key, _ := resolveTargetKey(host)
 	return key

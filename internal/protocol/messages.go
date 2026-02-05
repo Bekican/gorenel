@@ -11,9 +11,10 @@ type Message struct {
 }
 
 type RegisterRequest struct {
-	ClientID string `json:"client_id"`
-	Version  string `json:"version"`
-	APIKey   string `json:"api_key"`
+	ClientID     string `json:"client_id"`
+	Version      string `json:"version"`
+	APIKey       string `json:"api_key"`
+	CustomDomain string `json:"custom_domain,omitempty"` // --- NEW: Custom Domain field ---
 }
 
 type RegisterResponse struct {
@@ -40,11 +41,13 @@ func ReadMessage(r io.Reader) (*Message, error) {
 	return &msg, nil
 }
 
-func NewRegisterMessage(clientId, version, apiKey string) Message {
+// NewRegisterMessage now takes an optional custom domain
+func NewRegisterMessage(clientId, version, apiKey, domain string) Message {
 	req := RegisterRequest{
-		ClientID: clientId,
-		Version:  version,
-		APIKey:   apiKey,
+		ClientID:     clientId,
+		Version:      version,
+		APIKey:       apiKey,
+		CustomDomain: domain,
 	}
 	payload, _ := json.Marshal(req)
 

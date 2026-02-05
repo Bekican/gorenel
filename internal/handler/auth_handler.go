@@ -6,126 +6,126 @@ import (
 	"time"
 
 	"github.com/Bekican/gorenel/pkg/auth"
+	"github.com/Bekican/gorenel/pkg/errors"
+	"github.com/Bekican/gorenel/pkg/logger"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type AuthHandler struct {
+	oauth    auth.OAuthProvider
 	tokenSvc *auth.JWTService
-	userRepo *InMemoryUserRepo
+	userRepo auth.UserRepository
 }
 
-func NewAuthHandler(tokenSvc *auth.JWTService, repo *InMemoryUserRepo) *AuthHandler {
+func NewAuthHandler(oauth auth.OAuthProvider, tokenSvc *auth.JWTService, repo auth.UserRepository) *AuthHandler {
 	return &AuthHandler{
+		oauth:    oauth,
 		tokenSvc: tokenSvc,
 		userRepo: repo,
 	}
 }
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+// Login redirects user to Google
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
+	// Generate random state to prevent CSRF
+	state := uuid.New().String()
+
+	// Store state in a cookie for validation later
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth_state",
+		Value:    state,
+		Expires:  time.Now().Add(10 * time.Minute),
+		HttpOnly: true,
+		Secure:   false, // Set to true in production (HTTPS)
+		Path:     "/",
+	})
+
+	url := h.oauth.GetAuthURL(state)
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	return nil
 }
 
-type LoginResponse struct {
-	Token string     `json:"token"`
-	User  *auth.User `json:"user"`
-}
-
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
+// Callback handles the redirect from Google
+func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
+	// 1. Validate State (Anti-CSRF)
+	cookie, err := r.Cookie("oauth_state")
+	if err != nil || cookie.Value != r.FormValue("state") {
+		return errors.Unauthorized("Invalid OAuth state")
 	}
 
-	var req LoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	// Simple validation
-	user, err := h.userRepo.GetByEmail(req.Email)
+	// 2. Get User Profile from Provider
+	code := r.FormValue("code")
+	profile, err := h.oauth.GetUserProfile(code)
 	if err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
-		return
+		logger.Error("OAuth failed", zap.Error(err))
+		return errors.Unauthorized("Authentication failed")
 	}
 
-	// In a real app, you would check password hash here
-	// if !checkPasswordHash(req.Password, user.PasswordHash) { ... }
+	// 3. Find or Create User in DB
+	user, err := h.userRepo.GetByEmail(profile.Email)
+	if err != nil {
+		// Assume "not found" means we create a new user
+		user = &auth.User{
+			ID:        uuid.New().String(),
+			Email:     profile.Email,
+			Name:      profile.Name,
+			AvatarURL: profile.AvatarURL,
+			Provider:  profile.Provider,
+			CreatedAt: time.Now(),
+		}
+		if err := h.userRepo.Create(user); err != nil {
+			return errors.Internal(err)
+		}
+	}
 
+	// 4. Generate JWT
 	tokenString, err := h.tokenSvc.GenerateToken(user)
 	if err != nil {
-		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
-		return
+		return errors.Internal(err)
 	}
 
-	// Set as cookie
+	// 5. Set JWT as HttpOnly Cookie
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    tokenString,
 		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
+		HttpOnly: true,  // Javascript cannot read this!
+		Secure:   false, // Set true in Prod
 		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
 	})
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(LoginResponse{
-		Token: tokenString,
-		User:  user,
-	})
+	// 6. Redirect to Frontend Dashboard
+	http.Redirect(w, r, "http://localhost:3000/dashboard", http.StatusSeeOther)
+	return nil
 }
 
-// Register handler
-func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
+// Register handles manual user registration (simulation)
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
+	var body struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
-	var user auth.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		return errors.BadRequest("Invalid request body", err)
 	}
 
-	user.ID = uuid.New().String()
-	user.CreatedAt = time.Now()
+	user := &auth.User{
+		ID:        uuid.New().String(),
+		Email:     body.Email,
+		Name:      body.Name,
+		Provider:  "manual",
+		CreatedAt: time.Now(),
+	}
 
-	if err := h.userRepo.Create(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusConflict)
-		return
+	if err := h.userRepo.Create(user); err != nil {
+		return errors.Internal(err)
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
-}
-
-// InMemoryUserRepo for quick demo
-type InMemoryUserRepo struct {
-	users map[string]*auth.User
-}
-
-func NewInMemoryUserRepo() *InMemoryUserRepo {
-	repo := &InMemoryUserRepo{users: make(map[string]*auth.User)}
-	// Add a demo user
-	repo.Create(&auth.User{
-		ID:    "demo-1",
-		Email: "demo@gorenel.io",
-		Name:  "Demo User",
-	})
-	return repo
-}
-
-func (r *InMemoryUserRepo) GetByEmail(email string) (*auth.User, error) {
-	for _, u := range r.users {
-		if u.Email == email {
-			return u, nil
-		}
-	}
-	return nil, http.ErrNoCookie // Temporary use as "not found"
-}
-
-func (r *InMemoryUserRepo) Create(user *auth.User) error {
-	r.users[user.ID] = user
+	json.NewEncoder(w).Encode(map[string]string{"message": "User created", "uid": user.ID})
 	return nil
 }

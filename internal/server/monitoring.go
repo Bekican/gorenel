@@ -13,6 +13,7 @@ import (
 	"github.com/Bekican/gorenel/internal/handler"
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/middleware"
+	serverErrors "github.com/Bekican/gorenel/pkg/errors"
 )
 
 var (
@@ -59,8 +60,8 @@ func (m *MonitoringServer) Start() error {
 
 	// Register Auth Endpoints with CORS
 	if m.authHandler != nil {
-		mux.HandleFunc("/api/login", m.corsMiddleware(m.authHandler.Login))
-		mux.HandleFunc("/api/register", m.corsMiddleware(m.authHandler.Register))
+		mux.HandleFunc("/api/login", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Login)))
+		mux.HandleFunc("/api/register", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Register)))
 	}
 
 	// Register Inspector Endpoints

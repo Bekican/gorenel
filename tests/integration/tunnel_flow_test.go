@@ -36,7 +36,7 @@ func TestFullTunnelFlow(t *testing.T) {
 	defer clientSession.Close()
 
 	// Step 3: Simulate REGISTER flow
-	registerMsg := protocol.NewRegisterMessage("test-client", "1.0.0", "test-api-key")
+	registerMsg := protocol.NewRegisterMessage("test-client", "1.0.0", "test-api-key", "")
 
 	// Send register message through Yamux
 	stream, err := clientSession.OpenStream()
