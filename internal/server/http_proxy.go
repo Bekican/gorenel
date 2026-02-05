@@ -182,6 +182,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// --- NEW: Traffic Modification Hook ---
+	if p.inspector != nil && p.inspector.GetModifier() != nil {
+		p.inspector.GetModifier().Apply(r)
+	}
+
 	// RateLimiter kontrolü
 	if !p.advancedRL.Allow(targetKey, 1) {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
@@ -309,9 +314,4 @@ func (p *HTTPProxy) publishEvent(subdomain string, r *http.Request, clientIP str
 	} else {
 		p.eventStream.publish(event)
 	}
-}
-
-func extractSubdomain(host string) string {
-	key, _ := resolveTargetKey(host)
-	return key
 }

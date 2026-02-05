@@ -14,6 +14,7 @@ import (
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/middleware"
 	serverErrors "github.com/Bekican/gorenel/pkg/errors"
+	"github.com/google/uuid"
 )
 
 var (
@@ -68,6 +69,7 @@ func (m *MonitoringServer) Start() error {
 	if m.inspector != nil {
 		mux.HandleFunc("/api/inspector/history", m.corsMiddleware(rl(m.inspectorHistoryHandler)))
 		mux.HandleFunc("/api/inspector/replay", m.corsMiddleware(rl(m.inspectorReplayHandler)))
+		mux.HandleFunc("/api/inspector/rules", m.corsMiddleware(rl(m.inspectorRulesHandler)))
 	}
 
 	log.Println("Monitoring serverı başlatılıyor: :9090")
@@ -246,6 +248,42 @@ func (m *MonitoringServer) inspectorReplayHandler(w http.ResponseWriter, r *http
 
 	w.WriteHeader(resp.StatusCode)
 	io.Copy(w, resp.Body)
+}
+
+func (m *MonitoringServer) inspectorRulesHandler(w http.ResponseWriter, r *http.Request) {
+	if m.inspector == nil || m.inspector.GetModifier() == nil {
+		http.Error(w, "Inspector not initialized", http.StatusServiceUnavailable)
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		rules := m.inspector.GetModifier().GetRules()
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(rules)
+	case http.MethodPost:
+		var rule ModificationRule
+		if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
+			http.Error(w, "Invalid payload", http.StatusBadRequest)
+			return
+		}
+		if rule.ID == "" {
+			rule.ID = uuid.New().String()
+		}
+		m.inspector.GetModifier().AddRule(rule)
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(rule)
+	case http.MethodDelete:
+		id := r.URL.Query().Get("id")
+		if id == "" {
+			http.Error(w, "Missing rule ID", http.StatusBadRequest)
+			return
+		}
+		m.inspector.GetModifier().RemoveRule(id)
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 // increment request

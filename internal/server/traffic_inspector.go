@@ -22,16 +22,23 @@ type CapturedRequest struct {
 }
 
 type TrafficInspector struct {
-	mu      sync.RWMutex
-	history []*CapturedRequest
-	maxSize int
+	mu       sync.RWMutex
+	history  []*CapturedRequest
+	maxSize  int
+	modifier *TrafficModifier
 }
 
 func NewTrafficInspector(maxSize int) *TrafficInspector {
 	return &TrafficInspector{
-		history: make([]*CapturedRequest, 0, maxSize),
-		maxSize: maxSize,
+		history:  make([]*CapturedRequest, 0, maxSize),
+		maxSize:  maxSize,
+		modifier: NewTrafficModifier(),
 	}
+}
+
+// GetModifier returns the attached traffic modifier
+func (ti *TrafficInspector) GetModifier() *TrafficModifier {
+	return ti.modifier
 }
 
 func (ti *TrafficInspector) Record(req *CapturedRequest) {
