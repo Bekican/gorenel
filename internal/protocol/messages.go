@@ -14,12 +14,14 @@ type RegisterRequest struct {
 	ClientID     string `json:"client_id"`
 	Version      string `json:"version"`
 	APIKey       string `json:"api_key"`
-	CustomDomain string `json:"custom_domain,omitempty"` // --- NEW: Custom Domain field ---
+	CustomDomain string `json:"custom_domain,omitempty"`
+	TunnelType   string `json:"tunnel_type,omitempty"`
 }
 
 type RegisterResponse struct {
-	Subdomain string `json:"subdomain"`
-	FullURL   string `json:"full_url"`
+	Subdomain  string `json:"subdomain"`
+	FullURL    string `json:"full_url"`
+	PublicPort int    `json:"public_port,omitempty"`
 }
 
 type ErrorResponse struct {

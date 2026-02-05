@@ -1,0 +1,32 @@
+package cmd
+
+// --- cmd/client/cmd/start.go (Eklenecek Bayraklar ve Mantık) ---
+
+var (
+	tunnelType string // "http", "tcp", "udp"
+	remotePort int    // manuel port isteği için (opsiyonel)
+)
+
+func init() {
+	// ...
+	startCmd.Flags().StringVar(&tunnelType, "type", "http", "Tunnel tipi (http, tcp, udp)")
+	startCmd.Flags().IntVar(&remotePort, "remote-port", 0, "İstenen uzak port (varsa)")
+}
+
+func startTunnel(ctx context.Context, serverAddr string, localPort int, domain string) error {
+	// ...
+	// REGISTER talebine TunnelType ekle
+	registerMsg := protocol.Message{
+		Type: protocol.MsgTypeRegister,
+		Payload: marshal(protocol.RegisterRequest{
+			// ...
+			TunnelType: tunnelType,
+		}),
+	}
+	// ...
+	
+	// Yanıtta PublicPort varsa göster
+	if regResp.PublicPort != 0 {
+		fmt.Printf("TCP/UDP Portu: %d -> localhost:%d\n", regResp.PublicPort, localPort)
+	}
+}

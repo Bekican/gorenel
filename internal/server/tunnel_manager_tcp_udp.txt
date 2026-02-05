@@ -1,0 +1,34 @@
+package server
+
+import (
+	"fmt"
+	"net"
+	"sync"
+)
+
+// TunnelManager'a eklenecek alanlar
+type TunnelManager struct {
+	// ... mevcut alanlar ...
+	tcpPorts      map[int]string // key: allocated_port, value: subdomain
+	udpPorts      map[int]string
+	portMutex     sync.Mutex
+}
+
+// Port ayırma mantığı
+func (tm *TunnelManager) AllocatePort() (int, error) {
+	tm.portMutex.Lock()
+	defer tm.portMutex.Unlock()
+
+	// 10000-20000 arası boş bir port bul
+	for port := 10000; port <= 20000; port++ {
+		if _, used := tm.tcpPorts[port]; !used {
+			// Portun sistemde gerçekten boş olup olmadığını kontrol et
+			ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+			if err == nil {
+				ln.Close()
+				return port, nil
+			}
+		}
+	}
+	return 0, fmt.Errorf("boş port bulunamadı")
+}

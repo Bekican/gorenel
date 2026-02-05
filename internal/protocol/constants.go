@@ -18,6 +18,9 @@ const (
 	MsgTypeRegistered = "REGISTERED"
 	MsgTypeError      = "ERROR"
 
+	MsgTypeRegisterTCP = "REGISTER_TCP"
+	MsgTypeRegisterUDP = "REGISTER_UDP"
+
 	MsgTypePing = "PING"
 	MsgTypePong = "PONG"
 )
