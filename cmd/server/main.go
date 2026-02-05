@@ -63,11 +63,14 @@ func main() {
 	// Placeholder OAuth for AuthHandler (OAuth is not used in tunnel registration)
 	authHandler := handler.NewAuthHandler(nil, jwtSvc, userRepo)
 
-	// Proxy server (using shared limiter and inspector)
-	proxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector)
+	// Proxy servers
+	tcpProxy := server.NewTCPProxy()
+	udpProxy := server.NewUDPProxy()
+	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector)
+
 	go func() {
 		log.Println(" HTTP Proxy başlatılıyor...")
-		if err := proxy.Start(); err != nil {
+		if err := httpProxy.Start(); err != nil {
 			log.Fatalf(" HTTP Proxy hatası: %v", err)
 		}
 	}()
@@ -105,11 +108,11 @@ func main() {
 		}
 
 		log.Printf("Yeni bağlantı: %s", conn.RemoteAddr())
-		go handleClient(conn, tm, authManager)
+		go handleClient(conn, tm, authManager, tcpProxy, udpProxy)
 	}
 }
 
-func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.AuthManager) {
+func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy) {
 	defer conn.Close()
 
 	// 1. REGISTER mesajını oku
@@ -138,7 +141,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	}
 
 	// AUTH: API key kontrolü
-	apiKey, err := authManager.ValidateKey(regReq.APIKey)
+	authKey, err := authManager.ValidateKey(regReq.APIKey)
 	if err != nil {
 		log.Printf(" Authentication başarısız: %v", err)
 		errMsg := protocol.NewErrorMessage(401, fmt.Sprintf("Authentication failed: %v", err))
@@ -146,21 +149,8 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 		return
 	}
 
-	log.Printf(" Authentication başarılı: %s (User: %s)", regReq.APIKey[:8]+"...", apiKey.UserID)
+	log.Printf(" Authentication başarılı: %s (User: %s)", regReq.APIKey[:8]+"...", authKey.UserID)
 	authManager.IncrementUsage(regReq.APIKey)
-
-	// 2. Subdomain üret
-	subdomain := utils.GenerateSubDomain(8)
-	fullURL := fmt.Sprintf("http://%s.%s%s", subdomain, protocol.BaseDomain, protocol.ProxyPort)
-
-	// 3. Client'a subdomain'i bildir
-	response := protocol.NewRegisteredMessage(subdomain, fullURL)
-	if err := protocol.WriteMessage(conn, response); err != nil {
-		log.Printf(" Cevap gönderilemedi: %v", err)
-		return
-	}
-
-	log.Printf("✅ Subdomain atandı: %s", fullURL)
 
 	// 4. Yamux Session başlat
 	yamuxConfig := yamux.DefaultConfig()
@@ -173,12 +163,62 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	}
 	defer session.Close()
 
+	// 2. Tünel tipine göre işlem yap
+	var subdomain string
+	var fullURL string
+	var publicPort int
+
+	if regReq.TunnelType == "tcp" || regReq.TunnelType == "udp" {
+		// Port tahsis et
+		publicPort, err = tm.AllocatePort()
+		if err != nil {
+			log.Printf(" Port tahsis hatası: %v", err)
+			protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "Boş port bulunamadı"))
+			return
+		}
+
+		if regReq.TunnelType == "tcp" {
+			if err := tcpProx.ListenAndForward(publicPort, session); err != nil {
+				log.Printf(" TCP Proxy hatası: %v", err)
+				protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "TCP Proxy başlatılamadı"))
+				return
+			}
+		} else {
+			if err := udpProx.ListenAndForward(publicPort, session); err != nil {
+				log.Printf(" UDP Proxy hatası: %v", err)
+				protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "UDP Proxy başlatılamadı"))
+				return
+			}
+		}
+		log.Printf("✅ %s tüneli oluşturuldu: :%d", strings.ToUpper(regReq.TunnelType), publicPort)
+	} else {
+		// DEFAULT: HTTP Subdomain
+		subdomain = utils.GenerateSubDomain(8)
+		fullURL = fmt.Sprintf("http://%s.%s%s", subdomain, protocol.BaseDomain, protocol.ProxyPort)
+		log.Printf("✅ HTTP Subdomain atandı: %s", fullURL)
+	}
+
+	// 3. Client'a yanıt ver
+	respPayload := protocol.RegisterResponse{
+		Subdomain:  subdomain,
+		FullURL:    fullURL,
+		PublicPort: publicPort,
+	}
+	respJson, _ := json.Marshal(respPayload)
+	protocol.WriteMessage(conn, protocol.Message{
+		Type:    protocol.MsgTypeRegistered,
+		Payload: string(respJson),
+	})
+
 	log.Printf(" Yamux session başlatıldı: %s", subdomain)
 
 	// 5. Session'ı kaydet
-	// --- STEP 3 UPDATE: regReq.CustomDomain artık 3. parametre olarak gönderiliyor ---
-	tm.RegisterTunnel(subdomain, session, regReq.CustomDomain)
-	defer tm.RemoveTunnel(subdomain)
+	if subdomain != "" {
+		tm.RegisterTunnel(subdomain, session, regReq.CustomDomain)
+		defer tm.RemoveTunnel(subdomain)
+	} else {
+		// TCP/UDP için de kaydetmek gerekebilir (opsiyonel, monitoring için iyi olur)
+	}
 
 	cizgi := strings.Repeat("=", 60)
 	log.Printf(" Aktif tünel sayısı: %d", tm.Count())

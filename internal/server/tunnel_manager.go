@@ -1,7 +1,9 @@
 package server
 
 import (
+	"fmt"
 	"log"
+	"net"
 	"sync"
 
 	"github.com/hashicorp/yamux"
@@ -13,6 +15,29 @@ type TunnelManager struct {
 	tunnels       map[string]*yamux.Session // key: subdomain, value: yamux session
 	customDomains map[string]string         // key: custom_domain, value: subdomain mapping
 	mu            sync.RWMutex
+	tcpPorts      map[int]string
+	udpPorts      map[int]string
+	portMutex     sync.Mutex
+}
+
+func (tm *TunnelManager) AllocatePort() (int, error) {
+	tm.portMutex.Lock()
+	defer tm.portMutex.Unlock()
+
+	// 10000-20000 arası boş bir port bul
+	for port := 10000; port <= 20000; port++ {
+		if _, used := tm.tcpPorts[port]; !used {
+			// Portun sistemde gerçekten boş olup olmadığını kontrol et
+			ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+			if err == nil {
+				ln.Close()
+				// Artık AllocatePort sadece portu rezerve eder
+				// Kayıt işlemi Register aşamasında yapılacak veya burada geçici işaretlenebilir
+				return port, nil
+			}
+		}
+	}
+	return 0, fmt.Errorf("boş port bulunamadı")
 }
 
 // NewTunnelManager creates a new instance of TunnelManager with initialized maps.
@@ -20,6 +45,8 @@ func NewTunnelManager() *TunnelManager {
 	return &TunnelManager{
 		tunnels:       make(map[string]*yamux.Session),
 		customDomains: make(map[string]string),
+		tcpPorts:      make(map[int]string),
+		udpPorts:      make(map[int]string),
 	}
 }
 

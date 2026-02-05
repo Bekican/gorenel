@@ -28,7 +28,9 @@ var (
 	localPort       int
 	customSubdomain string
 	apiKey          string
-	customDomain    string // --- NEW: Custom domain variable ---
+	customDomain    string
+	tunnelType      string // --- NEW: "http", "tcp" or "udp" ---
+	remotePort      int    // --- NEW: Requested remote port ---
 
 	// Metrikler (atomic - thread-safe)
 	requestCount  int64
@@ -40,13 +42,13 @@ var (
 var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Tunnel'ı başlat ve localhost'u internete aç",
-	Long: `Belirtilen local port'u internete açar ve size public bir URL verir.
+	Long: `Belirtilen local port'u internete açar ve size public bir URL veya Port verir.
 
 Örnekler:
   gorenel start --port 3000
-  gorenel start --port 8080 --server tunnel.example.com:7000
   gorenel start --port 3000 --subdomain my-cool-app
-  gorenel start --port 3000 --domain api.bekircan.com`,
+  gorenel start --port 3306 --type tcp
+  gorenel start --port 5000 --type udp`,
 	Run: runStart,
 }
 
@@ -58,13 +60,16 @@ func init() {
 	startCmd.Flags().IntVarP(&localPort, "port", "p", 3000, "Local port numarası")
 	startCmd.Flags().StringVar(&customSubdomain, "subdomain", "", "Özel subdomain (mevcut değilse)")
 	startCmd.Flags().StringVarP(&apiKey, "api-key", "k", "", "API key (authentication için)")
-	startCmd.Flags().StringVarP(&customDomain, "domain", "d", "", "Özel alan adı (Custom Domain)") // --- NEW Flag ---
+	startCmd.Flags().StringVarP(&customDomain, "domain", "d", "", "Özel alan adı (Custom Domain)")
+	startCmd.Flags().StringVarP(&tunnelType, "type", "t", "http", "Tunnel tipi (http, tcp, udp)")
+	startCmd.Flags().IntVarP(&remotePort, "remote-port", "r", 0, "İstenen uzak port (raw tüneller için)")
 
 	// Viper ile config dosyasından değerleri bağla
 	viper.BindPFlag("server", startCmd.Flags().Lookup("server"))
 	viper.BindPFlag("port", startCmd.Flags().Lookup("port"))
 	viper.BindPFlag("api_key", startCmd.Flags().Lookup("api-key"))
 	viper.BindPFlag("domain", startCmd.Flags().Lookup("domain"))
+	viper.BindPFlag("type", startCmd.Flags().Lookup("type"))
 }
 
 func runStart(cmd *cobra.Command, args []string) {
@@ -95,10 +100,18 @@ func runStart(cmd *cobra.Command, args []string) {
 		customDomain = viper.GetString("domain")
 	}
 
+	if tunnelType == "http" {
+		t := viper.GetString("type")
+		if t != "" {
+			tunnelType = t
+		}
+	}
+
 	// Banner
 	printBanner()
 
 	log.Printf("Gorenel Client v%s", rootCmd.Version)
+	log.Printf("Type: %s", strings.ToUpper(tunnelType))
 	log.Printf("Local port: localhost:%d", localPort)
 	log.Printf("Server: %s", serverAddr)
 	if customDomain != "" {
@@ -120,7 +133,7 @@ func runStart(cmd *cobra.Command, args []string) {
 	// Tunnel'ı başlat (goroutine içinde)
 	errChan := make(chan error, 1)
 	go func() {
-		errChan <- startTunnel(ctx, serverAddr, localPort, customDomain)
+		errChan <- startTunnel(ctx, serverAddr, localPort, customDomain, tunnelType)
 	}()
 
 	// Metrikleri göster (her 10 saniyede bir)
@@ -145,7 +158,7 @@ func runStart(cmd *cobra.Command, args []string) {
 }
 
 // startTunnel - Ana tunnel mantığı
-func startTunnel(ctx context.Context, serverAddr string, localPort int, domain string) error {
+func startTunnel(ctx context.Context, serverAddr string, localPort int, domain string, tType string) error {
 	// 1. Server'a bağlan
 	conn, err := net.Dial("tcp", serverAddr)
 	if err != nil {
@@ -157,8 +170,21 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 
 	// 2. REGISTER mesajı gönder
 	clientID := utils.GenerateClientID()
-	// --- STEP 3 UPDATE: domain parametresi eklendi ---
-	registerMsg := protocol.NewRegisterMessage(clientID, rootCmd.Version, apiKey, domain)
+
+	// Prepare register request with type
+	regReq := protocol.RegisterRequest{
+		ClientID:     clientID,
+		Version:      rootCmd.Version,
+		APIKey:       apiKey,
+		CustomDomain: domain,
+		TunnelType:   tType,
+	}
+	reqPayload, _ := json.Marshal(regReq)
+
+	registerMsg := protocol.Message{
+		Type:    protocol.MsgTypeRegister,
+		Payload: string(reqPayload),
+	}
 
 	if err := protocol.WriteMessage(conn, registerMsg); err != nil {
 		return fmt.Errorf("REGISTER gönderilemedi: %w", err)
@@ -200,11 +226,15 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 	}
 
 	// 5. Başarı mesajı
-	url := regResp.FullURL
-	if domain != "" {
-		url = "http://" + domain + " (Custom Domain)"
+	if tType == "tcp" || tType == "udp" {
+		printRawSuccessBanner(tType, regResp.PublicPort, localPort)
+	} else {
+		url := regResp.FullURL
+		if domain != "" {
+			url = "http://" + domain + " (Custom Domain)"
+		}
+		printSuccessBanner(url, localPort)
 	}
-	printSuccessBanner(url, localPort)
 
 	// 6. Stream'leri handle et
 	go handleStreams(ctx, session, localPort)
@@ -296,6 +326,17 @@ func printSuccessBanner(url string, port int) {
 	fmt.Println(cizgi)
 	fmt.Printf("Public URL:  %s\n", url)
 	fmt.Printf("Local Port:  localhost:%d\n", port)
+	fmt.Println(cizgi)
+	fmt.Println("Tunnel çalışıyor. Kapatmak için Ctrl+C basın..")
+}
+
+func printRawSuccessBanner(tType string, publicPort int, localPort int) {
+	cizgi := strings.Repeat("=", 60)
+	fmt.Println("\n" + cizgi)
+	fmt.Printf("%s TÜNELİNİZ HAZIR!\n", strings.ToUpper(tType))
+	fmt.Println(cizgi)
+	fmt.Printf("Public Address: gorenel.io:%d\n", publicPort)
+	fmt.Printf("Local Target:   localhost:%d\n", localPort)
 	fmt.Println(cizgi)
 	fmt.Println("Tunnel çalışıyor. Kapatmak için Ctrl+C basın..")
 }
