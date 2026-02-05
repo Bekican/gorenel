@@ -126,7 +126,6 @@ import (
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/protocol"
 	"github.com/google/uuid"
-	"github.com/hashicorp/yamux"
 )
 
 type HTTPProxy struct {
@@ -159,48 +158,56 @@ func (p *HTTPProxy) Start() error {
 }
 
 func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// 1. Zaman sayacını başlat (Analytics için gerekli)
 	startTime := time.Now()
 
 	IncrementRequest()
 	IncrementActiveConnections()
 	defer DecrementActiveConnections()
 
-	// Client IP'yi al (Event logları için)
 	clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
 	if clientIP == "" {
 		clientIP = r.RemoteAddr
 	}
 
 	host := r.Host
-	subdomain := extractSubdomain(host)
+	// --- STEP 2 UPDATE: Host çözümleme mantığı genişletildi ---
+	targetKey, isCustom := resolveTargetKey(host)
 
-	if subdomain == "" {
-		http.Error(w, "Invalid subdomain", http.StatusBadRequest)
-		log.Printf("Geçersiz host : %s", host)
+	if targetKey == "" {
+		http.Error(w, "Invalid host or subdomain", http.StatusBadRequest)
+		log.Printf("Geçersiz host: %s", host)
 		return
 	}
 
-	// RateLimiter kontrolü
-	if !p.advancedRL.Allow(subdomain, 1) {
+	// RateLimiter kontrolü (targetKey üzerinden - subdomain ise subdomain, domain ise domain)
+	if !p.advancedRL.Allow(targetKey, 1) {
 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-		log.Printf("Ratelimit aşıldı : %s", subdomain)
+		log.Printf("Ratelimit aşıldı: %s", targetKey)
 		return
 	}
 
-	log.Printf("HTTP istek : %s %s (subdomain:%s)", r.Method, r.URL.Path, subdomain)
+	if isCustom {
+		log.Printf("HTTP Özel Domain İstek: %s %s (Host:%s)", r.Method, r.URL.Path, host)
+	} else {
+		log.Printf("HTTP Subdomain İstek: %s %s (Subdomain:%s)", r.Method, r.URL.Path, targetKey)
+	}
 
-	session, exists := p.tunnelManager.GetTunnel(subdomain)
+	// Tüneli bul (Yeni TunnelManager artık hem subdomain hem custom domain ile bulabiliyor)
+	session, exists := p.tunnelManager.GetTunnel(host)
 	if !exists {
-		log.Printf("[HTTP] Tunnel not found: %s", subdomain)
+		// Eğer tam host ile bulunamadıysa (custom domain değilse), subdomain olarak dene
+		session, exists = p.tunnelManager.GetTunnel(targetKey)
+	}
+
+	if !exists {
+		log.Printf("[HTTP] Tunnel not found for: %s", host)
 		http.Error(w, "Tunnel bulunamadı", http.StatusNotFound)
 		return
 	}
 
 	// WebSocket Kontrolü
 	if IsWebSocketUpgrade(r) {
-		p.HandleWebSocket(w, r, session, subdomain)
-		// Atomic counter artırımı eklendi
+		p.HandleWebSocket(w, r, session, targetKey)
 		atomic.AddInt64(&WebSocketConnections, 1)
 		return
 	}
@@ -213,17 +220,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer stream.Close()
 
-	var streamID uint32
-	if ys, ok := interface{}(stream).(*yamux.Stream); ok {
-		streamID = ys.StreamID()
-	}
-	log.Printf("Stream açıldı : %s (ID:%d)", subdomain, streamID)
-
-	// --- NEW: Traffic Capture (Request) ---
+	// Traffic Capture
 	reqBody, _ := InterceptBody(r)
 	captured := &CapturedRequest{
 		ID:         uuid.New().String(),
-		Subdomain:  subdomain,
+		Subdomain:  targetKey,
 		Method:     r.Method,
 		Path:       r.URL.Path,
 		ReqHeaders: r.Header,
@@ -231,7 +232,6 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Timestamp:  startTime,
 	}
 
-	// Wrapper for response capture
 	captureWriter := NewResponseCaptureWriter(w)
 
 	if err := r.Write(stream); err != nil {
@@ -240,13 +240,12 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Response'u kopyala (using captureWriter)
 	bytesReceived, err := io.Copy(captureWriter, stream)
 	if err != nil {
 		log.Printf("Response copy error: %v", err)
 	}
 
-	// --- NEW: Traffic Capture (Finalize) ---
+	// Finalize Traffic Capture
 	captured.RespHeaders = captureWriter.Header()
 	captured.RespBody = captureWriter.Body.Bytes()
 	captured.StatusCode = captureWriter.StatusCode
@@ -255,59 +254,60 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.inspector.Record(captured)
 	}
 
-	// 2. İstatistikleri Hesapla ve Kaydet (Integration Kısmı Burası)
+	// Analytics
 	responseTime := time.Since(startTime)
-
-	// Event Stream'e gönder (AnalyticsEngine bunu yakalayacak)
-	// Not: Status code'u io.Copy yaparken yakalamak zordur, varsayılan 200 kabul ediyoruz
-	// veya özel bir ResponseWriter wrapper yazmak gerekir. Şimdilik 200 geçiyoruz.
-	p.publishEvent(subdomain, r, clientIP, 200, responseTime, 0, bytesReceived, "")
+	p.publishEvent(targetKey, r, clientIP, captureWriter.StatusCode, responseTime, 0, bytesReceived, "")
 
 	log.Printf("İstek tamamlandı : %s %s (%v)", r.Method, r.URL.Path, responseTime)
 }
 
-// --- Yeni Eklenen Yardımcı Fonksiyonlar ---
-
-// publishEvent - İstatistikleri EventStream'e gönderir
 func (p *HTTPProxy) publishEvent(subdomain string, r *http.Request, clientIP string, statusCode int, responseTime time.Duration, bytesIn, bytesOut int64, errorMsg string) {
 	if p.eventStream == nil {
 		return
 	}
 
-	// RequestEvent struct'ının senin 'internal/protocol' veya 'server' paketinde tanımlı olduğunu varsayıyorum.
-	// Eğer yoksa tanımlaman gerekebilir. Buradaki yapı referans koddaki NewRequestEvent kullanımıdır.
 	event := NewRequestEvent(subdomain, r.Method, r.URL.Path, r.UserAgent(), clientIP)
 	event.StatusCode = statusCode
 	event.ResponseTime = responseTime
-	event.BytesReceived = bytesIn // Response size (Tunnel -> Client)
-	event.ByteSent = bytesOut     // Request size (Client -> Tunnel)
+	event.BytesReceived = bytesIn
+	event.ByteSent = bytesOut
 	event.Error = errorMsg
 
-	// Geo-location lookup (Asenkron çalışır, ana akışı bloklamaz)
 	if p.geoLocator != nil {
 		go func() {
 			if loc, err := p.geoLocator.Lookup(clientIP); err == nil {
 				event.GeoCountry = loc.Country
 				event.GeoCity = loc.City
 			}
-			// Lokasyon bilgisi eklendikten sonra publish ediliyor
 			p.eventStream.publish(event)
 		}()
 	} else {
-		// GeoLocator yoksa direkt gönder
 		p.eventStream.publish(event)
 	}
 }
 
-func extractSubdomain(host string) string {
+// resolveTargetKey helps to decide if the host is a subdomain or a custom domain.
+func resolveTargetKey(host string) (key string, isCustom bool) {
 	if idx := strings.Index(host, ":"); idx != -1 {
 		host = host[:idx]
 	}
 
-	parts := strings.Split(host, ".")
-	if len(parts) < 2 {
-		return ""
+	// Ana domainimiz gorenel.io mu?
+	if strings.HasSuffix(host, protocol.BaseDomain) {
+		parts := strings.Split(host, ".")
+		// parts: ["subdomain", "gorenel", "io"] or ["gorenel", "io"]
+		if len(parts) >= 3 {
+			return parts[0], false // Subdomain (not custom)
+		}
+		return "", false
 	}
 
-	return parts[0]
+	// Ana domainimiz değilse bu bir Custom Domaindir
+	return host, true
+}
+
+// Eski fonksiyonu yardımcı olması için saklayabiliriz veya temizleyebiliriz
+func extractSubdomain(host string) string {
+	key, _ := resolveTargetKey(host)
+	return key
 }

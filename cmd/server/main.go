@@ -175,7 +175,8 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	log.Printf(" Yamux session başlatıldı: %s", subdomain)
 
 	// 5. Session'ı kaydet
-	tm.RegisterTunnel(subdomain, session)
+	// --- STEP 1 UPDATE: 3. parametre (customDomain) eklendi ---
+	tm.RegisterTunnel(subdomain, session, "")
 	defer tm.RemoveTunnel(subdomain)
 
 	cizgi := strings.Repeat("=", 60)
