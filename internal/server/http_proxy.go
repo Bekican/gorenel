@@ -1,117 +1,3 @@
-// package server
-
-// import (
-// 	"io"
-// 	"log"
-// 	"net/http"
-// 	"strings"
-
-// 	"github.com/Bekican/gorenel/internal/protocol"
-// 	"github.com/hashicorp/yamux"
-// )
-
-// type HTTPProxy struct {
-// 	tunnelManager *TunnelManager
-// 	rateLimiter   *RateLimiter
-// 	eventStream   *EventStream
-// 	geoLocator    *GeoLocator
-// }
-
-// func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator) *HTTPProxy {
-// 	return &HTTPProxy{
-// 		tunnelManager: tm,
-// 		rateLimiter:   NewRateLimiter(100, 10),
-// 		eventStream:   es,
-// 		geoLocator:    gl,
-// 	}
-// }
-
-// func (p *HTTPProxy) Start() error {
-// 	log.Printf("[HTTP] Proxy listening on %s", protocol.ProxyPort)
-
-// 	server := &http.Server{
-// 		Addr:    protocol.ProxyPort,
-// 		Handler: p,
-// 	}
-
-// 	return server.ListenAndServe()
-// }
-
-// func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
-// 	IncrementRequest()
-// 	IncrementActiveConnections()
-// 	defer DecrementActiveConnections()
-
-// 	host := r.Host
-// 	subdomain := extractSubdomain(host)
-
-// 	if subdomain == "" {
-// 		http.Error(w, "Invalid subdomain", http.StatusBadRequest)
-// 		log.Printf("Geçersiz host : %s", host)
-// 		return
-// 	}
-
-// 	// RateLimiter kontrolü
-// 	if !p.rateLimiter.Allow(subdomain, 1) {
-// 		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
-// 		log.Printf("Ratelimit aşıldı : %s", subdomain)
-// 		return
-// 	}
-
-// 	log.Printf("HTTP istek : %s %s (subdomain:%s)", r.Method, r.URL.Path, subdomain)
-
-// 	session, exists := p.tunnelManager.GetTunnel(subdomain)
-// 	if !exists {
-// 		log.Printf("[HTTP] Tunnel not found: %s", subdomain)
-// 		http.Error(w, "Tunnel bulunamadı", http.StatusNotFound)
-// 		return
-// 	}
-
-// 	if IsWebSocketUpgrade(r) {
-// 		p.HandleWebSocket(w, r, session, subdomain)
-// 		return
-// 	}
-
-// 	stream, err := session.Open()
-// 	if err != nil {
-// 		log.Printf("[HTTP] Stream open error: %v", err)
-// 		http.Error(w, "Connection failed", http.StatusBadGateway)
-// 		return
-// 	}
-// 	defer stream.Close()
-
-// 	var streamID uint32
-
-// 	if ys, ok := interface{}(stream).(*yamux.Stream); ok {
-// 		streamID = ys.StreamID()
-// 	}
-// 	log.Printf("Stream açıldı : %s (ID:%d)", subdomain, streamID)
-
-// 	if err := r.Write(stream); err != nil {
-// 		log.Printf("[HTTP] Request forwarding failed: %v", err)
-// 		http.Error(w, "Upstream error", http.StatusBadGateway)
-// 		return
-// 	}
-
-// 	io.Copy(w, stream)
-
-// 	log.Printf("İstek tamamlandı : %s %s", r.Method, r.URL.Path)
-// }
-
-// func extractSubdomain(host string) string {
-// 	if idx := strings.Index(host, ":"); idx != -1 {
-// 		host = host[:idx]
-// 	}
-
-// 	parts := strings.Split(host, ".")
-// 	if len(parts) < 2 {
-// 		return ""
-// 	}
-
-// 	return parts[0]
-// }
-
 package server
 
 import (
@@ -131,13 +17,14 @@ import (
 )
 
 type HTTPProxy struct {
-	tunnelManager *TunnelManager
-	advancedRL    *limiter.RateLimiter
-	eventStream   *EventStream
-	geoLocator    *GeoLocator
-	inspector     *TrafficInspector
-	mlClient      *ml.Client
-	logger        *zap.Logger
+	tunnelManager  *TunnelManager
+	advancedRL     *limiter.RateLimiter
+	eventStream    *EventStream
+	geoLocator     *GeoLocator
+	inspector      *TrafficInspector
+	mlClient       *ml.Client
+	logger         *zap.Logger
+	redisPublisher *RedisPublisher
 }
 
 func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger) *HTTPProxy {
@@ -147,13 +34,14 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 	}
 
 	return &HTTPProxy{
-		tunnelManager: tm,
-		advancedRL:    rl,
-		eventStream:   es,
-		geoLocator:    gl,
-		inspector:     ti,
-		mlClient:      mlClient,
-		logger:        logger,
+		tunnelManager:  tm,
+		advancedRL:     rl,
+		eventStream:    es,
+		geoLocator:     gl,
+		inspector:      ti,
+		mlClient:       mlClient,
+		logger:         logger,
+		redisPublisher: NewRedisPublisher("localhost:6379"),
 	}
 }
 
@@ -169,7 +57,7 @@ func (p *HTTPProxy) Start() error {
 }
 
 func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// 1. Zaman sayacını başlat
+
 	startTime := time.Now()
 
 	IncrementRequest()
@@ -183,8 +71,6 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	host := r.Host
-	// --- STEP 2 UPDATE: Host çözümleme ve Routing mantığı ---
-	// Artık targetKey (oranın subdomaini veya domaini) ve tipini ayırıyoruz.
 	targetKey, isCustom := resolveTargetKey(host)
 
 	if targetKey == "" {
@@ -193,7 +79,6 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// --- NEW: Traffic Modification Hook ---
 	if p.inspector != nil && p.inspector.GetModifier() != nil {
 		p.inspector.GetModifier().Apply(r)
 	}
@@ -211,10 +96,9 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		log.Printf("HTTP Subdomain İstek: %s %s (Sub: %s)", r.Method, r.URL.Path, targetKey)
 	}
 
-	// Tüneli bul (TunnelManager artık host bilgisini akıllıca sorgular)
 	session, exists := p.tunnelManager.GetTunnel(host)
 	if !exists {
-		// Eğer tam host ile bulunamadıysa, belki portsuz veya subdomain olarak denemek gerekebilir
+
 		session, exists = p.tunnelManager.GetTunnel(targetKey)
 	}
 
@@ -224,7 +108,6 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// WebSocket Kontrolü
 	if IsWebSocketUpgrade(r) {
 		p.HandleWebSocket(w, r, session, targetKey)
 		atomic.AddInt64(&WebSocketConnections, 1)
@@ -239,7 +122,6 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer stream.Close()
 
-	// Traffic Capture
 	reqBody, _ := InterceptBody(r)
 	captured := &CapturedRequest{
 		ID:         uuid.New().String(),
@@ -259,13 +141,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Response'u kopyalarken yakala
 	bytesReceived, err := io.Copy(captureWriter, stream)
 	if err != nil {
 		log.Printf("Response copy error: %v", err)
 	}
 
-	// Traffic Capture Finalize
 	captured.RespHeaders = captureWriter.Header()
 	captured.RespBody = captureWriter.Body.Bytes()
 	captured.StatusCode = captureWriter.StatusCode
@@ -277,6 +157,26 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Analytics
 	responseTime := time.Since(startTime)
 	p.publishEvent(targetKey, r, clientIP, captureWriter.StatusCode, responseTime, 0, bytesReceived, "")
+
+	// Redis'e Ham Trafik Verisini Gönder (YENİ)
+	if p.redisPublisher != nil {
+		trafficData := TrafficData{
+			Method:       r.Method,
+			Path:         r.URL.Path,
+			StatusCode:   captureWriter.StatusCode,
+			ResponseTime: responseTime.Milliseconds(),
+			RequestSize:  r.ContentLength,
+			ResponseSize: bytesReceived,
+			ClientIP:     clientIP,
+			Timestamp:    time.Now().Format(time.RFC3339),
+		}
+		// Go routine ile asenkron gönder (İsteği bloklamaz)
+		go func() {
+			if err := p.redisPublisher.Publish(trafficData); err != nil {
+				log.Printf("Redis publish hatası: %v", err)
+			}
+		}()
+	}
 
 	// ML Anomali Kontrolu (Async - istegi yavaslat maz)
 	if p.mlClient != nil {
@@ -303,9 +203,8 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	log.Printf("İstek tamamlandı : %s %s (%v)", r.Method, r.URL.Path, responseTime)
 }
 
-// resolveTargetKey: Gelen host bilgisinin subdomain mi yoksa custom domain mi olduğunu ayırır.
 func resolveTargetKey(host string) (key string, isCustom bool) {
-	// Port bilgisini temizle (örn: :8080)
+
 	if idx := strings.Index(host, ":"); idx != -1 {
 		host = host[:idx]
 	}
