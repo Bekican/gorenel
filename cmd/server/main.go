@@ -16,6 +16,7 @@ import (
 	"github.com/Bekican/gorenel/internal/utils"
 	"github.com/Bekican/gorenel/pkg/auth"
 	"github.com/hashicorp/yamux"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -63,10 +64,14 @@ func main() {
 	// Placeholder OAuth for AuthHandler (OAuth is not used in tunnel registration)
 	authHandler := handler.NewAuthHandler(nil, jwtSvc, userRepo)
 
+	// Initialize zap logger for ML service
+	zapLogger, _ := zap.NewProduction()
+	defer zapLogger.Sync()
+
 	// Proxy servers
 	tcpProxy := server.NewTCPProxy()
 	udpProxy := server.NewUDPProxy()
-	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector)
+	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger)
 
 	go func() {
 		log.Println(" HTTP Proxy başlatılıyor...")

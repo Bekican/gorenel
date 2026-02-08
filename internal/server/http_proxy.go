@@ -124,8 +124,10 @@ import (
 	"time"
 
 	"github.com/Bekican/gorenel/internal/limiter"
+	"github.com/Bekican/gorenel/internal/ml"
 	"github.com/Bekican/gorenel/internal/protocol"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 type HTTPProxy struct {
@@ -134,15 +136,24 @@ type HTTPProxy struct {
 	eventStream   *EventStream
 	geoLocator    *GeoLocator
 	inspector     *TrafficInspector
+	mlClient      *ml.Client
+	logger        *zap.Logger
 }
 
-func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector) *HTTPProxy {
+func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger) *HTTPProxy {
+	var mlClient *ml.Client
+	if logger != nil {
+		mlClient = ml.NewClient("http://localhost:5000", logger)
+	}
+
 	return &HTTPProxy{
 		tunnelManager: tm,
 		advancedRL:    rl,
 		eventStream:   es,
 		geoLocator:    gl,
 		inspector:     ti,
+		mlClient:      mlClient,
+		logger:        logger,
 	}
 }
 
@@ -266,6 +277,28 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Analytics
 	responseTime := time.Since(startTime)
 	p.publishEvent(targetKey, r, clientIP, captureWriter.StatusCode, responseTime, 0, bytesReceived, "")
+
+	// ML Anomali Kontrolu (Async - istegi yavaslat maz)
+	if p.mlClient != nil {
+		requestData := map[string]interface{}{
+			"method":        r.Method,
+			"path":          r.URL.Path,
+			"response_time": responseTime.Milliseconds(),
+			"status_code":   captureWriter.StatusCode,
+			"request_size":  r.ContentLength,
+			"response_size": bytesReceived,
+		}
+
+		p.mlClient.PredictAsync(requestData, func(resp *ml.PredictionResponse, err error) {
+			if err == nil && resp.IsAnomaly {
+				p.logger.Warn("Anomali tespit edildi!",
+					zap.String("path", r.URL.Path),
+					zap.String("method", r.Method),
+					zap.Float64("score", resp.AnomalyScore),
+				)
+			}
+		})
+	}
 
 	log.Printf("İstek tamamlandı : %s %s (%v)", r.Method, r.URL.Path, responseTime)
 }
