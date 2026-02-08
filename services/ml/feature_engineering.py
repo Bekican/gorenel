@@ -31,7 +31,7 @@ class FeatureEngineer:
             if 'path' in df.columns:
                 features_df['path_length'] = df['path'].str.len()
                 features_df['path_depth'] = df['path'].str.count('/')
-                features_df['has_query'] = df['path'].str.contains('\?').astype(int)
+                features_df['has_query'] = df['path'].str.contains(r'\?').astype(int)
 
                 suspicious = ['select', 'union', 'exec', '../', '/etc/passwd']
             features_df['is_suspicious_path'] = df['path'].str.lower().apply(
