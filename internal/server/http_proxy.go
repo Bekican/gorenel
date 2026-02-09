@@ -73,8 +73,19 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	host := r.Host
 	targetKey, isCustom := resolveTargetKey(host)
 
+	// Use a response wrapper to capture status code for analytics
+	statusCode := http.StatusOK // Default, will be overwritten by errors or response
+	var bytesOut int64
+
+	// Ensure analytics are published for ALL requests, even on early return
+	defer func() {
+		dur := time.Since(startTime)
+		p.publishEvent(targetKey, r, clientIP, statusCode, dur, 0, bytesOut, "")
+	}()
+
 	if targetKey == "" {
-		http.Error(w, "Invalid host or subdomain", http.StatusBadRequest)
+		statusCode = http.StatusBadRequest
+		http.Error(w, "Invalid host or subdomain", statusCode)
 		log.Printf("Geçersiz host denemesi: %s", host)
 		return
 	}
@@ -85,7 +96,8 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// RateLimiter kontrolü
 	if !p.advancedRL.Allow(targetKey, 1) {
-		http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
+		statusCode = http.StatusTooManyRequests
+		http.Error(w, "Rate limit exceeded", statusCode)
 		log.Printf("Ratelimit aşıldı: %s", targetKey)
 		return
 	}
@@ -103,8 +115,9 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !exists {
+		statusCode = http.StatusNotFound
 		log.Printf("[HTTP] Tunnel not found for: %s", host)
-		http.Error(w, "Tunnel bulunamadı", http.StatusNotFound)
+		http.Error(w, "Tunnel bulunamadı", statusCode)
 		return
 	}
 
@@ -135,28 +148,21 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	captureWriter := NewResponseCaptureWriter(w)
 
-	var bytesReceived int64
-
-	// Ensure analytics are published even on early return
-	defer func() {
-		dur := time.Since(startTime)
-		status := captureWriter.StatusCode
-		if status == 0 {
-			status = http.StatusOK
-		}
-		// targetKey and bytesReceived will have their current values when the defer executes
-		p.publishEvent(targetKey, r, clientIP, status, dur, 0, bytesReceived, "")
-	}()
-
 	if err := r.Write(stream); err != nil {
+		statusCode = http.StatusBadGateway
 		log.Printf("[HTTP] Request forwarding failed: %v", err)
-		http.Error(w, "Upstream error", http.StatusBadGateway)
+		http.Error(w, "Upstream error", statusCode)
 		return
 	}
 
-	bytesReceived, err = io.Copy(captureWriter, stream)
+	bytesReceived, err := io.Copy(captureWriter, stream)
 	if err != nil {
 		log.Printf("Response copy error: %v", err)
+	}
+	bytesOut = bytesReceived
+	statusCode = captureWriter.StatusCode
+	if statusCode == 0 {
+		statusCode = http.StatusOK
 	}
 
 	captured.RespHeaders = captureWriter.Header()
