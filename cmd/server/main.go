@@ -237,7 +237,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 
 	// 5. Session'ı kaydet
 	if subdomain != "" {
-		tm.RegisterTunnel(subdomain, session, regReq.CustomDomain)
+		tm.RegisterTunnel(subdomain, session, regReq.CustomDomain, regReq.LocalPort, fullURL)
 		defer tm.RemoveTunnel(subdomain)
 	} else {
 		// TCP/UDP için de kaydetmek gerekebilir (opsiyonel, monitoring için iyi olur)

@@ -11,25 +11,12 @@ const GeoMap = React.lazy(() => import('./components/GeoMap').then(module => ({ 
 import { LoginPage } from './components/LoginPage';
 import { LogOut } from 'lucide-react';
 
-// Mock tunnels data (replace with real data from your API)
-const MOCK_TUNNELS = [
-  {
-    id: '1',
-    subdomain: 'abc123.tunnel-project.xyz',
-    localPort: 3000,
-    publicUrl: 'https://abc123.tunnel-project.xyz',
-    status: 'active' as const,
-    requestCount: 1234,
-    bandwidth: { in: 1024 * 1024 * 2.5, out: 1024 * 1024 * 5.2 },
-    startedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    lastActivity: new Date().toISOString(),
-  },
-];
-
+// Main App Component
 function App() {
   const [user, setUser] = useState<any>(null);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsSnapshot | null>(null);
+  const [tunnels, setTunnels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,12 +64,14 @@ function App() {
     const fetchData = async () => {
       try {
         setError(null);
-        const [metricsData, analyticsData] = await Promise.all([
+        const [metricsData, analyticsData, tunnelsData] = await Promise.all([
           api.getMetrics(),
           api.getAnalytics(),
+          api.getTunnels(),
         ]);
         setMetrics(metricsData);
         setAnalytics(analyticsData);
+        setTunnels(tunnelsData.tunnels || []);
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch data. Make sure the server is running on port 9090.');
@@ -225,7 +214,7 @@ function App() {
 
           {/* Tunnels and Geo */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in-up" style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
-            <TunnelsList tunnels={MOCK_TUNNELS} />
+            <TunnelsList tunnels={tunnels} />
             {analytics?.top_countries && (
               <GeoMap data={analytics.top_countries} />
             )}

@@ -154,6 +154,9 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.inspector.Record(captured)
 	}
 
+	// Update Tunnel Stats
+	p.tunnelManager.UpdateStats(targetKey, 0, bytesReceived)
+
 	// Analytics
 	responseTime := time.Since(startTime)
 	p.publishEvent(targetKey, r, clientIP, captureWriter.StatusCode, responseTime, 0, bytesReceived, "")

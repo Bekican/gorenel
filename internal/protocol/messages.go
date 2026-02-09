@@ -16,6 +16,7 @@ type RegisterRequest struct {
 	APIKey       string `json:"api_key"`
 	CustomDomain string `json:"custom_domain,omitempty"`
 	TunnelType   string `json:"tunnel_type,omitempty"`
+	LocalPort    int    `json:"local_port,omitempty"`
 }
 
 type RegisterResponse struct {
@@ -50,6 +51,7 @@ func NewRegisterMessage(clientId, version, apiKey, domain string) Message {
 		Version:      version,
 		APIKey:       apiKey,
 		CustomDomain: domain,
+		LocalPort:    80, // Default or should be passed
 	}
 	payload, _ := json.Marshal(req)
 

@@ -66,6 +66,26 @@ export interface SystemInfo {
   start_time: string;
 }
 
+export interface Tunnel {
+  id: string;
+  subdomain: string;
+  localPort: number;
+  publicUrl: string;
+  status: 'active' | 'idle' | 'error';
+  requestCount: number;
+  bandwidth: {
+    in: number;
+    out: number;
+  };
+  startedAt: string;
+  lastActivity: string;
+}
+
+export interface TunnelsResponse {
+  tunnels: Tunnel[];
+  count: number;
+}
+
 // API Functions
 export const api = {
   // Health check
@@ -100,6 +120,11 @@ export const api = {
 
   getMe: async () => {
     const { data } = await apiClient.get('/api/me');
+    return data;
+  },
+
+  getTunnels: async (): Promise<TunnelsResponse> => {
+    const { data } = await apiClient.get<TunnelsResponse>('/api/tunnels');
     return data;
   },
 
