@@ -98,6 +98,11 @@ export const api = {
     return data;
   },
 
+  getMe: async () => {
+    const { data } = await apiClient.get('/api/me');
+    return data;
+  },
+
   logout: async () => {
     // We can clear cookies here or handle server-side
     document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";

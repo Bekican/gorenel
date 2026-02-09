@@ -34,11 +34,30 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check if user is already logged in (via cookies, etc)
-    const storedUser = localStorage.getItem('gorenel_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const checkSession = async () => {
+      // 1. Check LocalStorage first
+      const storedUser = localStorage.getItem('gorenel_user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+        setLoading(false);
+        return;
+      }
+
+      // 2. If nothing in LocalStorage, try API (for handling redirects)
+      try {
+        const data = await api.getMe();
+        if (data && data.user) {
+          setUser(data.user);
+          localStorage.setItem('gorenel_user', JSON.stringify(data.user));
+        }
+      } catch (err) {
+        console.log('No active session');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
   }, []);
 
   const handleLoginSuccess = (userData: any) => {

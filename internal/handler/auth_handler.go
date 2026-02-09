@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Bekican/gorenel/internal/middleware"
 	"github.com/Bekican/gorenel/pkg/auth"
 	"github.com/Bekican/gorenel/pkg/errors"
 	"github.com/Bekican/gorenel/pkg/logger"
@@ -48,7 +49,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	url := h.oauth.GetAuthURL(state)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"redirect_url": url,
+	})
 	return nil
 }
 
@@ -134,4 +139,20 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"message": "User created", "uid": user.ID})
 	return nil
+}
+
+func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) error {
+	claims := middleware.GetUserFromContext(r.Context())
+	if claims == nil {
+		return errors.Unauthorized("Unauthorized")
+	}
+
+	user := map[string]string{
+		"email": claims.Email,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(map[string]interface{}{
+		"user": user,
+	})
 }

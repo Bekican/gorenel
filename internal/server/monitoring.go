@@ -13,6 +13,7 @@ import (
 	"github.com/Bekican/gorenel/internal/handler"
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/middleware"
+	"github.com/Bekican/gorenel/pkg/auth"
 	serverErrors "github.com/Bekican/gorenel/pkg/errors"
 	"github.com/google/uuid"
 )
@@ -35,15 +36,17 @@ type MonitoringServer struct {
 	authHandler     *handler.AuthHandler
 	advancedRL      *limiter.RateLimiter
 	inspector       *TrafficInspector
+	tokenSvc        *auth.JWTService
 }
 
-func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector) *MonitoringServer {
+func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService) *MonitoringServer {
 	return &MonitoringServer{
 		tunnelManager:   tm,
 		analyticsEngine: ae,
 		authHandler:     ah,
 		advancedRL:      rl,
 		inspector:       ti,
+		tokenSvc:        ts,
 	}
 }
 
@@ -64,6 +67,9 @@ func (m *MonitoringServer) Start() error {
 		mux.HandleFunc("/api/login", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Login)))
 		mux.HandleFunc("/api/register", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Register)))
 		mux.HandleFunc("/api/callback", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Callback))) // YENİ
+
+		authMw := middleware.RequireAuth(m.tokenSvc)
+		mux.HandleFunc("/api/me", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.authHandler.Me))))
 	}
 
 	// Register Inspector Endpoints

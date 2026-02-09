@@ -19,7 +19,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
         try {
             const data = await api.login({ email, password });
-            onLoginSuccess(data.user);
+            
+            if (data.redirect_url) {
+                // Eğer backend bir yönlendirme URL'si dönerse (SPA dostu yöntem)
+                // URL göreceli ise base URL ile birleştir
+                const redirectUrl = data.redirect_url.startsWith('http') 
+                    ? data.redirect_url 
+                    : `http://localhost:9090${data.redirect_url}`;
+                
+                window.location.href = redirectUrl;
+            } else if (data.user) {
+                onLoginSuccess(data.user);
+            }
         } catch (err: any) {
             setError(err.response?.data || 'Giriş yapılamadı. Lütfen bilgilerinizi kontrol edin.');
         } finally {
