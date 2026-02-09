@@ -87,6 +87,16 @@ func (tm *TunnelManager) GetTunnel(host string) (*yamux.Session, bool) {
 	return nil, false
 }
 
+func (tm *TunnelManager) GetTunnels() []string {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	var list []string
+	for sub := range tm.tunnels {
+		list = append(list, sub)
+	}
+	return list
+}
+
 // RemoveTunnel cleans up all mappings associated with a subdomain when it disconnects.
 func (tm *TunnelManager) RemoveTunnel(subdomain string) {
 	tm.mu.Lock()

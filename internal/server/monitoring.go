@@ -68,8 +68,9 @@ func (m *MonitoringServer) Start() error {
 		mux.HandleFunc("/api/register", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Register)))
 		mux.HandleFunc("/api/callback", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Callback))) // YENİ
 
-		authMw := middleware.RequireAuth(m.tokenSvc)
-		mux.HandleFunc("/api/me", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.authHandler.Me))))
+		authMw := middleware.RequireAuth(m.tokenSvc) // Eğer yukarıda tanımlı değilse
+		mux.HandleFunc("/api/tunnels", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.tunnelsHandler))))
+
 	}
 
 	// Register Inspector Endpoints
@@ -215,6 +216,15 @@ func (m *MonitoringServer) realtimeAnalyticsHandler(w http.ResponseWriter, r *ht
 	}
 	snapshot := m.analyticsEngine.GetSnapshot()
 	json.NewEncoder(w).Encode(snapshot)
+}
+
+func (m *MonitoringServer) tunnelsHandler(w http.ResponseWriter, r *http.Request) error {
+	tunnels := m.tunnelManager.GetTunnels()
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(map[string]interface{}{
+		"tunnels": tunnels,
+		"count":   len(tunnels),
+	})
 }
 
 // --- Inspector Handlers ---
