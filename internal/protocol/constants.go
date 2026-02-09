@@ -26,7 +26,7 @@ const (
 )
 
 const (
-	BaseDomain = "tunnel.local"
+	BaseDomain = ".gorenel.io"
 
 	SubdomainLength = 12
 )

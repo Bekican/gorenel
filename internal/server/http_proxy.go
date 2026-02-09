@@ -135,13 +135,26 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	captureWriter := NewResponseCaptureWriter(w)
 
+	var bytesReceived int64
+
+	// Ensure analytics are published even on early return
+	defer func() {
+		dur := time.Since(startTime)
+		status := captureWriter.StatusCode
+		if status == 0 {
+			status = http.StatusOK
+		}
+		// targetKey and bytesReceived will have their current values when the defer executes
+		p.publishEvent(targetKey, r, clientIP, status, dur, 0, bytesReceived, "")
+	}()
+
 	if err := r.Write(stream); err != nil {
 		log.Printf("[HTTP] Request forwarding failed: %v", err)
 		http.Error(w, "Upstream error", http.StatusBadGateway)
 		return
 	}
 
-	bytesReceived, err := io.Copy(captureWriter, stream)
+	bytesReceived, err = io.Copy(captureWriter, stream)
 	if err != nil {
 		log.Printf("Response copy error: %v", err)
 	}
@@ -157,11 +170,9 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Update Tunnel Stats
 	p.tunnelManager.UpdateStats(targetKey, 0, bytesReceived)
 
-	// Analytics
 	responseTime := time.Since(startTime)
-	p.publishEvent(targetKey, r, clientIP, captureWriter.StatusCode, responseTime, 0, bytesReceived, "")
 
-	// Redis'e Ham Trafik Verisini Gönder (YENİ)
+	// Redis'e Ham Trafik Verisini Gönder
 	if p.redisPublisher != nil {
 		trafficData := TrafficData{
 			Method:       r.Method,
@@ -173,7 +184,6 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			ClientIP:     clientIP,
 			Timestamp:    time.Now().Format(time.RFC3339),
 		}
-		// Go routine ile asenkron gönder (İsteği bloklamaz)
 		go func() {
 			if err := p.redisPublisher.Publish(trafficData); err != nil {
 				log.Printf("Redis publish hatası: %v", err)
@@ -181,7 +191,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
-	// ML Anomali Kontrolu (Async - istegi yavaslat maz)
+	// ML Anomali Kontrolu
 	if p.mlClient != nil {
 		requestData := map[string]interface{}{
 			"method":        r.Method,
@@ -215,11 +225,13 @@ func resolveTargetKey(host string) (key string, isCustom bool) {
 	// Eğer host ana tünel domaini ile bitiyorsa (örn: .gorenel.io)
 	// protocol.BaseDomain'in ".gorenel.io" formatında olduğunu varsayıyoruz (başına nokta eklenmiş hali)
 	if strings.HasSuffix(host, protocol.BaseDomain) {
-		parts := strings.Split(host, ".")
-		// parts: ["abc", "gorenel", "io"]
-		if len(parts) >= 3 {
-			return parts[0], false // Bu bir subdomaindir
-		}
+		sub := strings.TrimSuffix(host, protocol.BaseDomain)
+		return sub, false
+	}
+
+	// Eğer ana domain değilse veya localhost ise
+	if host == "localhost" || host == "127.0.0.1" {
+		return "localhost", false
 	}
 
 	// Eğer ana domain değilse, bu bir Custom Domain'dir
