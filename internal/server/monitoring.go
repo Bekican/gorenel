@@ -63,6 +63,7 @@ func (m *MonitoringServer) Start() error {
 	if m.authHandler != nil {
 		mux.HandleFunc("/api/login", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Login)))
 		mux.HandleFunc("/api/register", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Register)))
+		mux.HandleFunc("/api/callback", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Callback))) // YENİ
 	}
 
 	// Register Inspector Endpoints

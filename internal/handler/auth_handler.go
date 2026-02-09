@@ -103,7 +103,7 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 	})
 
 	// 6. Redirect to Frontend Dashboard
-	http.Redirect(w, r, "http://localhost:3000/dashboard", http.StatusSeeOther)
+	http.Redirect(w, r, "http://localhost:5173/dashboard", http.StatusSeeOther)
 	return nil
 }
 
