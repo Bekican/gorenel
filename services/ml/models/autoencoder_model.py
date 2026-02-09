@@ -34,8 +34,13 @@ class AutoEncoderAnomalyDetector:
         self.model = keras.Model(inputs,decoded)
         self.model.compile(optimizer='adam',loss='mse')
 
-    def train()
+    def train(self,X: np.ndarray,epochs=50,batch_size=32):
+        logger.info(f"Autoencoder eğitimi başlıyor:{X.shape}")
 
+        self._build_model(X.shape[1])
+
+        
+        
         
 
 
