@@ -41,6 +41,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		Path:     "/",
 	})
 
+	if h.oauth == nil {
+		logger.Error("OAuth provider not initialized")
+		http.Error(w, "OAuth provider not initialized", http.StatusInternalServerError)
+		return nil
+	}
+
 	url := h.oauth.GetAuthURL(state)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	return nil

@@ -15,11 +15,29 @@ import (
 	"github.com/Bekican/gorenel/internal/server"
 	"github.com/Bekican/gorenel/internal/utils"
 	"github.com/Bekican/gorenel/pkg/auth"
+	"github.com/Bekican/gorenel/pkg/logger"
 	"github.com/hashicorp/yamux"
 	"go.uber.org/zap"
 )
 
+type MockOAuth struct{}
+
+func (m *MockOAuth) GetAuthURL(state string) string {
+	return "/api/callback?state=" + state + "&code=mock_code"
+}
+func (m *MockOAuth) GetUserProfile(code string) (*auth.UserProfile, error) {
+	return &auth.UserProfile{
+		Email:    "demo@gorenel.io",
+		Name:     "Demo User",
+		Provider: "mock",
+	}, nil
+}
+
 func main() {
+	// Initialize global logger
+	logger.Init(logger.DefaultConfig())
+	defer logger.Sync()
+
 	log.Println(" Gorenel Server başlatılıyor...")
 
 	// Core components
@@ -61,8 +79,8 @@ func main() {
 	// Auth components
 	jwtSvc := auth.NewJWTService("SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD")
 	userRepo := handler.NewInMemoryUserRepo()
-	// Placeholder OAuth for AuthHandler (OAuth is not used in tunnel registration)
-	authHandler := handler.NewAuthHandler(nil, jwtSvc, userRepo)
+	// Using MockOAuth to prevent nil pointer panics
+	authHandler := handler.NewAuthHandler(&MockOAuth{}, jwtSvc, userRepo)
 
 	// Initialize zap logger for ML service
 	zapLogger, _ := zap.NewProduction()
