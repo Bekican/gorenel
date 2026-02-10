@@ -37,9 +37,10 @@ type MonitoringServer struct {
 	advancedRL      *limiter.RateLimiter
 	inspector       *TrafficInspector
 	tokenSvc        *auth.JWTService
+	anomalyStore    *AnomalyStore
 }
 
-func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService) *MonitoringServer {
+func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore) *MonitoringServer {
 	return &MonitoringServer{
 		tunnelManager:   tm,
 		analyticsEngine: ae,
@@ -47,6 +48,7 @@ func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.Aut
 		advancedRL:      rl,
 		inspector:       ti,
 		tokenSvc:        ts,
+		anomalyStore:    as,
 	}
 }
 
@@ -68,9 +70,8 @@ func (m *MonitoringServer) Start() error {
 		mux.HandleFunc("/api/register", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Register)))
 		mux.HandleFunc("/api/callback", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Callback))) // YENİ
 
-		authMw := middleware.RequireAuth(m.tokenSvc) // Eğer yukarıda tanımlı değilse
-		mux.HandleFunc("/api/tunnels", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.tunnelsHandler))))
-
+		authMw := middleware.RequireAuth(m.tokenSvc)
+		mux.HandleFunc("/api/me", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.authHandler.Me))))
 	}
 
 	// Register Inspector Endpoints
@@ -79,6 +80,12 @@ func (m *MonitoringServer) Start() error {
 		mux.HandleFunc("/api/inspector/replay", m.corsMiddleware(rl(m.inspectorReplayHandler)))
 		mux.HandleFunc("/api/inspector/rules", m.corsMiddleware(rl(m.inspectorRulesHandler)))
 	}
+
+	// Tunnels endpoint
+	mux.HandleFunc("/api/tunnels", m.corsMiddleware(rl(m.tunnelsHandlerFunc)))
+
+	// Anomaly endpoint
+	mux.HandleFunc("/api/anomalies", m.corsMiddleware(rl(m.anomaliesHandler)))
 
 	log.Println("Monitoring serverı başlatılıyor: :9090")
 	return http.ListenAndServe(":9090", mux)
@@ -109,6 +116,33 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 		// Call the next handler
 		next(w, r)
 	}
+}
+
+func (m *MonitoringServer) tunnelsHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	tunnels := m.tunnelManager.GetTunnels()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"tunnels": tunnels,
+		"count":   len(tunnels),
+	})
+}
+
+func (m *MonitoringServer) anomaliesHandler(w http.ResponseWriter, r *http.Request) {
+	if m.anomalyStore == nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"anomalies": []AnomalyRecord{},
+			"count":     0,
+		})
+		return
+	}
+
+	anomalies := m.anomalyStore.GetRecent(50)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"anomalies": anomalies,
+		"count":     len(anomalies),
+	})
 }
 
 // healthHandler -- healthCheck
@@ -216,15 +250,6 @@ func (m *MonitoringServer) realtimeAnalyticsHandler(w http.ResponseWriter, r *ht
 	}
 	snapshot := m.analyticsEngine.GetSnapshot()
 	json.NewEncoder(w).Encode(snapshot)
-}
-
-func (m *MonitoringServer) tunnelsHandler(w http.ResponseWriter, r *http.Request) error {
-	tunnels := m.tunnelManager.GetTunnels()
-	w.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(w).Encode(map[string]interface{}{
-		"tunnels": tunnels,
-		"count":   len(tunnels),
-	})
 }
 
 // --- Inspector Handlers ---

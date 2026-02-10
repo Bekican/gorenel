@@ -89,7 +89,8 @@ func main() {
 	// Proxy servers
 	tcpProxy := server.NewTCPProxy()
 	udpProxy := server.NewUDPProxy()
-	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger)
+	anomalyStore := server.NewAnomalyStore(100) // Son 100 anomali kaydı
+	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore)
 
 	go func() {
 		log.Println(" HTTP Proxy başlatılıyor...")
@@ -99,7 +100,7 @@ func main() {
 	}()
 
 	// Monitoring server (using auth, shared limiter, and inspector)
-	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc)
+	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore)
 	go func() {
 		if err := monitor.Start(); err != nil {
 			log.Fatalf(" Monitoring server hatası: %v", err)

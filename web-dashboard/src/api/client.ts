@@ -86,6 +86,20 @@ export interface TunnelsResponse {
   count: number;
 }
 
+export interface AnomalyRecord {
+  id: string;
+  timestamp: string;
+  subdomain: string;
+  method: string;
+  path: string;
+  client_ip: string;
+  anomaly_score: number;
+}
+
+export interface AnomaliesResponse {
+  anomalies: AnomalyRecord[];
+  count: number;
+}
 // API Functions
 export const api = {
   // Health check
@@ -125,6 +139,11 @@ export const api = {
 
   getTunnels: async (): Promise<TunnelsResponse> => {
     const { data } = await apiClient.get<TunnelsResponse>('/api/tunnels');
+    return data;
+  },
+
+  getAnomalies: async (): Promise<AnomaliesResponse> => {
+    const { data } = await apiClient.get<AnomaliesResponse>('/api/anomalies');
     return data;
   },
 

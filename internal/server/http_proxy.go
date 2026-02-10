@@ -25,9 +25,10 @@ type HTTPProxy struct {
 	mlClient       *ml.Client
 	logger         *zap.Logger
 	redisPublisher *RedisPublisher
+	anomalyStore   *AnomalyStore
 }
 
-func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger) *HTTPProxy {
+func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore) *HTTPProxy {
 	var mlClient *ml.Client
 	if logger != nil {
 		mlClient = ml.NewClient("http://localhost:5000", logger)
@@ -42,6 +43,7 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 		mlClient:       mlClient,
 		logger:         logger,
 		redisPublisher: NewRedisPublisher("localhost:6379"),
+		anomalyStore:   as,
 	}
 }
 
@@ -215,6 +217,19 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					zap.String("method", r.Method),
 					zap.Float64("score", resp.AnomalyScore),
 				)
+
+				// Anomali deposuna kaydet
+				if p.anomalyStore != nil {
+					p.anomalyStore.Add(AnomalyRecord{
+						ID:           uuid.New().String(),
+						Timestamp:    time.Now(),
+						Subdomain:    targetKey,
+						Method:       r.Method,
+						Path:         r.URL.Path,
+						ClientIP:     clientIP,
+						AnomalyScore: resp.AnomalyScore,
+					})
+				}
 			}
 		})
 	}
