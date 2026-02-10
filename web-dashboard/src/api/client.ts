@@ -100,6 +100,36 @@ export interface AnomaliesResponse {
   anomalies: AnomalyRecord[];
   count: number;
 }
+
+export interface ModelResult {
+  model: string;
+  is_anomaly: boolean;
+  anomaly_score: number;
+  prediction: string;
+  inference_ms: number;
+}
+
+export interface ConsensusResult {
+  any_anomaly: boolean;
+  all_agree: boolean;
+  flagged_by: string[];
+  models_compared: number;
+}
+
+export interface MLComparisonResponse {
+  models: Record<string, ModelResult>;
+  consensus: ConsensusResult;
+}
+
+export interface ModelStat {
+  is_trained: boolean;
+  total_predictions: number;
+  total_anomalies: number;
+  avg_inference_ms: number;
+}
+
+export type ModelStatsResponse = Record<string, ModelStat>;
+
 // API Functions
 export const api = {
   // Health check
@@ -144,6 +174,11 @@ export const api = {
 
   getAnomalies: async (): Promise<AnomaliesResponse> => {
     const { data } = await apiClient.get<AnomaliesResponse>('/api/anomalies');
+    return data;
+  },
+
+  getMLStats: async (): Promise<ModelStatsResponse> => {
+    const { data } = await apiClient.get<ModelStatsResponse>('/api/ml/stats');
     return data;
   },
 

@@ -28,19 +28,14 @@ type HTTPProxy struct {
 	anomalyStore   *AnomalyStore
 }
 
-func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore) *HTTPProxy {
-	var mlClient *ml.Client
-	if logger != nil {
-		mlClient = ml.NewClient("http://localhost:5000", logger)
-	}
-
+func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client) *HTTPProxy {
 	return &HTTPProxy{
 		tunnelManager:  tm,
 		advancedRL:     rl,
 		eventStream:    es,
 		geoLocator:     gl,
 		inspector:      ti,
-		mlClient:       mlClient,
+		mlClient:       mlc,
 		logger:         logger,
 		redisPublisher: NewRedisPublisher("localhost:6379"),
 		anomalyStore:   as,
@@ -210,12 +205,24 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			"response_size": bytesReceived,
 		}
 
-		p.mlClient.PredictAsync(requestData, func(resp *ml.PredictionResponse, err error) {
-			if err == nil && resp.IsAnomaly {
+		p.mlClient.PredictCompareAsync(requestData, func(resp *ml.ComparisonResponse, err error) {
+			if err == nil && resp.Consensus.AnyAnomaly {
+				// Hangi modeller anomali dedi?
+				detectedBy := strings.Join(resp.Consensus.FlaggedBy, ", ")
+
+				// En yüksek anomali skorunu bul (görsellemede kullanmak için)
+				var maxScore float64
+				for _, mResult := range resp.Models {
+					if mResult.AnomalyScore > maxScore {
+						maxScore = mResult.AnomalyScore
+					}
+				}
+
 				p.logger.Warn("Anomali tespit edildi!",
 					zap.String("path", r.URL.Path),
 					zap.String("method", r.Method),
-					zap.Float64("score", resp.AnomalyScore),
+					zap.String("detected_by", detectedBy),
+					zap.Float64("max_score", maxScore),
 				)
 
 				// Anomali deposuna kaydet
@@ -227,7 +234,8 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 						Method:       r.Method,
 						Path:         r.URL.Path,
 						ClientIP:     clientIP,
-						AnomalyScore: resp.AnomalyScore,
+						AnomalyScore: maxScore,
+						DetectedBy:   detectedBy,
 					})
 				}
 			}

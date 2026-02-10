@@ -9,6 +9,7 @@ interface AnomalyRecord {
     path: string;
     client_ip: string;
     anomaly_score: number;
+    detected_by?: string;
 }
 
 interface Props {
@@ -105,9 +106,16 @@ export const AnomalyAlerts: React.FC<Props> = ({ anomalies }) => {
                                     <span>{anomaly.subdomain}</span>
                                     <span>{anomaly.client_ip}</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    <span>{timeAgo(anomaly.timestamp)}</span>
+                                <div className="flex items-center gap-3">
+                                    {anomaly.detected_by && (
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 border border-neutral-200 px-1.5 py-0.5 rounded">
+                                            {anomaly.detected_by}
+                                        </span>
+                                    )}
+                                    <div className="flex items-center gap-1">
+                                        <Clock className="w-3 h-3" />
+                                        <span>{timeAgo(anomaly.timestamp)}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

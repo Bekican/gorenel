@@ -13,6 +13,7 @@ import (
 	"github.com/Bekican/gorenel/internal/handler"
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/middleware"
+	"github.com/Bekican/gorenel/internal/ml"
 	"github.com/Bekican/gorenel/pkg/auth"
 	serverErrors "github.com/Bekican/gorenel/pkg/errors"
 	"github.com/google/uuid"
@@ -38,9 +39,10 @@ type MonitoringServer struct {
 	inspector       *TrafficInspector
 	tokenSvc        *auth.JWTService
 	anomalyStore    *AnomalyStore
+	mlClient        *ml.Client
 }
 
-func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore) *MonitoringServer {
+func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client) *MonitoringServer {
 	return &MonitoringServer{
 		tunnelManager:   tm,
 		analyticsEngine: ae,
@@ -49,6 +51,7 @@ func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.Aut
 		inspector:       ti,
 		tokenSvc:        ts,
 		anomalyStore:    as,
+		mlClient:        mlc,
 	}
 }
 
@@ -86,6 +89,9 @@ func (m *MonitoringServer) Start() error {
 
 	// Anomaly endpoint
 	mux.HandleFunc("/api/anomalies", m.corsMiddleware(rl(m.anomaliesHandler)))
+
+	// ML Stats endpoint
+	mux.HandleFunc("/api/ml/stats", m.corsMiddleware(rl(m.mlStatsHandler)))
 
 	log.Println("Monitoring serverı başlatılıyor: :9090")
 	return http.ListenAndServe(":9090", mux)
@@ -143,6 +149,22 @@ func (m *MonitoringServer) anomaliesHandler(w http.ResponseWriter, r *http.Reque
 		"anomalies": anomalies,
 		"count":     len(anomalies),
 	})
+}
+
+func (m *MonitoringServer) mlStatsHandler(w http.ResponseWriter, r *http.Request) {
+	if m.mlClient == nil {
+		http.Error(w, "ML client not initialized", http.StatusServiceUnavailable)
+		return
+	}
+
+	stats, err := m.mlClient.GetModelStats()
+	if err != nil {
+		http.Error(w, fmt.Sprintf("ML stats error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(stats)
 }
 
 // healthHandler -- healthCheck

@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { Activity, Zap, Users, TrendingUp, AlertCircle } from 'lucide-react';
-import { api, type Metrics, type AnalyticsSnapshot, type AnomalyRecord } from './api/client';
+import { api, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type ModelStatsResponse } from './api/client';
 import './index.css';
 
 // Lazy load components
@@ -9,6 +9,7 @@ const RealtimeChart = React.lazy(() => import('./components/RealtimeChart').then
 const TunnelsList = React.lazy(() => import('./components/TunnelsList').then(module => ({ default: module.TunnelsList })));
 const GeoMap = React.lazy(() => import('./components/GeoMap').then(module => ({ default: module.GeoMap })));
 const AnomalyAlerts = React.lazy(() => import('./components/AnomalyAlerts').then(module => ({ default: module.AnomalyAlerts })));
+const ModelComparison = React.lazy(() => import('./components/ModelComparison').then(module => ({ default: module.ModelComparison })));
 import { LoginPage } from './components/LoginPage';
 import { LogOut } from 'lucide-react';
 
@@ -19,6 +20,7 @@ function App() {
   const [analytics, setAnalytics] = useState<AnalyticsSnapshot | null>(null);
   const [tunnels, setTunnels] = useState<any[]>([]);
   const [anomalies, setAnomalies] = useState<AnomalyRecord[]>([]);
+  const [mlStats, setMlStats] = useState<ModelStatsResponse>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -66,16 +68,18 @@ function App() {
     const fetchData = async () => {
       try {
         setError(null);
-        const [metricsData, analyticsData, tunnelsData, anomaliesData] = await Promise.all([
+        const [metricsData, analyticsData, tunnelsData, anomaliesData, mlStatsData] = await Promise.all([
           api.getMetrics(),
           api.getAnalytics(),
           api.getTunnels(),
           api.getAnomalies(),
+          api.getMLStats(),
         ]);
         setMetrics(metricsData);
         setAnalytics(analyticsData);
         setTunnels(tunnelsData.tunnels || []);
         setAnomalies(anomaliesData.anomalies || []);
+        setMlStats(mlStatsData || {});
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch data. Make sure the server is running on port 9090.');
@@ -224,8 +228,9 @@ function App() {
             )}
           </div>
 
-          {/* Security Alerts */}
-          <div className="animate-fade-in-up" style={{ animationDelay: '600ms', animationFillMode: 'both' }}>
+          {/* Security & ML Models */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '600ms', animationFillMode: 'both' }}>
+            <ModelComparison stats={mlStats} />
             <AnomalyAlerts anomalies={anomalies} />
           </div>
 

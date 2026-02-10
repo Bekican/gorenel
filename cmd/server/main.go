@@ -11,6 +11,7 @@ import (
 
 	"github.com/Bekican/gorenel/internal/handler"
 	"github.com/Bekican/gorenel/internal/limiter"
+	"github.com/Bekican/gorenel/internal/ml"
 	"github.com/Bekican/gorenel/internal/protocol"
 	"github.com/Bekican/gorenel/internal/server"
 	"github.com/Bekican/gorenel/internal/utils"
@@ -86,11 +87,14 @@ func main() {
 	zapLogger, _ := zap.NewProduction()
 	defer zapLogger.Sync()
 
+	// Initialize shared ML client
+	mlClient := ml.NewClient("http://localhost:5000", zapLogger)
+
 	// Proxy servers
 	tcpProxy := server.NewTCPProxy()
 	udpProxy := server.NewUDPProxy()
 	anomalyStore := server.NewAnomalyStore(100) // Son 100 anomali kaydı
-	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore)
+	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient)
 
 	go func() {
 		log.Println(" HTTP Proxy başlatılıyor...")
@@ -99,8 +103,8 @@ func main() {
 		}
 	}()
 
-	// Monitoring server (using auth, shared limiter, and inspector)
-	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore)
+	// Monitoring server
+	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient)
 	go func() {
 		if err := monitor.Start(); err != nil {
 			log.Fatalf(" Monitoring server hatası: %v", err)
