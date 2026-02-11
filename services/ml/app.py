@@ -1,3 +1,5 @@
+# TODO [K8S]: Production ortamı için app.run() yerine gunicorn/uWSGI kullanılmalı.
+# DNS: Servisi internal K8s DNS'i ile ayağa kaldıracak şekilde güncelle.
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np

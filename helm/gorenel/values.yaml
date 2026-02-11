@@ -177,6 +177,12 @@ serviceAccount:
   annotations: {}
   name: ""
 
+# TODO [K8S]: Gorenel-ML Servisi için yeni bir section ekle.
+# Örn: ml: { replicaCount: 2, image: { repository: ..., tag: ... } }
+
+# TODO [K8S]: Dashboard (Nginx) Servisi için yeni bir section ekle.
+# Örn: dashboard: { replicaCount: 1, image: { repository: ..., tag: ... } }
+
 # RBAC
 rbac:
   create: true

@@ -2,6 +2,7 @@ numpy
 pandas
 scikit-learn
 tensorflow
+# TODO [K8S]: Production için gunicorn veya uWSGI ekleyin.
 flask
 flask-cors
 redis
