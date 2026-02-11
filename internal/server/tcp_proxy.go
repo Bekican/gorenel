@@ -3,19 +3,20 @@ package server
 import (
 	"fmt"
 	"io"
-	"log"
 	"net"
 
 	"github.com/hashicorp/yamux"
+	"go.uber.org/zap"
 )
 
 // TCPProxy handles raw TCP traffic forwarding
 type TCPProxy struct {
-	// Any configuration if needed
+	logger *zap.Logger
 }
 
 func NewTCPProxy() *TCPProxy {
-	return &TCPProxy{}
+	l, _ := zap.NewProduction()
+	return &TCPProxy{logger: l}
 }
 
 // Start listener for a specific port and link it to a yamux session
@@ -25,7 +26,7 @@ func (p *TCPProxy) ListenAndForward(publicPort int, session *yamux.Session) erro
 		return fmt.Errorf("TCP listener error on port %d: %w", publicPort, err)
 	}
 
-	log.Printf("TCP Proxy listening on :%d", publicPort)
+	p.logger.Info("TCP Proxy listening", zap.Int("port", publicPort))
 
 	go func() {
 		defer listener.Close()
@@ -37,14 +38,14 @@ func (p *TCPProxy) ListenAndForward(publicPort int, session *yamux.Session) erro
 				if session.IsClosed() {
 					return
 				}
-				log.Printf("TCP Accept error: %v", err)
+				p.logger.Error("TCP Accept error", zap.Error(err))
 				continue
 			}
 
 			// Open a new Yamux stream to the client
 			stream, err := session.OpenStream()
 			if err != nil {
-				log.Printf("Failed to open Yamux stream: %v", err)
+				p.logger.Error("Failed to open Yamux stream", zap.Error(err))
 				conn.Close()
 				continue
 			}

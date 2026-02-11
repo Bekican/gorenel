@@ -1,6 +1,7 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { Activity, Zap, Users, TrendingUp, AlertCircle } from 'lucide-react';
 import { api, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type ModelStatsResponse } from './api/client';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
 // Lazy load components
@@ -201,38 +202,44 @@ function App() {
           </div>
 
           {/* Charts Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
-            {analytics?.time_series && (
-              <>
-                <RealtimeChart
-                  data={analytics.time_series}
-                  metric="requests"
-                  title="Request Rate"
-                  color="#10b981"
-                />
-                <RealtimeChart
-                  data={analytics.time_series}
-                  metric="avg_latency_ms"
-                  title="Average Latency"
-                  color="#f59e0b"
-                />
-              </>
-            )}
-          </div>
+          <ErrorBoundary>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
+              {analytics?.time_series && (
+                <>
+                  <RealtimeChart
+                    data={analytics.time_series}
+                    metric="requests"
+                    title="Request Rate"
+                    color="#10b981"
+                  />
+                  <RealtimeChart
+                    data={analytics.time_series}
+                    metric="avg_latency_ms"
+                    title="Average Latency"
+                    color="#f59e0b"
+                  />
+                </>
+              )}
+            </div>
+          </ErrorBoundary>
 
           {/* Tunnels and Geo */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
-            <TunnelsList tunnels={tunnels} />
-            {analytics?.top_countries && (
-              <GeoMap data={analytics.top_countries} />
-            )}
-          </div>
+          <ErrorBoundary>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
+              <TunnelsList tunnels={tunnels} />
+              {analytics?.top_countries && (
+                <GeoMap data={analytics.top_countries} />
+              )}
+            </div>
+          </ErrorBoundary>
 
           {/* Security & ML Models */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '600ms', animationFillMode: 'both' }}>
-            <ModelComparison stats={mlStats} />
-            <AnomalyAlerts anomalies={anomalies} />
-          </div>
+          <ErrorBoundary>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '600ms', animationFillMode: 'both' }}>
+              <ModelComparison stats={mlStats} />
+              <AnomalyAlerts anomalies={anomalies} />
+            </div>
+          </ErrorBoundary>
 
           {/* Footer */}
           <div className="mt-12 border-t border-neutral-200 pt-8 text-center text-neutral-400 text-sm">

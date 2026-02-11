@@ -2,22 +2,25 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"sync"
 
 	"github.com/hashicorp/yamux"
+	"go.uber.org/zap"
 )
 
 // UDPProxy handles UDP packet forwarding using a virtual stream mapping
 type UDPProxy struct {
 	mu       sync.Mutex
-	sessions map[string]net.Conn // Remote addr -> Yamux stream
+	sessions map[string]net.Conn
+	logger   *zap.Logger
 }
 
 func NewUDPProxy() *UDPProxy {
+	l, _ := zap.NewProduction()
 	return &UDPProxy{
 		sessions: make(map[string]net.Conn),
+		logger:   l,
 	}
 }
 
@@ -32,7 +35,7 @@ func (p *UDPProxy) ListenAndForward(publicPort int, session *yamux.Session) erro
 		return err
 	}
 
-	log.Printf("UDP Proxy listening on :%d", publicPort)
+	p.logger.Info("UDP Proxy listening", zap.Int("port", publicPort))
 
 	go func() {
 		defer conn.Close()

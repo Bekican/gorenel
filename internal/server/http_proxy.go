@@ -2,7 +2,6 @@ package server
 
 import (
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -43,7 +42,7 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 }
 
 func (p *HTTPProxy) Start() error {
-	log.Printf("[HTTP] Proxy listening on %s", protocol.ProxyPort)
+	p.logger.Info("HTTP Proxy listening", zap.String("port", protocol.ProxyPort))
 
 	server := &http.Server{
 		Addr:    protocol.ProxyPort,
@@ -83,7 +82,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if targetKey == "" {
 		statusCode = http.StatusBadRequest
 		http.Error(w, "Invalid host or subdomain", statusCode)
-		log.Printf("Geçersiz host denemesi: %s", host)
+		p.logger.Warn("Geçersiz host denemesi", zap.String("host", host))
 		return
 	}
 
@@ -95,14 +94,14 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !p.advancedRL.Allow(targetKey, 1) {
 		statusCode = http.StatusTooManyRequests
 		http.Error(w, "Rate limit exceeded", statusCode)
-		log.Printf("Ratelimit aşıldı: %s", targetKey)
+		p.logger.Warn("Rate limit aşıldı", zap.String("target", targetKey))
 		return
 	}
 
 	if isCustom {
-		log.Printf("HTTP Özel Domain İstek: %s %s (Host: %s)", r.Method, r.URL.Path, host)
+		p.logger.Info("HTTP istek", zap.String("type", "custom_domain"), zap.String("method", r.Method), zap.String("path", r.URL.Path), zap.String("host", host))
 	} else {
-		log.Printf("HTTP Subdomain İstek: %s %s (Sub: %s)", r.Method, r.URL.Path, targetKey)
+		p.logger.Info("HTTP istek", zap.String("type", "subdomain"), zap.String("method", r.Method), zap.String("path", r.URL.Path), zap.String("subdomain", targetKey))
 	}
 
 	session, exists := p.tunnelManager.GetTunnel(host)
@@ -113,8 +112,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if !exists {
 		statusCode = http.StatusNotFound
-		log.Printf("[HTTP] Tunnel not found for: %s", host)
+		p.logger.Warn("Tunnel not found", zap.String("host", host))
 		http.Error(w, "Tunnel bulunamadı", statusCode)
+
+		// Tunnel bulunmasa bile ML analizi yap (Scanner'ları yakalamak için)
+		p.triggerMLAnalysis(r, time.Since(startTime), statusCode, 0, clientIP, targetKey)
 		return
 	}
 
@@ -126,7 +128,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	stream, err := session.Open()
 	if err != nil {
-		log.Printf("[HTTP] Stream open error: %v", err)
+		p.logger.Error("Stream open error", zap.Error(err))
 		http.Error(w, "Connection failed", http.StatusBadGateway)
 		return
 	}
@@ -147,14 +149,14 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if err := r.Write(stream); err != nil {
 		statusCode = http.StatusBadGateway
-		log.Printf("[HTTP] Request forwarding failed: %v", err)
+		p.logger.Error("Request forwarding failed", zap.Error(err))
 		http.Error(w, "Upstream error", statusCode)
 		return
 	}
 
 	bytesReceived, err := io.Copy(captureWriter, stream)
 	if err != nil {
-		log.Printf("Response copy error: %v", err)
+		p.logger.Error("Response copy error", zap.Error(err))
 	}
 	bytesOut = bytesReceived
 	statusCode = captureWriter.StatusCode
@@ -189,60 +191,70 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		go func() {
 			if err := p.redisPublisher.Publish(trafficData); err != nil {
-				log.Printf("Redis publish hatası: %v", err)
+				p.logger.Error("Redis publish hatası", zap.Error(err))
 			}
 		}()
 	}
 
 	// ML Anomali Kontrolu
-	if p.mlClient != nil {
-		requestData := map[string]interface{}{
-			"method":        r.Method,
-			"path":          r.URL.Path,
-			"response_time": responseTime.Milliseconds(),
-			"status_code":   captureWriter.StatusCode,
-			"request_size":  r.ContentLength,
-			"response_size": bytesReceived,
-		}
+	p.triggerMLAnalysis(r, responseTime, captureWriter.StatusCode, bytesReceived, clientIP, targetKey)
 
-		p.mlClient.PredictCompareAsync(requestData, func(resp *ml.ComparisonResponse, err error) {
-			if err == nil && resp.Consensus.AnyAnomaly {
-				// Hangi modeller anomali dedi?
-				detectedBy := strings.Join(resp.Consensus.FlaggedBy, ", ")
+	p.logger.Debug("İstek tamamlandı",
+		zap.String("method", r.Method),
+		zap.String("path", r.URL.Path),
+		zap.Duration("duration", responseTime),
+	)
+}
 
-				// En yüksek anomali skorunu bul (görsellemede kullanmak için)
-				var maxScore float64
-				for _, mResult := range resp.Models {
-					if mResult.AnomalyScore > maxScore {
-						maxScore = mResult.AnomalyScore
-					}
-				}
-
-				p.logger.Warn("Anomali tespit edildi!",
-					zap.String("path", r.URL.Path),
-					zap.String("method", r.Method),
-					zap.String("detected_by", detectedBy),
-					zap.Float64("max_score", maxScore),
-				)
-
-				// Anomali deposuna kaydet
-				if p.anomalyStore != nil {
-					p.anomalyStore.Add(AnomalyRecord{
-						ID:           uuid.New().String(),
-						Timestamp:    time.Now(),
-						Subdomain:    targetKey,
-						Method:       r.Method,
-						Path:         r.URL.Path,
-						ClientIP:     clientIP,
-						AnomalyScore: maxScore,
-						DetectedBy:   detectedBy,
-					})
-				}
-			}
-		})
+func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, statusCode int, bytesReceived int64, clientIP string, targetKey string) {
+	if p.mlClient == nil {
+		return
 	}
 
-	log.Printf("İstek tamamlandı : %s %s (%v)", r.Method, r.URL.Path, responseTime)
+	requestData := map[string]interface{}{
+		"method":        r.Method,
+		"path":          r.URL.Path,
+		"response_time": duration.Milliseconds(),
+		"status_code":   statusCode,
+		"request_size":  r.ContentLength,
+		"response_size": bytesReceived,
+	}
+
+	p.mlClient.PredictCompareAsync(requestData, func(resp *ml.ComparisonResponse, err error) {
+		if err == nil && resp.Consensus.AnyAnomaly {
+			// Hangi modeller anomali dedi?
+			detectedBy := strings.Join(resp.Consensus.FlaggedBy, ", ")
+
+			// En yüksek anomali skorunu bul (görsellemede kullanmak için)
+			var maxScore float64
+			for _, mResult := range resp.Models {
+				if mResult.AnomalyScore > maxScore {
+					maxScore = mResult.AnomalyScore
+				}
+			}
+
+			p.logger.Warn("Anomali tespit edildi!",
+				zap.String("path", r.URL.Path),
+				zap.String("method", r.Method),
+				zap.String("detected_by", detectedBy),
+				zap.Float64("max_score", maxScore),
+			)
+
+			// Anomali deposuna kaydet
+			if p.anomalyStore != nil {
+				p.anomalyStore.Add(AnomalyRecord{
+					ID:           uuid.New().String(),
+					Timestamp:    time.Now(),
+					Subdomain:    targetKey,
+					Method:       r.Method,
+					Path:         r.URL.Path,
+					ClientIP:     clientIP,
+					AnomalyScore: maxScore,
+					DetectedBy:   detectedBy,
+				})
+			}
+		}
+	})
 }
 
 func resolveTargetKey(host string) (key string, isCustom bool) {

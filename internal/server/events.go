@@ -3,10 +3,11 @@ package server
 import (
 	"crypto/rand"
 	"encoding/json"
-	"log"
 	"math/big"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 //her http isteği için request oluşturacağımız event
@@ -48,7 +49,8 @@ type EventStream struct {
 	DroppedEvents int64
 	mu            sync.RWMutex
 
-	done chan struct{}
+	done   chan struct{}
+	logger *zap.Logger
 }
 
 type EventConsumer interface {
@@ -58,10 +60,12 @@ type EventConsumer interface {
 
 // yeni event streeam oluşturuyoruz
 func NewEventStream(bufferSize int) *EventStream {
+	l, _ := zap.NewProduction()
 	es := &EventStream{
 		events:      make(chan *RequestEvent, bufferSize),
 		subscribers: make([]EventConsumer, 0),
 		done:        make(chan struct{}),
+		logger:      l,
 	}
 
 	go es.dispatcher()
@@ -100,7 +104,7 @@ func (es *EventStream) dispatcher() {
 			for _, consumer := range es.subscribers {
 				go func(c EventConsumer, e *RequestEvent) {
 					if err := c.Consume(e); err != nil {
-						log.Printf("Error processing event: %v", err)
+						es.logger.Error("Event processing error", zap.String("consumer", c.Name()), zap.Error(err))
 					}
 				}(consumer, event)
 			}

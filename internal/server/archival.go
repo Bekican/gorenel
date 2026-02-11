@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type DataArchiver struct {
@@ -30,7 +31,8 @@ type DataArchiver struct {
 	TotalFiles    int64
 	mu            sync.RWMutex
 
-	done chan struct{}
+	done   chan struct{}
+	logger *zap.Logger
 }
 
 // yeni data arşivi oluşturucaz
@@ -38,11 +40,13 @@ func NewDataArchiver(archiveDir string, rotateInterval time.Duration, retentionD
 	if err := os.MkdirAll(archiveDir, 0755); err != nil {
 		return nil, fmt.Errorf("archive dir oluşturulamadı:%w", err)
 	}
+	l, _ := zap.NewProduction()
 	da := &DataArchiver{
 		archiveDir:     archiveDir,
 		rotateInterval: rotateInterval,
 		retentionDays:  retentionDays,
 		done:           make(chan struct{}),
+		logger:         l,
 	}
 	//ilk dosyayı aç
 	if err := da.rotateFile(); err != nil {
@@ -95,7 +99,7 @@ func (da *DataArchiver) rotateFileLocked() error {
 	}
 	if da.currentFile != nil {
 		da.currentFile.Close()
-		log.Printf("archive dosyası kapatıldı : %d events", da.eventsInFile)
+		da.logger.Info("Archive dosyası kapatıldı", zap.Int64("events", da.eventsInFile))
 	}
 
 	//yeni dosya oluşturuyoruz
@@ -118,7 +122,7 @@ func (da *DataArchiver) rotateFileLocked() error {
 	da.TotalFiles++
 	da.mu.Unlock()
 
-	log.Printf("Yeni archive dosyası: %s", filename)
+	da.logger.Info("Yeni archive dosyası", zap.String("filename", filename))
 
 	return nil
 }
@@ -136,7 +140,7 @@ func (da *DataArchiver) periodicMaintenance() {
 		select {
 		case <-rotateTicker.C:
 			if err := da.rotateFile(); err != nil {
-				log.Printf("File rotation hatası: %v", err)
+				da.logger.Error("File rotation hatası", zap.Error(err))
 			}
 		case <-cleanupTicker.C:
 			da.cleanup()
@@ -152,7 +156,7 @@ func (da *DataArchiver) cleanup() {
 
 	files, err := filepath.Glob(filepath.Join(da.archiveDir, "archive_*.jsonl.gz"))
 	if err != nil {
-		log.Printf("Archive dosyaları okunamadı : %v", err)
+		da.logger.Error("Archive dosyaları okunamadı", zap.Error(err))
 		return
 	}
 
@@ -165,14 +169,14 @@ func (da *DataArchiver) cleanup() {
 		//retention süresine bakıyoruz geçmişse siliyoruz
 		if info.ModTime().Before(cutoff) {
 			if err := os.Remove(file); err != nil {
-				log.Printf("Dosya silinemedi: %s", file)
+				da.logger.Warn("Dosya silinemedi", zap.String("file", file))
 			} else {
 				deletedCount++
 			}
 		}
 	}
 	if deletedCount > 0 {
-		log.Printf("%d eski archive dosyaları silindi(retention:%d gün)", deletedCount, da.retentionDays)
+		da.logger.Info("Eski archive dosyaları silindi", zap.Int("count", deletedCount), zap.Int("retention_days", da.retentionDays))
 	}
 }
 

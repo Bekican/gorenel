@@ -4,11 +4,12 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type BatchLogger struct {
@@ -26,7 +27,8 @@ type BatchLogger struct {
 	TotalEvents  int64
 	mu           sync.RWMutex
 
-	done chan struct{}
+	done   chan struct{}
+	logger *zap.Logger
 }
 
 // yeni batch logger oluşturuyoruz
@@ -35,12 +37,14 @@ func NewBatchLogger(outputDir string, batchSize int, flushInterval time.Duration
 		return nil, fmt.Errorf("outputdir oluşturulamadı:%w", err)
 	}
 
+	l, _ := zap.NewProduction()
 	bl := &BatchLogger{
 		batchSize:     batchSize,
 		flushInterval: flushInterval,
 		buffer:        make([]*RequestEvent, 0, batchSize),
 		outputDir:     outputDir,
 		done:          make(chan struct{}),
+		logger:        l,
 	}
 
 	go bl.periodicFlush()
@@ -107,7 +111,7 @@ func (bl *BatchLogger) flushLocked() error {
 
 	for _, event := range bl.buffer {
 		if err := encoder.Encode(event); err != nil {
-			log.Printf("Event yazılamadı : %v", err)
+			bl.logger.Error("Event yazılamadı", zap.Error(err))
 			continue
 		}
 	}
@@ -120,7 +124,7 @@ func (bl *BatchLogger) flushLocked() error {
 	bl.TotalEvents += int64(len(bl.buffer))
 	bl.mu.Unlock()
 
-	log.Printf("Batch yazıldı: %s (%d events)", filename, len(bl.buffer))
+	bl.logger.Info("Batch yazıldı", zap.String("filename", filename), zap.Int("events", len(bl.buffer)))
 
 	// buffer1ı temizle
 	bl.buffer = bl.buffer[:0]

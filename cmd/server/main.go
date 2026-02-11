@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/Bekican/gorenel/internal/handler"
@@ -39,7 +42,10 @@ func main() {
 	logger.Init(logger.DefaultConfig())
 	defer logger.Sync()
 
-	log.Println(" Gorenel Server başlatılıyor...")
+	zapLogger, _ := zap.NewProduction()
+	defer zapLogger.Sync()
+
+	zapLogger.Info("Gorenel Server başlatılıyor")
 
 	// Core components
 	tm := server.NewTunnelManager()
@@ -61,7 +67,7 @@ func main() {
 	//batch logger
 	batchLogger, err := server.NewBatchLogger("./logs/batches", 1000, 5*time.Minute)
 	if err != nil {
-		log.Fatalf("Batch logger başlatılamadı : %v", err)
+		zapLogger.Fatal("Batch logger başlatılamadı", zap.Error(err))
 	}
 	defer batchLogger.Close()
 	eventStream.Subscribe(batchLogger)
@@ -69,7 +75,7 @@ func main() {
 	//Data archive
 	archiver, err := server.NewDataArchiver("./logs/archives", 1*time.Hour, 30)
 	if err != nil {
-		log.Fatalf("Data archiver başlatılamadı : %v", err)
+		zapLogger.Fatal("Data archiver başlatılamadı", zap.Error(err))
 	}
 	defer archiver.Close()
 	eventStream.Subscribe(archiver)
@@ -83,9 +89,7 @@ func main() {
 	// Using MockOAuth to prevent nil pointer panics
 	authHandler := handler.NewAuthHandler(&MockOAuth{}, jwtSvc, userRepo)
 
-	// Initialize zap logger for ML service
-	zapLogger, _ := zap.NewProduction()
-	defer zapLogger.Sync()
+	// ML client uses the same shared logger
 
 	// Initialize shared ML client
 	mlClient := ml.NewClient("http://localhost:5000", zapLogger)
@@ -97,9 +101,9 @@ func main() {
 	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient)
 
 	go func() {
-		log.Println(" HTTP Proxy başlatılıyor...")
+		zapLogger.Info("HTTP Proxy başlatılıyor", zap.String("port", protocol.ProxyPort))
 		if err := httpProxy.Start(); err != nil {
-			log.Fatalf(" HTTP Proxy hatası: %v", err)
+			zapLogger.Fatal("HTTP Proxy hatası", zap.Error(err))
 		}
 	}()
 
@@ -107,62 +111,82 @@ func main() {
 	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient)
 	go func() {
 		if err := monitor.Start(); err != nil {
-			log.Fatalf(" Monitoring server hatası: %v", err)
+			zapLogger.Fatal("Monitoring server hatası", zap.Error(err))
 		}
 	}()
 
 	// Control Port'u dinle (Client'lar buraya bağlanacak)
 	listener, err := net.Listen("tcp", protocol.ControlPort)
 	if err != nil {
-		log.Fatalf(" Port dinlenemedi: %v", err)
+		zapLogger.Fatal("Port dinlenemedi", zap.Error(err))
 	}
 	defer listener.Close()
 
-	cizgi := strings.Repeat("=", 60)
-	log.Printf("Control port dinleniyor: %s", protocol.ControlPort)
-	log.Printf(" HTTP Proxy dinleniyor: %s", protocol.ProxyPort)
-	log.Printf("Monitoring endpoint: http://localhost:9090/metrics")
-	log.Printf("Authentication: ENABLED")
-	log.Printf("Rate Limiting: ADVANCED (Sliding Window)")
-	log.Println(" Client bağlantıları bekleniyor...")
-	log.Println(cizgi)
+	zapLogger.Info("Gorenel Server hazır",
+		zap.String("control_port", protocol.ControlPort),
+		zap.String("proxy_port", protocol.ProxyPort),
+		zap.String("monitoring", "http://localhost:9090/metrics"),
+		zap.Bool("auth_enabled", true),
+		zap.String("rate_limiter", "sliding_window"),
+	)
 
-	// Client handling
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			log.Printf(" Bağlantı hatası: %v", err)
-			continue
+	// Graceful Shutdown: sinyal dinleme
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	// Client handling (ayrı goroutine'de)
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				select {
+				case <-ctx.Done():
+					return // Shutdown sinyali geldi
+				default:
+					zapLogger.Error("Bağlantı hatası", zap.Error(err))
+					continue
+				}
+			}
+
+			zapLogger.Info("Yeni bağlantı", zap.String("remote_addr", conn.RemoteAddr().String()))
+			go handleClient(conn, tm, authManager, tcpProxy, udpProxy, zapLogger)
 		}
+	}()
 
-		log.Printf("Yeni bağlantı: %s", conn.RemoteAddr())
-		go handleClient(conn, tm, authManager, tcpProxy, udpProxy)
-	}
+	// Ana goroutine sinyal bekler
+	<-ctx.Done()
+	zapLogger.Info("Shutdown sinyali alındı, kapatılıyor...")
+
+	// Listener'ı kapat → accept loop durur
+	listener.Close()
+
+	// Defer'ler (eventStream.Close, batchLogger.Close, archiver.Close) burada çalışır
+	zapLogger.Info("Gorenel Server kapatıldı")
 }
 
-func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy) {
+func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy, logger *zap.Logger) {
 	defer conn.Close()
 
 	// 1. REGISTER mesajını oku
 	msg, err := protocol.ReadMessage(conn)
 	if err != nil {
-		log.Printf("Mesaj okunamadı: %v", err)
+		logger.Error("Mesaj okunamadı", zap.Error(err))
 		return
 	}
 
 	if msg.Type != protocol.MsgTypeRegister {
-		log.Printf(" Beklenmeyen mesaj tipi: %s", msg.Type)
+		logger.Warn("Beklenmeyen mesaj tipi", zap.String("type", msg.Type))
 		errMsg := protocol.NewErrorMessage(400, "İlk mesaj REGISTER olmalı")
 		protocol.WriteMessage(conn, errMsg)
 		return
 	}
 
-	log.Printf("📥 REGISTER mesajı alındı")
+	logger.Info("REGISTER mesajı alındı")
 
 	// Parse REGISTER request
 	var regReq protocol.RegisterRequest
 	if err := json.Unmarshal([]byte(msg.Payload), &regReq); err != nil {
-		log.Printf(" REGISTER parse edilemedi: %v", err)
+		logger.Error("REGISTER parse edilemedi", zap.Error(err))
 		errMsg := protocol.NewErrorMessage(400, "Invalid REGISTER payload")
 		protocol.WriteMessage(conn, errMsg)
 		return
@@ -171,13 +195,13 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	// AUTH: API key kontrolü
 	authKey, err := authManager.ValidateKey(regReq.APIKey)
 	if err != nil {
-		log.Printf(" Authentication başarısız: %v", err)
+		logger.Warn("Authentication başarısız", zap.Error(err))
 		errMsg := protocol.NewErrorMessage(401, fmt.Sprintf("Authentication failed: %v", err))
 		protocol.WriteMessage(conn, errMsg)
 		return
 	}
 
-	log.Printf(" Authentication başarılı: %s (User: %s)", regReq.APIKey[:8]+"...", authKey.UserID)
+	logger.Info("Authentication başarılı", zap.String("api_key_prefix", regReq.APIKey[:8]+"..."), zap.String("user_id", authKey.UserID))
 	authManager.IncrementUsage(regReq.APIKey)
 
 	// 4. Yamux Session başlat
@@ -186,7 +210,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 
 	session, err := yamux.Server(conn, yamuxConfig)
 	if err != nil {
-		log.Printf(" Yamux session başlatılamadı: %v", err)
+		logger.Error("Yamux session başlatılamadı", zap.Error(err))
 		return
 	}
 	defer session.Close()
@@ -200,30 +224,30 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 		// Port tahsis et
 		publicPort, err = tm.AllocatePort()
 		if err != nil {
-			log.Printf(" Port tahsis hatası: %v", err)
+			logger.Error("Port tahsis hatası", zap.Error(err))
 			protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "Boş port bulunamadı"))
 			return
 		}
 
 		if regReq.TunnelType == "tcp" {
 			if err := tcpProx.ListenAndForward(publicPort, session); err != nil {
-				log.Printf(" TCP Proxy hatası: %v", err)
+				logger.Error("TCP Proxy hatası", zap.Error(err))
 				protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "TCP Proxy başlatılamadı"))
 				return
 			}
 		} else {
 			if err := udpProx.ListenAndForward(publicPort, session); err != nil {
-				log.Printf(" UDP Proxy hatası: %v", err)
+				logger.Error("UDP Proxy hatası", zap.Error(err))
 				protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "UDP Proxy başlatılamadı"))
 				return
 			}
 		}
-		log.Printf("✅ %s tüneli oluşturuldu: :%d", strings.ToUpper(regReq.TunnelType), publicPort)
+		logger.Info("Tünel oluşturuldu", zap.String("type", strings.ToUpper(regReq.TunnelType)), zap.Int("port", publicPort))
 	} else {
 		// DEFAULT: HTTP Subdomain
 		subdomain = utils.GenerateSubDomain(8)
 		fullURL = fmt.Sprintf("http://%s.%s%s", subdomain, protocol.BaseDomain, protocol.ProxyPort)
-		log.Printf("✅ HTTP Subdomain atandı: %s", fullURL)
+		logger.Info("HTTP Subdomain atandı", zap.String("url", fullURL))
 	}
 
 	// 3. Client'a yanıt ver
@@ -238,7 +262,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 		Payload: string(respJson),
 	})
 
-	log.Printf(" Yamux session başlatıldı: %s", subdomain)
+	logger.Info("Yamux session başlatıldı", zap.String("subdomain", subdomain))
 
 	// 5. Session'ı kaydet
 	if subdomain != "" {
@@ -248,20 +272,18 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 		// TCP/UDP için de kaydetmek gerekebilir (opsiyonel, monitoring için iyi olur)
 	}
 
-	cizgi := strings.Repeat("=", 60)
-	log.Printf(" Aktif tünel sayısı: %d", tm.Count())
-	log.Println(cizgi)
+	logger.Info("Aktif tünel sayısı", zap.Int("count", tm.Count()))
 
 	// 6. Session kapanana kadar bekle
 	for {
 		if session.IsClosed() {
 			<-session.CloseChan()
-			log.Printf("🔌 Session kapandı: %s", subdomain)
+			logger.Info("Session kapandı", zap.String("subdomain", subdomain))
 			return
 		}
 		_, err := session.AcceptStream()
 		if err != nil {
-			log.Printf("🔌 Client bağlantısı kesildi: %s", subdomain)
+			logger.Info("Client bağlantısı kesildi", zap.String("subdomain", subdomain))
 			return
 		}
 	}

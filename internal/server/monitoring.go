@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"runtime"
 	"sync/atomic"
@@ -17,6 +16,7 @@ import (
 	"github.com/Bekican/gorenel/pkg/auth"
 	serverErrors "github.com/Bekican/gorenel/pkg/errors"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
 )
 
 var (
@@ -93,7 +93,8 @@ func (m *MonitoringServer) Start() error {
 	// ML Stats endpoint
 	mux.HandleFunc("/api/ml/stats", m.corsMiddleware(rl(m.mlStatsHandler)))
 
-	log.Println("Monitoring serverı başlatılıyor: :9090")
+	l, _ := zap.NewProduction()
+	l.Info("Monitoring server başlatılıyor", zap.String("port", ":9090"))
 	return http.ListenAndServe(":9090", mux)
 }
 

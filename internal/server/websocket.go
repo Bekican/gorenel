@@ -2,12 +2,12 @@ package server
 
 import (
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"sync/atomic"
 
 	"github.com/hashicorp/yamux"
+	"go.uber.org/zap"
 )
 
 // Global değişkenler
@@ -27,7 +27,7 @@ func IsWebSocketUpgrade(r *http.Request) bool {
 // HandleWebSocket: WebSocket bağlantısını yönetir.
 // Not: HTTPProxy struct'ının bir metodu olarak tanımladık, böylece diğer dosyadan çağrılabilir.
 func (p *HTTPProxy) HandleWebSocket(w http.ResponseWriter, r *http.Request, session *yamux.Session, subdomain string) {
-	log.Printf("🔌 Websocket upgrade isteği geldi: %s", subdomain)
+	p.logger.Info("WebSocket upgrade isteği", zap.String("subdomain", subdomain))
 
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {
@@ -36,14 +36,14 @@ func (p *HTTPProxy) HandleWebSocket(w http.ResponseWriter, r *http.Request, sess
 	}
 	clientConn, bufrw, err := hijacker.Hijack()
 	if err != nil {
-		log.Printf("Hijack hatası: %v", err)
+		p.logger.Error("Hijack hatası", zap.Error(err))
 		return
 	}
 	defer clientConn.Close()
 
 	stream, err := session.Open()
 	if err != nil {
-		log.Printf(" Stream açılamadı: %v", err)
+		p.logger.Error("Stream açılamadı", zap.Error(err))
 		return
 	}
 	defer stream.Close()
@@ -55,10 +55,10 @@ func (p *HTTPProxy) HandleWebSocket(w http.ResponseWriter, r *http.Request, sess
 	if ys, ok := interface{}(stream).(*yamux.Stream); ok {
 		streamID = ys.StreamID()
 	}
-	log.Printf("Websocket stream açıldı: %s (ID:%d)", subdomain, streamID)
+	p.logger.Info("WebSocket stream açıldı", zap.String("subdomain", subdomain), zap.Uint32("stream_id", streamID))
 
 	if err := r.Write(stream); err != nil {
-		log.Printf("Request yazılamadı: %v", err)
+		p.logger.Error("Request yazılamadı", zap.Error(err))
 		return
 	}
 
@@ -84,5 +84,5 @@ func (p *HTTPProxy) HandleWebSocket(w http.ResponseWriter, r *http.Request, sess
 	}()
 
 	<-done
-	log.Printf("Websocket bağlantısı kapandı: %s", subdomain)
+	p.logger.Info("WebSocket bağlantısı kapandı", zap.String("subdomain", subdomain))
 }

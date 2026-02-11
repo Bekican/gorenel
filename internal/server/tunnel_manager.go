@@ -2,13 +2,13 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"net"
 	"sync"
 
 	"time"
 
 	"github.com/hashicorp/yamux"
+	"go.uber.org/zap"
 )
 
 // TunnelInfo stores metadata and the session for an active tunnel.
@@ -33,12 +33,13 @@ type BandwidthInfo struct {
 // TunnelManager maintains the mapping between host names and active tunnel sessions.
 // It supports both default subdomains (gorenel.io) and user-defined custom domains.
 type TunnelManager struct {
-	tunnels       map[string]*TunnelInfo // key: subdomain, value: tunnel info
-	customDomains map[string]string      // key: custom_domain, value: subdomain mapping
+	tunnels       map[string]*TunnelInfo
+	customDomains map[string]string
 	mu            sync.RWMutex
 	tcpPorts      map[int]string
 	udpPorts      map[int]string
 	portMutex     sync.Mutex
+	logger        *zap.Logger
 }
 
 func (tm *TunnelManager) AllocatePort() (int, error) {
@@ -63,11 +64,13 @@ func (tm *TunnelManager) AllocatePort() (int, error) {
 
 // NewTunnelManager creates a new instance of TunnelManager with initialized maps.
 func NewTunnelManager() *TunnelManager {
+	l, _ := zap.NewProduction()
 	return &TunnelManager{
 		tunnels:       make(map[string]*TunnelInfo),
 		customDomains: make(map[string]string),
 		tcpPorts:      make(map[int]string),
 		udpPorts:      make(map[int]string),
+		logger:        l,
 	}
 }
 
@@ -90,9 +93,16 @@ func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session
 
 	if customDomain != "" {
 		tm.customDomains[customDomain] = subdomain
-		log.Printf("Tünel kaydedildi: %s (Özel Domain: %s) [Toplam: %d]", subdomain, customDomain, len(tm.tunnels))
+		tm.logger.Info("Tünel kaydedildi",
+			zap.String("subdomain", subdomain),
+			zap.String("custom_domain", customDomain),
+			zap.Int("total", len(tm.tunnels)),
+		)
 	} else {
-		log.Printf("Tünel kaydedildi: %s [Toplam: %d]", subdomain, len(tm.tunnels))
+		tm.logger.Info("Tünel kaydedildi",
+			zap.String("subdomain", subdomain),
+			zap.Int("total", len(tm.tunnels)),
+		)
 	}
 }
 
@@ -154,12 +164,12 @@ func (tm *TunnelManager) RemoveTunnel(subdomain string) {
 	for domain, sub := range tm.customDomains {
 		if sub == subdomain {
 			delete(tm.customDomains, domain)
-			log.Printf("[TunnelManager] Custom domain eşleşmesi silindi: %s", domain)
+			tm.logger.Info("Custom domain eşleşmesi silindi", zap.String("domain", domain))
 			break
 		}
 	}
 
-	log.Printf("[TunnelManager] Tünel silindi: %s (Kalan: %d)", subdomain, len(tm.tunnels))
+	tm.logger.Info("Tünel silindi", zap.String("subdomain", subdomain), zap.Int("remaining", len(tm.tunnels)))
 }
 
 // Count returns the number of currently active tunnel sessions.
