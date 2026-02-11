@@ -26,3 +26,13 @@ icon: https://raw.githubusercontent.com/yourusername/gorenel/main/docs/logo.png
 annotations:
   category: Networking
   licenses: MIT
+
+dependencies:
+  - name: redis
+    version: 18.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: clickhouse
+    version: 4.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: clickhouse.enabled
