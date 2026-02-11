@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gorenel.fullname" . }}-ml
+  labels:
+    {{- include "gorenel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ml
+spec:
+  replicas: {{ .Values.ml.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "gorenel.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: ml
+  template:
+    metadata:
+      labels:
+        {{- include "gorenel.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: ml
+    spec:
+      containers:
+      - name: ml
+        image: "{{ .Values.ml.image.repository }}:{{ .Values.ml.image.tag }}"
+        imagePullPolicy: {{ .Values.ml.image.pullPolicy }}
+        ports:
+        - containerPort: 5000
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+        resources:
+          {{- nindent 10 .Values.ml.resources | toYaml }}

@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gorenel.fullname" . }}-server
+  labels:
+    {{- include "gorenel.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.server.service.type }}
+  ports:
+    - port: {{ .Values.server.service.controlPort }}
+      targetPort: control
+      protocol: TCP
+      name: control
+    - port: {{ .Values.server.service.httpPort }}
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: {{ .Values.server.service.monitoringPort }}
+      targetPort: monitoring
+      protocol: TCP
+      name: monitoring
+  selector:
+    {{- include "gorenel.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gorenel.fullname" . }}-ml
+  labels:
+    {{- include "gorenel.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.ml.service.type }}
+  ports:
+    - port: {{ .Values.ml.service.port }}
+      targetPort: 5000
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "gorenel.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: ml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gorenel.fullname" . }}-dashboard
+  labels:
+    {{- include "gorenel.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.dashboard.service.type }}
+  ports:
+    - port: {{ .Values.dashboard.service.port }}
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "gorenel.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: dashboard

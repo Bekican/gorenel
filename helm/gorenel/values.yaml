@@ -115,23 +115,68 @@ redis:
       enabled: true
       size: 10Gi
 
-# Ingress
+# ML Service Configuration
+ml:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/yourusername/gorenel-ml
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 5000
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 200m
+      memory: 512Mi
+
+# Dashboard Configuration (Nginx)
+dashboard:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/yourusername/gorenel-dashboard
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 80
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Ingress Configuration
 ingress:
   enabled: true
   className: nginx
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/websocket-services: gorenel
   hosts:
+    - host: dashboard.tunnel.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: dashboard
+              port: 80
     - host: "*.tunnel.example.com"
       paths:
         - path: /
           pathType: Prefix
-  tls:
-    - secretName: gorenel-wildcard-tls
-      hosts:
-        - "*.tunnel.example.com"
+          backend:
+            service:
+              name: server
+              port: 8080
 
 # Security
 securityContext:
