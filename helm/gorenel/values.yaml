@@ -6,7 +6,7 @@ server:
   replicaCount: 3  # High availability
   
   image:
-    repository: ghcr.io/yourusername/gorenel
+    repository: bekican/gorenel-server
     tag: latest
     pullPolicy: IfNotPresent
   
@@ -120,7 +120,7 @@ ml:
   enabled: true
   replicaCount: 2
   image:
-    repository: ghcr.io/yourusername/gorenel-ml
+    repository: bekican/gorenel-ml
     tag: latest
     pullPolicy: IfNotPresent
   service:
@@ -139,7 +139,7 @@ dashboard:
   enabled: true
   replicaCount: 1
   image:
-    repository: ghcr.io/yourusername/gorenel-dashboard
+    repository: bekican/gorenel-dashboard
     tag: latest
     pullPolicy: IfNotPresent
   service:
@@ -221,12 +221,6 @@ serviceAccount:
   create: true
   annotations: {}
   name: ""
-
-# TODO [K8S]: Gorenel-ML Servisi için yeni bir section ekle.
-# Örn: ml: { replicaCount: 2, image: { repository: ..., tag: ... } }
-
-# TODO [K8S]: Dashboard (Nginx) Servisi için yeni bir section ekle.
-# Örn: dashboard: { replicaCount: 1, image: { repository: ..., tag: ... } }
 
 # RBAC
 rbac:
