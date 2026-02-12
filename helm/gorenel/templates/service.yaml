@@ -4,23 +4,25 @@ metadata:
   name: {{ include "gorenel.fullname" . }}-server
   labels:
     {{- include "gorenel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
 spec:
   type: {{ .Values.server.service.type }}
   ports:
     - port: {{ .Values.server.service.controlPort }}
-      targetPort: control
+      targetPort: 7000
       protocol: TCP
       name: control
     - port: {{ .Values.server.service.httpPort }}
-      targetPort: http
+      targetPort: 8080
       protocol: TCP
       name: http
     - port: {{ .Values.server.service.monitoringPort }}
-      targetPort: monitoring
+      targetPort: 9090
       protocol: TCP
       name: monitoring
   selector:
     {{- include "gorenel.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: server
 ---
 apiVersion: v1
 kind: Service
@@ -28,6 +30,7 @@ metadata:
   name: {{ include "gorenel.fullname" . }}-ml
   labels:
     {{- include "gorenel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: ml
 spec:
   type: {{ .Values.ml.service.type }}
   ports:
@@ -45,6 +48,7 @@ metadata:
   name: {{ include "gorenel.fullname" . }}-dashboard
   labels:
     {{- include "gorenel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: dashboard
 spec:
   type: {{ .Values.dashboard.service.type }}
   ports:

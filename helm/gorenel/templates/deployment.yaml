@@ -4,6 +4,7 @@ metadata:
   name: {{ include "gorenel.fullname" . }}
   labels:
     {{- include "gorenel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
 spec:
   {{- if not .Values.server.autoscaling.enabled }}
   replicas: {{ .Values.server.replicaCount }}
@@ -11,12 +12,14 @@ spec:
   selector:
     matchLabels:
       {{- include "gorenel.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: server
   template:
     metadata:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         {{- include "gorenel.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: server
     spec:
       {{- with .Values.server.image.pullSecrets }}
       imagePullSecrets:
