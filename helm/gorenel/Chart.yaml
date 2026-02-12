@@ -12,16 +12,16 @@ keywords:
   - analytics
   - big-data
 
-home: https://github.com/yourusername/gorenel
+home: https://github.com/Bekican/gorenel
 sources:
-  - https://github.com/yourusername/gorenel
+  - https://github.com/Bekican/gorenel
 
 maintainers:
-  - name: Your Name
-    email: your@email.com
-    url: https://github.com/yourusername
+  - name: Bekican
+    email: bekircan3634@gmail.com
+    url: https://github.com/Bekican
 
-icon: https://raw.githubusercontent.com/yourusername/gorenel/main/docs/logo.png
+icon: https://raw.githubusercontent.com/Bekican/gorenel/main/docs/logo.png
 
 annotations:
   category: Networking

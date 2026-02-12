@@ -62,17 +62,17 @@ config:
 
 # TLS/SSL Configuration
 tls:
-  enabled: true
+  enabled: false
   secretName: gorenel-tls
   certManager:
-    enabled: true
+    enabled: false
     issuer: letsencrypt-prod
-    email: your@email.com
+    email: bekircan3634@gmail.com
 
 # Persistence (for logs and archives)
 persistence:
   enabled: true
-  storageClass: "standard"
+  storageClass: "hostpath"
   accessMode: ReadWriteOnce
   size: 100Gi
   annotations: {}
