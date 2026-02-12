@@ -60,6 +60,11 @@ spec:
             configMapKeyRef:
               name: {{ include "gorenel.fullname" . }}-config
               key: retention_days
+        - name: ML_URL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "gorenel.fullname" . }}-config
+              key: ml_service_url
         livenessProbe:
           httpGet:
             path: /health

@@ -92,7 +92,11 @@ func main() {
 	// ML client uses the same shared logger
 
 	// Initialize shared ML client
-	mlClient := ml.NewClient("http://localhost:5000", zapLogger)
+	mlURL := os.Getenv("ML_URL")
+	if mlURL == "" {
+		mlURL = "http://localhost:5000"
+	}
+	mlClient := ml.NewClient(mlURL, zapLogger)
 
 	// Proxy servers
 	tcpProxy := server.NewTCPProxy()

@@ -22,12 +22,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             
             if (data.redirect_url) {
                 // Eğer backend bir yönlendirme URL'si dönerse (SPA dostu yöntem)
-                // URL göreceli ise base URL ile birleştir
-                const redirectUrl = data.redirect_url.startsWith('http') 
-                    ? data.redirect_url 
-                    : `http://localhost:9090${data.redirect_url}`;
-                
-                window.location.href = redirectUrl;
+                window.location.href = data.redirect_url;
             } else if (data.user) {
                 onLoginSuccess(data.user);
             }

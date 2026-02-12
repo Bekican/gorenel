@@ -27,9 +27,56 @@ func NewAuthHandler(oauth auth.OAuthProvider, tokenSvc *auth.JWTService, repo au
 	}
 }
 
-// Login redirects user to Google
+// Login handles user login
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
-	// Generate random state to prevent CSRF
+	// 1. Check for Demo user bypass
+	var credentials struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&credentials); err == nil {
+		if credentials.Email == "demo@gorenel.io" {
+			// Find or create demo user
+			user, err := h.userRepo.GetByEmail(credentials.Email)
+			if err != nil {
+				user = &auth.User{
+					ID:        "demo-user-id",
+					Email:     credentials.Email,
+					Name:      "Demo User",
+					Provider:  "demo",
+					CreatedAt: time.Now(),
+				}
+				h.userRepo.Create(user)
+			}
+
+			// Generate Token
+			tokenString, err := h.tokenSvc.GenerateToken(user)
+			if err != nil {
+				return errors.Internal(err)
+			}
+
+			// Set Cookie
+			http.SetCookie(w, &http.Cookie{
+				Name:     "auth_token",
+				Value:    tokenString,
+				Expires:  time.Now().Add(24 * time.Hour),
+				HttpOnly: true,
+				Secure:   false,
+				Path:     "/",
+			})
+
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"user": map[string]string{
+					"email": user.Email,
+				},
+			})
+			return nil
+		}
+	}
+
+	// 2. Standard OAuth Flow
 	state := uuid.New().String()
 
 	// Store state in a cookie for validation later
