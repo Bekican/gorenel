@@ -182,7 +182,6 @@ ingress:
 securityContext:
   runAsNonRoot: true
   runAsUser: 1000
-  fsGroup: 1000
   capabilities:
     drop:
       - ALL
