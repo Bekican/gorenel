@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Copy, ExternalLink, Server } from 'lucide-react';
+import { Activity, Copy, ExternalLink, Server, Plus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Tunnel {
@@ -19,9 +19,10 @@ interface Tunnel {
 
 interface TunnelsListProps {
   tunnels: Tunnel[];
+  onOpenConnect: () => void;
 }
 
-export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels }) => {
+export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, onOpenConnect }) => {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     // Could add toast notification here
@@ -52,9 +53,18 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels }) => {
             <p className="text-sm text-neutral-500">{tunnels.length} tunnel(s) running</p>
           </div>
         </div>
-        <div className="flex items-center gap-2 bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
-          <Activity className="w-4 h-4 text-green-600 animate-pulse" />
-          <span className="text-xs text-green-700 font-medium">Live</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={onOpenConnect}
+            className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all active:scale-95"
+          >
+            <Plus className="w-4 h-4" />
+            New Tunnel
+          </button>
+          <div className="flex items-center gap-2 bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
+            <Activity className="w-4 h-4 text-green-600 animate-pulse" />
+            <span className="text-xs text-green-700 font-medium">Live</span>
+          </div>
         </div>
       </div>
 
