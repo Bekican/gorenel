@@ -12,11 +12,13 @@ const GeoMap = React.lazy(() => import('./components/GeoMap').then(module => ({ 
 const AnomalyAlerts = React.lazy(() => import('./components/AnomalyAlerts').then(module => ({ default: module.AnomalyAlerts })));
 const ModelComparison = React.lazy(() => import('./components/ModelComparison').then(module => ({ default: module.ModelComparison })));
 import { LoginPage } from './components/LoginPage';
-import { LogOut } from 'lucide-react';
+import { ConnectModal } from './components/ConnectModal';
+import { LogOut, Plus } from 'lucide-react';
 
 // Main App Component
 function App() {
   const [user, setUser] = useState<any>(null);
+  const [isConnectOpen, setIsConnectOpen] = useState(false);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsSnapshot | null>(null);
   const [tunnels, setTunnels] = useState<any[]>([]);
@@ -226,7 +228,7 @@ function App() {
           {/* Tunnels and Geo */}
           <ErrorBoundary>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
-              <TunnelsList tunnels={tunnels} />
+              <TunnelsList tunnels={tunnels} onOpenConnect={() => setIsConnectOpen(true)} />
               {analytics?.top_countries && (
                 <GeoMap data={analytics.top_countries} />
               )}
@@ -240,6 +242,9 @@ function App() {
               <AnomalyAlerts anomalies={anomalies} />
             </div>
           </ErrorBoundary>
+
+          {/* Connect Modal */}
+          <ConnectModal isOpen={isConnectOpen} onClose={() => setIsConnectOpen(false)} />
 
           {/* Footer */}
           <div className="mt-12 border-t border-neutral-200 pt-8 text-center text-neutral-400 text-sm">
