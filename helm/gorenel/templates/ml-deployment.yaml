@@ -32,4 +32,4 @@ spec:
             path: /health
             port: 5000
         resources:
-          {{- nindent 10 .Values.ml.resources | toYaml }}
+          {{- toYaml .Values.ml.resources | nindent 10 }}
