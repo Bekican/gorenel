@@ -37,6 +37,26 @@ func (m *MockOAuth) GetUserProfile(code string) (*auth.UserProfile, error) {
 	}, nil
 }
 
+func initOAuthProvider(logger *zap.Logger) auth.OAuthProvider {
+	env := os.Getenv("GO_ENV")
+	if env == "production" {
+		clientID := os.Getenv("GOOGLE_CLIENT_ID")
+		clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
+		redirectURL := os.Getenv("GOOGLE_REDIRECT_URL")
+
+		if clientID == "" || clientSecret == "" || redirectURL == "" {
+			logger.Warn("GO_ENV=production but GOOGLE_CLIENT_ID/SECRET/URL is missing. Falling back to MockOAuth for safety.")
+			return &MockOAuth{}
+		}
+
+		logger.Info("Google OAuth provider initialized", zap.String("client_id", clientID[:5]+"..."))
+		return auth.NewGoogleOAuth(clientID, clientSecret, redirectURL)
+	}
+
+	logger.Info("Mock OAuth provider initialized (dev mode)")
+	return &MockOAuth{}
+}
+
 func main() {
 	// Initialize global logger
 	logger.Init(logger.DefaultConfig())
@@ -84,10 +104,18 @@ func main() {
 	geoLocator := server.NewGeoLocator(true)
 
 	// Auth components
-	jwtSvc := auth.NewJWTService("SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD")
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD"
+		if os.Getenv("GO_ENV") == "production" {
+			zapLogger.Warn("JWT_SECRET is not set in production! Using fallback.")
+		}
+	}
+	jwtSvc := auth.NewJWTService(jwtSecret)
 	userRepo := handler.NewInMemoryUserRepo()
-	// Using MockOAuth to prevent nil pointer panics
-	authHandler := handler.NewAuthHandler(&MockOAuth{}, jwtSvc, userRepo)
+
+	oauthProvider := initOAuthProvider(zapLogger)
+	authHandler := handler.NewAuthHandler(oauthProvider, jwtSvc, userRepo)
 
 	// ML client uses the same shared logger
 

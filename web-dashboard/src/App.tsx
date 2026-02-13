@@ -13,7 +13,7 @@ const AnomalyAlerts = React.lazy(() => import('./components/AnomalyAlerts').then
 const ModelComparison = React.lazy(() => import('./components/ModelComparison').then(module => ({ default: module.ModelComparison })));
 import { LoginPage } from './components/LoginPage';
 import { ConnectModal } from './components/ConnectModal';
-import { LogOut, Plus } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 // Main App Component
 function App() {
