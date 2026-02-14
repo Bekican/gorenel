@@ -153,5 +153,7 @@ func (g *AIGateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	proxy := httputil.NewSingleHostReverseProxy(target)
 
 	//cachleme ve analytic için response alma
+	var responseBuffer bytes.Buffer
+	originalWriter := w
 
 }
