@@ -160,7 +160,10 @@ func (m *MonitoringServer) mlStatsHandler(w http.ResponseWriter, r *http.Request
 
 	stats, err := m.mlClient.GetModelStats()
 	if err != nil {
-		http.Error(w, fmt.Sprintf("ML stats error: %v", err), http.StatusInternalServerError)
+		// ML servisi kapalıysa 500 dönmek yerine boş veri dönelim.
+		// Böylece dashboard'daki Promise.all patlamaz.
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{})
 		return
 	}
 
