@@ -12,13 +12,13 @@ interface GeoMapProps {
 }
 
 const COLORS = [
+  '#10b981', // emerald
   '#3b82f6', // blue
-  '#10b981', // green
+  '#8b5cf6', // violet
+  '#f43f5e', // rose
   '#f59e0b', // amber
-  '#ef4444', // red
-  '#8b5cf6', // purple
-  '#ec4899', // pink
   '#06b6d4', // cyan
+  '#ec4899', // pink
   '#f97316', // orange
 ];
 
@@ -28,45 +28,45 @@ export const GeoMap: React.FC<GeoMapProps> = ({ data }) => {
   const totalRequests = data.reduce((sum, item) => sum + item.count, 0);
 
   return (
-    <div className="card">
+    <div className="card h-full">
       <div className="flex items-center gap-2 mb-6">
-        <div className="p-2 bg-primary-50 rounded-lg">
-          <Globe className="w-5 h-5 text-primary-600" />
+        <div className="p-2 bg-primary/10 rounded-lg">
+          <Globe className="w-5 h-5 text-primary" />
         </div>
-        <h3 className="text-lg font-semibold text-neutral-900">Geographic Distribution</h3>
+        <h3 className="text-lg font-bold text-white tracking-tight">Geographic Distribution</h3>
       </div>
 
       {/* Bar Chart */}
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={topCountries} layout="horizontal">
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
           <XAxis
             type="number"
-            stroke="#9ca3af"
-            style={{ fontSize: '12px' }}
+            stroke="rgba(255,255,255,0.3)"
+            style={{ fontSize: '10px', fontFamily: 'inherit' }}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
             type="category"
             dataKey="key"
-            stroke="#64748b"
-            style={{ fontSize: '12px' }}
+            stroke="rgba(255,255,255,0.5)"
+            style={{ fontSize: '11px', fontWeight: 600, fontFamily: 'inherit' }}
             width={100}
             tickLine={false}
             axisLine={false}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#ffffff',
-              border: '1px solid #e5e7eb',
-              borderRadius: '0.5rem',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              color: '#111827'
+              backgroundColor: '#09090b',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '1rem',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+              color: '#fff'
             }}
-            itemStyle={{ color: '#111827' }}
-            labelStyle={{ color: '#6b7280' }}
-            cursor={{ fill: 'transparent' }}
+            itemStyle={{ color: '#fff' }}
+            labelStyle={{ color: 'rgba(255,255,255,0.5)' }}
+            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
           />
           <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={20}>
             {topCountries.map((_entry, index) => (
@@ -79,19 +79,19 @@ export const GeoMap: React.FC<GeoMapProps> = ({ data }) => {
       {/* Country List */}
       <div className="mt-6 space-y-2">
         {topCountries.map((country, index) => {
-          const percentage = ((country.count / totalRequests) * 100).toFixed(1);
+          const percentage = totalRequests > 0 ? ((country.count / totalRequests) * 100).toFixed(1) : "0.0";
           return (
-            <div key={country.key} className="flex items-center justify-between p-2 hover:bg-neutral-50 rounded-lg transition-colors">
+            <div key={country.key} className="flex items-center justify-between p-2 hover:bg-white/5 rounded-lg transition-colors group">
               <div className="flex items-center gap-3">
                 <div
-                  className="w-2.5 h-2.5 rounded-full"
+                  className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)]"
                   style={{ backgroundColor: COLORS[index % COLORS.length] }}
                 />
-                <span className="text-sm text-neutral-700 font-medium">{country.key}</span>
+                <span className="text-sm text-white/70 font-medium group-hover:text-white transition-colors">{country.key}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-sm text-neutral-600 font-mono">{country.count.toLocaleString()}</span>
-                <span className="text-xs text-neutral-400 w-12 text-right bg-neutral-100 px-1 py-0.5 rounded">{percentage}%</span>
+                <span className="text-sm text-white/40 font-mono group-hover:text-white/60">{country.count.toLocaleString()}</span>
+                <span className="text-xs text-primary w-12 text-right bg-primary/10 px-1 py-0.5 rounded font-bold">{percentage}%</span>
               </div>
             </div>
           );
@@ -99,9 +99,9 @@ export const GeoMap: React.FC<GeoMapProps> = ({ data }) => {
       </div>
 
       {data.length > 8 && (
-        <div className="mt-4 pt-4 border-t border-neutral-100">
-          <p className="text-xs text-neutral-500 text-center">
-            Showing top 8 countries out of {data.length}
+        <div className="mt-4 pt-4 border-t border-white/5">
+          <p className="text-xs text-white/30 text-center uppercase tracking-widest font-bold">
+            Showing top 8 of {data.length}
           </p>
         </div>
       )}
