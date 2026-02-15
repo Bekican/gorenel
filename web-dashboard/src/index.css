@@ -50,7 +50,7 @@
   }
 
   .metric-card {
-    @apply card hover:border-white/10 hover:bg-white/[0.05] group;
+    @apply card hover:border-white/10 hover:bg-white/[0.05];
   }
 
   .btn-premium {
