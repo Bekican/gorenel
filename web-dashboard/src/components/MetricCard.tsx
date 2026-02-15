@@ -14,28 +14,28 @@ interface MetricCardProps {
 
 const colorStyles = {
   emerald: {
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-500",
-    glow: "shadow-[0_0_15px_rgba(16,185,129,0.3)]",
-    trend: "text-emerald-400"
+    text: "text-emerald-400",
+    bg: "bg-emerald-500/5",
+    border: "border-emerald-500/10",
+    glow: "shadow-[0_0_30px_-10px_rgba(16,185,129,0.2)]"
   },
   violet: {
-    bg: "bg-violet-500/10",
-    text: "text-violet-500",
-    glow: "shadow-[0_0_15px_rgba(139,92,246,0.3)]",
-    trend: "text-violet-400"
+    text: "text-violet-400",
+    bg: "bg-violet-500/5",
+    border: "border-violet-500/10",
+    glow: "shadow-[0_0_30px_-10px_rgba(139,92,246,0.2)]"
   },
   blue: {
-    bg: "bg-blue-500/10",
-    text: "text-blue-500",
-    glow: "shadow-[0_0_15px_rgba(59,130,246,0.3)]",
-    trend: "text-blue-400"
+    text: "text-blue-400",
+    bg: "bg-blue-500/5",
+    border: "border-blue-500/10",
+    glow: "shadow-[0_0_30px_-10px_rgba(59,130,246,0.2)]"
   },
   rose: {
-    bg: "bg-rose-500/10",
-    text: "text-rose-500",
-    glow: "shadow-[0_0_15px_rgba(244,63,94,0.3)]",
-    trend: "text-rose-400"
+    text: "text-rose-400",
+    bg: "bg-rose-500/5",
+    border: "border-rose-500/10",
+    glow: "shadow-[0_0_30px_-10px_rgba(244,63,94,0.2)]"
   },
 };
 
@@ -104,30 +104,27 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   const style = colorStyles[color];
 
   return (
-    <div className="metric-card relative group">
-      {/* Background glow on hover */}
-      <div className={`absolute -inset-1 rounded-[2.2rem] bg-gradient-to-br transition-all duration-500 opacity-0 group-hover:opacity-10 blur-xl ${style.bg}`} />
-
-      <div className="relative h-full flex flex-col justify-between">
-        <div className="flex items-center justify-between mb-8">
-          <div className={`p-4 rounded-2xl ${style.bg} ${style.glow} group-hover:scale-110 transition-transform duration-500`}>
-            <Icon className={`w-6 h-6 ${style.text}`} />
+    <div className={`metric-card relative group hover:-translate-y-1 ${style.glow}`}>
+      <div className="relative z-10">
+        <div className="flex justify-between items-start mb-6">
+          <div className={`p-3 rounded-xl ${style.bg} ${style.border} border`}>
+            <Icon className={`w-5 h-5 ${style.text}`} />
           </div>
-
           {trend && (
-            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest ${trend.isPositive ? 'text-primary' : 'text-rose-400'}`}>
+            <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg ${trend.isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
               {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
             </div>
           )}
         </div>
 
-        <div>
-          <h3 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{title}</h3>
-          <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-black tracking-tighter text-gradient">{animatedValue}</span>
-          </div>
+        <div className="space-y-1">
+          <h3 className="text-white/40 text-xs font-medium uppercase tracking-wider">{title}</h3>
+          <div className="text-4xl font-light tracking-tight text-white">{animatedValue}</div>
         </div>
       </div>
+
+      {/* Dynamic Background Gradient */}
+      <div className={`absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
     </div>
   );
 };

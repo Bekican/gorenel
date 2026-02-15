@@ -3,7 +3,6 @@ import {
   Zap,
   Users,
   TrendingUp,
-  AlertCircle,
   LayoutDashboard,
   Globe,
   Microscope,
@@ -123,180 +122,192 @@ function App() {
   const NavItem = ({ id, icon: Icon, label }: { id: NavTab, icon: any, label: string }) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${activeTab === id
-        ? 'bg-primary/10 text-primary glow-emerald'
+      className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 group ${activeTab === id
+        ? 'bg-emerald-500/10 text-emerald-400'
         : 'text-white/40 hover:text-white hover:bg-white/5'
         }`}
     >
-      <Icon className={`w-5 h-5 ${activeTab === id ? 'text-primary' : ''}`} />
-      <span className="font-bold text-sm tracking-tight">{label}</span>
-      {activeTab === id && <ChevronRight className="w-4 h-4 ml-auto" />}
+      <Icon className={`w-4 h-4 ${activeTab === id ? 'text-emerald-400' : 'group-hover:scale-110 transition-transform'}`} />
+      <span className="font-medium text-sm">{label}</span>
+      {activeTab === id && <ChevronRight className="w-3 h-3 ml-auto opacity-50" />}
     </button>
   );
 
   return (
-    <div className="min-h-screen bg-black flex text-white selection:bg-primary/30">
-      {/* Sidebar */}
-      <aside className="w-72 border-r border-white/5 flex flex-col sticky top-0 h-screen p-6 shrink-0 bg-[#050505]">
-        <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-            <Zap className="w-6 h-6 text-black fill-current" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tighter">GORENEL</span>
-            <span className="text-[10px] text-white/40 font-black tracking-widest uppercase -mt-1">Cloud Gateway</span>
-          </div>
-        </div>
+    <div className="min-h-screen flex text-white selection:bg-emerald-500/30 overflow-hidden font-sans">
 
-        <nav className="flex-1 space-y-2">
-          <div className="px-4 mb-4">
-            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Management</span>
-          </div>
-          <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
-          <NavItem id="tunnels" icon={Globe} label="Standard Tunnels" />
-          <NavItem id="ai_gateway" icon={Cpu} label="AI Gateway" />
+      {/* Background Mesh Gradients (Fixed) */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[20%] left-[10%] w-[30%] h-[30%] bg-emerald-500/5 rounded-full blur-[100px] animate-pulse-slow" />
+        <div className="absolute bottom-[20%] right-[10%] w-[30%] h-[30%] bg-blue-600/5 rounded-full blur-[100px] animate-pulse-slow delay-1000" />
+      </div>
 
-          <div className="mt-8 px-4 mb-4">
-            <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Developer Tools</span>
-          </div>
-          <NavItem id="traffic" icon={Microscope} label="Traffic Inspector" />
-          <NavItem id="settings" icon={Settings} label="Global Rules" />
-        </nav>
-
-        <div className="mt-auto space-y-4">
-          <div className="bg-white/5 rounded-3xl p-4 border border-white/5">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(16,185,129,1)]" />
-              <span className="text-xs font-bold text-white/50">System Online</span>
+      {/* Floating Sidebar */}
+      <aside className="w-64 z-20 p-4 hidden md:flex flex-col h-screen">
+        <div className="flex-1 bg-[#0A0C10]/60 backdrop-blur-xl border border-white/5 rounded-3xl flex flex-col p-6 shadow-2xl">
+          <div className="flex items-center gap-3 mb-10">
+            <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(52,211,153,0.3)]">
+              <Zap className="w-4 h-4 text-black fill-current" />
             </div>
-            <p className="text-[10px] text-white/30 leading-relaxed font-medium">Node: EU-Central-1<br />Agent Version: 1.0.0-gold</p>
+            <div className="flex flex-col">
+              <span className="font-bold text-lg tracking-tight">GORENEL</span>
+            </div>
           </div>
 
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-white/40 hover:text-red-400 hover:bg-red-400/10 transition-all group"
-          >
-            <LogOut className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-            <span className="font-bold text-sm">Sign Out</span>
-          </button>
+          <nav className="flex-1 space-y-6">
+            <div className="space-y-1">
+              <div className="px-4 mb-2">
+                <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Platform</span>
+              </div>
+              <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
+              <NavItem id="tunnels" icon={Globe} label="Tunnels" />
+              <NavItem id="ai_gateway" icon={Cpu} label="AI Gateway" />
+            </div>
+
+            <div className="space-y-1">
+              <div className="px-4 mb-2">
+                <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Developers</span>
+              </div>
+              <NavItem id="traffic" icon={Microscope} label="Inspector" />
+              <NavItem id="settings" icon={Settings} label="Rules" />
+            </div>
+          </nav>
+
+          <div className="mt-auto pt-6 border-t border-white/5 space-y-4">
+            <div className="flex items-center gap-2 text-xs text-white/40 px-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              EU-Central-1 • v1.0.0
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
+            >
+              <LogOut className="w-4 h-4" />
+              Sign Out
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto p-12">
-        {error && (
-          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-500">
-            <AlertCircle className="w-5 h-5" />
-            <span className="text-sm font-bold">{error}</span>
-          </div>
-        )}
+      <main className="flex-1 overflow-auto relative z-10 scrollbar-hide">
+        <div className="p-6 md:p-8 lg:p-12 max-w-[1600px] mx-auto space-y-10">
 
-        <header className="flex items-center justify-between mb-12">
-          <div>
-            <h2 className="text-4xl font-black tracking-tight mb-2 text-gradient">
-              {activeTab === 'overview' && "Command Center"}
-              {activeTab === 'tunnels' && "Traffic Tunnels"}
-              {activeTab === 'ai_gateway' && "AI Intelligence"}
-              {activeTab === 'traffic' && "Deep Inspection"}
-              {activeTab === 'settings' && "Modification Rules"}
-            </h2>
-            <p className="text-white/40 font-medium">
-              {activeTab === 'overview' && "Real-time system integrity and global metrics."}
-              {activeTab === 'tunnels' && "Manage and monitor your public endpoints."}
-              {activeTab === 'ai_gateway' && "Unified interface for LLM proxying and caching."}
-              {activeTab === 'traffic' && "Detailed request/response logs and replay tools."}
-              {activeTab === 'settings' && "Define dynamic traffic manipulation logic."}
-            </p>
-          </div>
+          {/* Transparent Header */}
+          <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4">
+            <div className="animate-in slide-in-from-bottom-2 duration-500">
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
+                {activeTab === 'overview' && "Command Center"}
+                {activeTab === 'tunnels' && "Active Tunnels"}
+                {activeTab === 'ai_gateway' && "AI Gateway"}
+                {activeTab === 'traffic' && "Traffic Inspector"}
+                {activeTab === 'settings' && "Global Rules"}
+              </h2>
+              <p className="text-lg text-white/50 font-normal max-w-2xl">
+                {activeTab === 'overview' && "Real-time system overview and performance metrics."}
+                {activeTab === 'tunnels' && "Manage your secure tunnels and endpoints."}
+                {activeTab === 'ai_gateway' && "Unified API for LLM routing, caching and rate limiting."}
+                {activeTab === 'traffic' && "Inspect and replay HTTP requests in real-time."}
+                {activeTab === 'settings' && "Configure modification rules for incoming traffic."}
+              </p>
+            </div>
 
-          <div className="flex items-center gap-4">
             <button
               onClick={() => setIsConnectOpen(true)}
-              className="btn-primary-premium"
+              className="btn-primary-premium self-start md:self-center"
             >
-              Connect Localhost <ChevronRight className="w-4 h-4" />
+              <span className="text-lg mr-1">+</span> Connect Localhost
             </button>
-          </div>
-        </header>
+          </header>
 
-        <Suspense fallback={<div className="flex items-center justify-center p-20"><Activity className="w-8 h-8 text-primary animate-spin" /></div>}>
-          {activeTab === 'overview' && (
-            <div className="space-y-12">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <MetricCard title="Active Tunnels" value={metrics?.tunnels.active_count || 0} icon={Globe} color="emerald" />
-                <MetricCard title="Total Requests" value={analytics?.total_requests || 0} icon={TrendingUp} color="emerald" trend={{ value: 12, isPositive: true }} />
-                <MetricCard title="System Load" value={metrics?.system.goroutines || 0} icon={Activity} color="emerald" />
-                <MetricCard title="Avg Latency" value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(0)} ms`} icon={Zap} color="emerald" />
-              </div>
+          <Suspense fallback={<div className="h-96 flex items-center justify-center"><Activity className="w-8 h-8 text-emerald-500 animate-spin" /></div>}>
+            {activeTab === 'overview' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
-              <div className="grid grid-cols-2 gap-8">
-                <RealtimeChart data={analytics?.time_series || []} metric="requests" title="Global Requests / Sec" color="#10b981" />
-                <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title="P95 Response Latency" color="#8b5cf6" />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                  <GeoMap data={analytics?.top_countries || []} />
+                {/* Metrics Grid - Airy */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <MetricCard title="Active Tunnels" value={metrics?.tunnels.active_count || 0} icon={Globe} color="emerald" />
+                  <MetricCard title="Total Requests" value={analytics?.total_requests || 0} icon={TrendingUp} color="blue" trend={{ value: 12, isPositive: true }} />
+                  <MetricCard title="System Load" value={`${metrics?.system.goroutines || 0}`} icon={Activity} color="violet" />
+                  <MetricCard title="Avg Latency" value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(0)} ms`} icon={Zap} color="rose" />
                 </div>
-                <div className="space-y-8">
-                  <AnomalyAlerts anomalies={anomalies} />
-                  <div className="card bg-gradient-to-br from-primary/10 to-transparent">
-                    <div className="flex items-center gap-3 mb-4">
-                      <ShieldCheck className="w-6 h-6 text-primary" />
-                      <h3 className="font-black">Safe Shield Active</h3>
-                    </div>
-                    <p className="text-xs text-white/50 leading-relaxed font-medium">Automatic anomaly detection is protecting 100% of your incoming traffic using a distributed consensus model.</p>
+
+                {/* Charts - Floating */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <RealtimeChart data={analytics?.time_series || []} metric="requests" title="Global Requests / Sec" color="#10b981" />
+                  <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title="P95 Latency (ms)" color="#eff6ff" />
+                </div>
+
+                {/* Bottom Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-2">
+                    <GeoMap data={analytics?.top_countries || []} />
                   </div>
-                </div>
-              </div>
-            </div>
-          )}
+                  <div className="space-y-6">
+                    <AnomalyAlerts anomalies={anomalies} />
 
-          {activeTab === 'tunnels' && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <TunnelsList tunnels={tunnels} onOpenConnect={() => setIsConnectOpen(true)} />
-            </div>
-          )}
-
-          {activeTab === 'ai_gateway' && (
-            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                  <ModelComparison stats={mlStats} />
-                </div>
-                <div className="card space-y-6">
-                  <h3 className="font-black text-xl">Provider Heath</h3>
-                  <div className="space-y-4">
-                    {['OpenAI', 'Anthropic', 'Local-Llama'].map(p => (
-                      <div key={p} className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
-                        <span className="font-bold text-sm">{p}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-primary font-black uppercase tracking-widest">Active</span>
-                          <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_4px_rgba(16,185,129,1)]" />
-                        </div>
+                    <div className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col justify-center h-full relative overflow-hidden">
+                      <div className="absolute inset-0 bg-emerald-500/5 blur-3xl" />
+                      <div className="relative z-10">
+                        <ShieldCheck className="w-10 h-10 text-emerald-400 mb-4" />
+                        <h3 className="text-xl font-bold text-white mb-2">System Secure</h3>
+                        <p className="text-white/50 leading-relaxed">
+                          Anomaly detection is active. No threats detected in the last 24 hours.
+                        </p>
                       </div>
-                    ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {activeTab === 'traffic' && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <TrafficInspector history={history} />
-            </div>
-          )}
+            {activeTab === 'tunnels' && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <TunnelsList tunnels={tunnels} onOpenConnect={() => setIsConnectOpen(true)} />
+              </div>
+            )}
 
-          {activeTab === 'settings' && (
-            <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <ModificationRules rules={rules} onRulesChange={fetchData} />
-            </div>
-          )}
-        </Suspense>
+            {activeTab === 'ai_gateway' && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2">
+                    <ModelComparison stats={mlStats} />
+                  </div>
+                  <div className="p-8 rounded-3xl bg-[#0A0C10]/40 border border-white/5 backdrop-blur-md">
+                    <h3 className="font-bold text-lg mb-6">Provider Status</h3>
+                    <div className="space-y-4">
+                      {['OpenAI', 'Anthropic', 'Local-Llama'].map(p => (
+                        <div key={p} className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.02]">
+                          <span className="font-medium">{p}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Operational</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
-        <ConnectModal isOpen={isConnectOpen} onClose={() => setIsConnectOpen(false)} />
+            {activeTab === 'traffic' && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-[#0A0C10]/40 backdrop-blur-md rounded-3xl border border-white/5 overflow-hidden">
+                <TrafficInspector history={history} />
+              </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <ModificationRules rules={rules} onRulesChange={fetchData} />
+              </div>
+            )}
+          </Suspense>
+        </div>
       </main>
+
+      <ConnectModal isOpen={isConnectOpen} onClose={() => setIsConnectOpen(false)} />
     </div>
   );
 }
