@@ -128,6 +128,28 @@ export interface ModelStat {
   avg_inference_ms: number;
 }
 
+export interface CapturedRequest {
+  id: string;
+  subdomain: string;
+  method: string;
+  path: string;
+  req_headers: Record<string, string[]>;
+  req_body: string; // Base64 or string
+  resp_headers: Record<string, string[]>;
+  resp_body: string;
+  status_code: number;
+  timestamp: string;
+  duration: number; // in nanoseconds
+}
+
+export interface ModificationRule {
+  id: string;
+  path_pattern: string;
+  add_headers?: Record<string, string>;
+  remove_headers?: string[];
+  replace_path?: string;
+}
+
 export type ModelStatsResponse = Record<string, ModelStat>;
 
 // API Functions
@@ -185,6 +207,32 @@ export const api = {
   logout: async () => {
     // We can clear cookies here or handle server-side
     document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  },
+
+  // Traffic Inspection
+  getTrafficHistory: async (): Promise<CapturedRequest[]> => {
+    const { data } = await apiClient.get<CapturedRequest[]>('/api/inspector/history');
+    return data;
+  },
+
+  replayRequest: async (id: string): Promise<any> => {
+    const { data } = await apiClient.post(`/api/inspector/replay?id=${id}`);
+    return data;
+  },
+
+  // Traffic Modification Rules
+  getModificationRules: async (): Promise<ModificationRule[]> => {
+    const { data } = await apiClient.get<ModificationRule[]>('/api/inspector/rules');
+    return data;
+  },
+
+  addModificationRule: async (rule: Partial<ModificationRule>): Promise<ModificationRule> => {
+    const { data } = await apiClient.post<ModificationRule>('/api/inspector/rules', rule);
+    return data;
+  },
+
+  deleteModificationRule: async (id: string): Promise<void> => {
+    await apiClient.delete(`/api/inspector/rules?id=${id}`);
   },
 };
 

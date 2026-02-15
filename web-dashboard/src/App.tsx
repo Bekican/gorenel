@@ -11,9 +11,12 @@ const TunnelsList = React.lazy(() => import('./components/TunnelsList').then(mod
 const GeoMap = React.lazy(() => import('./components/GeoMap').then(module => ({ default: module.GeoMap })));
 const AnomalyAlerts = React.lazy(() => import('./components/AnomalyAlerts').then(module => ({ default: module.AnomalyAlerts })));
 const ModelComparison = React.lazy(() => import('./components/ModelComparison').then(module => ({ default: module.ModelComparison })));
+const TrafficInspector = React.lazy(() => import('./components/TrafficInspector').then(module => ({ default: module.TrafficInspector })));
+const ModificationRules = React.lazy(() => import('./components/ModificationRules').then(module => ({ default: module.ModificationRules })));
 import { LoginPage } from './components/LoginPage';
 import { ConnectModal } from './components/ConnectModal';
-import { LogOut } from 'lucide-react';
+import { LogOut, Layout, Activity as ActivityIcon } from 'lucide-react';
+import type { CapturedRequest, ModificationRule } from './api/client';
 
 // Main App Component
 function App() {
@@ -24,6 +27,9 @@ function App() {
   const [tunnels, setTunnels] = useState<any[]>([]);
   const [anomalies, setAnomalies] = useState<AnomalyRecord[]>([]);
   const [mlStats, setMlStats] = useState<ModelStatsResponse>({});
+  const [history, setHistory] = useState<CapturedRequest[]>([]);
+  const [rules, setRules] = useState<ModificationRule[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'traffic'>('overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,18 +77,22 @@ function App() {
     const fetchData = async () => {
       try {
         setError(null);
-        const [metricsData, analyticsData, tunnelsData, anomaliesData, mlStatsData] = await Promise.all([
+        const [metricsData, analyticsData, tunnelsData, anomaliesData, mlStatsData, historyData, rulesData] = await Promise.all([
           api.getMetrics(),
           api.getAnalytics(),
           api.getTunnels(),
           api.getAnomalies(),
           api.getMLStats(),
+          api.getTrafficHistory(),
+          api.getModificationRules(),
         ]);
         setMetrics(metricsData);
         setAnalytics(analyticsData);
         setTunnels(tunnelsData.tunnels || []);
         setAnomalies(anomaliesData.anomalies || []);
         setMlStats(mlStatsData || {});
+        setHistory(historyData || []);
+        setRules(rulesData || []);
         setLoading(false);
       } catch (err) {
         setError('Failed to fetch data. Make sure the server is running on port 9090.');
@@ -147,6 +157,20 @@ function App() {
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <nav className="flex items-center gap-2 bg-neutral-100 p-1 rounded-xl mr-4">
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'overview' ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-700'}`}
+                >
+                  <Layout className="w-4 h-4" /> Overview
+                </button>
+                <button
+                  onClick={() => setActiveTab('traffic')}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'traffic' ? 'bg-white text-primary-600 shadow-sm' : 'text-neutral-500 hover:text-neutral-700'}`}
+                >
+                  <ActivityIcon className="w-4 h-4" /> Traffic
+                </button>
+              </nav>
               <div className="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-sm font-medium text-green-700">Live System</span>
@@ -203,45 +227,64 @@ function App() {
             />
           </div>
 
-          {/* Charts Row */}
-          <ErrorBoundary>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
-              {analytics?.time_series && (
-                <>
-                  <RealtimeChart
-                    data={analytics.time_series}
-                    metric="requests"
-                    title="Request Rate"
-                    color="#10b981"
-                  />
-                  <RealtimeChart
-                    data={analytics.time_series}
-                    metric="avg_latency_ms"
-                    title="Average Latency"
-                    color="#f59e0b"
-                  />
-                </>
-              )}
-            </div>
-          </ErrorBoundary>
+          {activeTab === 'overview' ? (
+            <>
+              {/* Charts Row */}
+              <ErrorBoundary>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
+                  {analytics?.time_series && (
+                    <>
+                      <RealtimeChart
+                        data={analytics.time_series}
+                        metric="requests"
+                        title="Request Rate"
+                        color="#10b981"
+                      />
+                      <RealtimeChart
+                        data={analytics.time_series}
+                        metric="avg_latency_ms"
+                        title="Average Latency"
+                        color="#f59e0b"
+                      />
+                    </>
+                  )}
+                </div>
+              </ErrorBoundary>
 
-          {/* Tunnels and Geo */}
-          <ErrorBoundary>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
-              <TunnelsList tunnels={tunnels} onOpenConnect={() => setIsConnectOpen(true)} />
-              {analytics?.top_countries && (
-                <GeoMap data={analytics.top_countries} />
-              )}
-            </div>
-          </ErrorBoundary>
+              {/* Tunnels and Geo */}
+              <ErrorBoundary>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '400ms', animationFillMode: 'both' }}>
+                  <TunnelsList tunnels={tunnels} onOpenConnect={() => setIsConnectOpen(true)} />
+                  {analytics?.top_countries && (
+                    <GeoMap data={analytics.top_countries} />
+                  )}
+                </div>
+              </ErrorBoundary>
 
-          {/* Security & ML Models */}
-          <ErrorBoundary>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '600ms', animationFillMode: 'both' }}>
-              <ModelComparison stats={mlStats} />
-              <AnomalyAlerts anomalies={anomalies} />
+              {/* Security & ML Models */}
+              <ErrorBoundary>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 animate-fade-in-up" style={{ animationDelay: '600ms', animationFillMode: 'both' }}>
+                  <ModelComparison stats={mlStats} />
+                  <AnomalyAlerts anomalies={anomalies} />
+                </div>
+              </ErrorBoundary>
+            </>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8 animate-fade-in">
+              <div className="lg:col-span-8">
+                <TrafficInspector history={history} />
+              </div>
+              <div className="lg:col-span-4">
+                <ModificationRules
+                  rules={rules}
+                  onRulesChange={async () => {
+                    const rulesData = await api.getModificationRules();
+                    setRules(rulesData);
+                  }}
+                />
+              </div>
             </div>
-          </ErrorBoundary>
+          )}
 
           {/* Connect Modal */}
           <ConnectModal isOpen={isConnectOpen} onClose={() => setIsConnectOpen(false)} />
