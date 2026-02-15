@@ -1,5 +1,4 @@
-import React from 'react';
-import { Cpu, Zap, Activity, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Zap, Activity, ShieldCheck, AlertCircle, BarChart3, BrainCircuit } from 'lucide-react';
 import type { ModelStatsResponse } from '../api/client';
 
 interface Props {
@@ -12,75 +11,93 @@ const modelNames: Record<string, string> = {
 };
 
 const modelColors: Record<string, string> = {
-    isolation_forest: 'text-blue-500 bg-blue-50',
-    autoencoder: 'text-purple-500 bg-purple-50'
+    isolation_forest: 'text-blue-400 bg-blue-400/10 border-blue-400/20 glow-blue',
+    autoencoder: 'text-violet-400 bg-violet-400/10 border-violet-400/20 glow-violet'
 };
 
 export const ModelComparison: React.FC<Props> = ({ stats }) => {
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-neutral-100 p-6 h-full">
-            <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-neutral-50 rounded-xl flex items-center justify-center">
-                    <Cpu className="w-5 h-5 text-neutral-500" />
+        <div className="card h-full p-8 flex flex-col space-y-8">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <div className="p-3 bg-white/5 rounded-2xl border border-white/10 shadow-[0_0_20px_rgba(255,255,255,0.05)]">
+                        <BrainCircuit className="w-5 h-5 text-white/60" />
+                    </div>
+                    <div>
+                        <h3 className="text-xl font-black">Anomaly Engine</h3>
+                        <p className="text-sm text-white/40 font-medium">Dual-stack heuristic validation</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 className="font-semibold text-neutral-800">Anomaly Engine Analysis</h3>
-                    <p className="text-xs text-neutral-500">Dual-model academic comparison</p>
+                <div className="flex items-center gap-2">
+                    <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-2">
+                        <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
+                        <span className="text-[10px] font-black uppercase text-primary tracking-widest">Neural Live</span>
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {Object.entries(stats).map(([key, stat]) => (
-                    <div key={key} className="p-4 rounded-xl border border-neutral-100 bg-neutral-50/30">
-                        <div className="flex items-center justify-between mb-3">
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${modelColors[key] || 'text-neutral-500 bg-neutral-50'}`}>
-                                {modelNames[key] || key}
-                            </span>
-                            {stat.is_trained ? (
-                                <ShieldCheck className="w-4 h-4 text-green-500" />
-                            ) : (
-                                <AlertCircle className="w-4 h-4 text-yellow-500" />
-                            )}
-                        </div>
-
-                        <div className="space-y-3">
+                    <div key={key} className="relative group overflow-hidden bg-white/[0.02] border border-white/5 rounded-[2rem] p-6 hover:bg-white/[0.05] hover:border-white/10 transition-all duration-300">
+                        <div className="relative z-10 space-y-6">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-neutral-500 shrink-0">
-                                    <Activity className="w-3.5 h-3.5" />
-                                    <span className="text-xs">Detections</span>
-                                </div>
-                                <span className="text-sm font-semibold text-neutral-800 font-mono">
-                                    {stat.total_anomalies}
+                                <span className={`text-[10px] font-black px-3 py-1 rounded-full border uppercase tracking-widest ${modelColors[key] || 'text-white/40 bg-white/5 border-white/10'}`}>
+                                    {modelNames[key] || key}
                                 </span>
+                                {stat.is_trained ? (
+                                    <div className="p-2 bg-emerald-500/10 rounded-xl">
+                                        <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                                    </div>
+                                ) : (
+                                    <div className="p-2 bg-amber-500/10 rounded-xl animate-pulse">
+                                        <AlertCircle className="w-4 h-4 text-amber-500" />
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-neutral-500 shrink-0">
-                                    <Zap className="w-3.5 h-3.5" />
-                                    <span className="text-xs">Latency</span>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-black border border-white/5 rounded-2xl space-y-1">
+                                    <div className="flex items-center gap-2 text-white/20">
+                                        <Activity className="w-3 h-3" />
+                                        <span className="text-[8px] font-black uppercase tracking-widest">Detections</span>
+                                    </div>
+                                    <p className="text-xl font-black text-white selection:bg-primary/30">{stat.total_anomalies}</p>
                                 </div>
-                                <span className="text-sm font-semibold text-neutral-800 font-mono">
-                                    {stat.avg_inference_ms.toFixed(2)}ms
-                                </span>
+                                <div className="p-4 bg-black border border-white/5 rounded-2xl space-y-1">
+                                    <div className="flex items-center gap-2 text-white/20">
+                                        <Zap className="w-3 h-3" />
+                                        <span className="text-[8px] font-black uppercase tracking-widest">Latency</span>
+                                    </div>
+                                    <p className="text-xl font-black text-white selection:bg-primary/30">{stat.avg_inference_ms.toFixed(2)}<span className="text-xs text-white/20 ml-1">ms</span></p>
+                                </div>
                             </div>
 
-                            {/* Progress bar visual for confidence/load or similar */}
-                            <div className="pt-1">
-                                <div className="w-full bg-neutral-200 rounded-full h-1">
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-end">
+                                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Heuristic confidence</span>
+                                    <span className="text-[10px] font-black text-primary uppercase tracking-widest">
+                                        {Math.round(Math.min((stat.total_anomalies / (stat.total_predictions || 1)) * 500, 100))}%
+                                    </span>
+                                </div>
+                                <div className="w-full bg-white/5 rounded-full h-1.5 overflow-hidden">
                                     <div
-                                        className={`h-1 rounded-full ${key === 'autoencoder' ? 'bg-purple-500' : 'bg-blue-500'}`}
+                                        className={`h-full rounded-full transition-all duration-1000 ${key === 'autoencoder' ? 'bg-violet-400 glow-violet' : 'bg-blue-400 glow-blue'}`}
                                         style={{ width: `${Math.min((stat.total_anomalies / (stat.total_predictions || 1)) * 500, 100)}%` }}
                                     />
                                 </div>
                             </div>
                         </div>
+
+                        {/* Decorative background accent */}
+                        <div className={`absolute -right-8 -bottom-8 w-32 h-32 blur-[60px] opacity-10 rounded-full ${key === 'autoencoder' ? 'bg-violet-500' : 'bg-blue-500'}`} />
                     </div>
                 ))}
             </div>
 
             {!Object.keys(stats).length && (
-                <div className="text-center py-8 text-neutral-400 text-sm italic">
-                    Fetching model statistics...
+                <div className="flex-1 flex flex-col items-center justify-center space-y-4 border-2 border-white/5 border-dashed rounded-[3rem]">
+                    <BarChart3 className="w-12 h-12 text-white/5" />
+                    <p className="text-[10px] font-black text-white/10 uppercase tracking-[0.3em]">Awaiting signal calibration...</p>
                 </div>
             )}
         </div>

@@ -4,40 +4,42 @@ import type { LucideIcon } from "lucide-react";
 interface MetricCardProps {
   title: string;
   value: string | number;
-  subtitle?: string;
   icon: LucideIcon;
   trend?: {
     value: number;
     isPositive: boolean;
   };
-  color?: "blue" | "green" | "purple" | "orange" | "red";
+  color?: "emerald" | "violet" | "blue" | "rose";
 }
 
-const colorClasses = {
-  blue: "from-blue-500 to-cyan-500",
-  green: "from-green-500 to-emerald-500",
-  purple: "from-purple-500 to-pink-500",
-  orange: "from-orange-500 to-red-500",
-  red: "from-red-500 to-rose-500",
+const colorStyles = {
+  emerald: {
+    bg: "bg-emerald-500/10",
+    text: "text-emerald-500",
+    glow: "shadow-[0_0_15px_rgba(16,185,129,0.3)]",
+    trend: "text-emerald-400"
+  },
+  violet: {
+    bg: "bg-violet-500/10",
+    text: "text-violet-500",
+    glow: "shadow-[0_0_15px_rgba(139,92,246,0.3)]",
+    trend: "text-violet-400"
+  },
+  blue: {
+    bg: "bg-blue-500/10",
+    text: "text-blue-500",
+    glow: "shadow-[0_0_15px_rgba(59,130,246,0.3)]",
+    trend: "text-blue-400"
+  },
+  rose: {
+    bg: "bg-rose-500/10",
+    text: "text-rose-500",
+    glow: "shadow-[0_0_15px_rgba(244,63,94,0.3)]",
+    trend: "text-rose-400"
+  },
 };
 
-const iconBgColors = {
-  blue: "bg-blue-50",
-  green: "bg-green-50",
-  purple: "bg-purple-50",
-  orange: "bg-orange-50",
-  red: "bg-red-50",
-};
-
-const iconTextColors = {
-  blue: "text-blue-600",
-  green: "text-green-600",
-  purple: "text-purple-600",
-  orange: "text-orange-600",
-  red: "text-red-600",
-};
-
-const useCountUp = (end: number | string, duration = 1000) => {
+const useCountUp = (end: number | string, duration = 1500) => {
   const [displayValue, setDisplayValue] = React.useState(end);
 
   React.useEffect(() => {
@@ -76,7 +78,7 @@ const useCountUp = (end: number | string, duration = 1000) => {
       if (Number.isInteger(numericEnd)) {
         formattedCurrent = Math.floor(current).toLocaleString();
       } else {
-        formattedCurrent = current.toFixed(2);
+        formattedCurrent = current.toFixed(0);
       }
 
       setDisplayValue(`${prefix}${formattedCurrent}${suffix}`);
@@ -94,39 +96,36 @@ const useCountUp = (end: number | string, duration = 1000) => {
 export const MetricCard: React.FC<MetricCardProps> = ({
   title,
   value,
-  subtitle,
   icon: Icon,
   trend,
-  color = "blue",
+  color = "emerald",
 }) => {
   const animatedValue = useCountUp(value);
+  const style = colorStyles[color];
 
   return (
-    <div className="metric-card group relative overflow-hidden transform transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-fade-in-up">
-      <div
-        className={`absolute inset-0 bg-gradient-to-br ${colorClasses[color]} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
-      />
+    <div className="metric-card relative group">
+      {/* Background glow on hover */}
+      <div className={`absolute -inset-1 rounded-[2.2rem] bg-gradient-to-br transition-all duration-500 opacity-0 group-hover:opacity-10 blur-xl ${style.bg}`} />
 
-      <div className="relative">
-        <div className="flex items-start justify-between mb-4">
-          <div className={`p-3 rounded-xl ${iconBgColors[color]} shadow-sm group-hover:scale-110 transition-transform duration-300`}>
-            <Icon className={`w-6 h-6 ${iconTextColors[color]}`} />
+      <div className="relative h-full flex flex-col justify-between">
+        <div className="flex items-center justify-between mb-8">
+          <div className={`p-4 rounded-2xl ${style.bg} ${style.glow} group-hover:scale-110 transition-transform duration-500`}>
+            <Icon className={`w-6 h-6 ${style.text}`} />
           </div>
 
           {trend && (
-            <div
-              className={`flex items-center gap-1 text-sm font-medium ${trend.isPositive ? "text-green-600" : "text-red-600"
-                }`}
-            >
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest ${trend.isPositive ? 'text-primary' : 'text-rose-400'}`}>
               {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
             </div>
           )}
         </div>
 
-        <div className="space-y-1">
-          <p className="text-3xl font-bold text-neutral-900 tracking-tight">{animatedValue}</p>
-          <p className="text-sm text-neutral-500 font-medium">{title}</p>
-          {subtitle && <p className="text-xs text-neutral-400">{subtitle}</p>}
+        <div>
+          <h3 className="text-white/40 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{title}</h3>
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-black tracking-tighter text-gradient">{animatedValue}</span>
+          </div>
         </div>
       </div>
     </div>

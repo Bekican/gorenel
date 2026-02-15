@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Play, Clock, Globe, Shield, Terminal } from 'lucide-react';
+import { Search, Play, Clock, Globe, Shield, Terminal, Filter, MoreHorizontal, ArrowRight, CornerDownRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { type CapturedRequest, api } from '../api/client';
 
@@ -24,7 +24,6 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
         setReplaying(id);
         try {
             await api.replayRequest(id);
-            // Success notification could go here
         } catch (err) {
             console.error('Replay failed:', err);
         } finally {
@@ -32,34 +31,40 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
         }
     };
 
-    const getStatusBadgeClass = (code: number) => {
-        if (code >= 200 && code < 300) return 'bg-green-50 text-green-700 border-green-100';
-        if (code >= 400 && code < 500) return 'bg-orange-50 text-orange-700 border-orange-100';
-        if (code >= 500) return 'bg-red-50 text-red-700 border-red-100';
-        return 'bg-blue-50 text-blue-700 border-blue-100';
+    const getStatusStyles = (code: number) => {
+        if (code >= 200 && code < 300) return 'text-primary bg-primary/10 border-primary/20 glow-emerald';
+        if (code >= 400 && code < 500) return 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20';
+        if (code >= 500) return 'text-rose-500 bg-rose-500/10 border-rose-500/20 glow-rose';
+        return 'text-blue-400 bg-blue-400/10 border-blue-400/20';
     };
 
     return (
-        <div className="card h-full flex flex-col p-0 overflow-hidden">
-            <div className="p-6 border-b border-neutral-100">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2 bg-primary-50 rounded-lg">
-                            <Search className="w-5 h-5 text-primary-600" />
+        <div className="card p-0 flex flex-col h-[calc(100vh-250px)]">
+            <div className="p-8 border-b border-white/5 space-y-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
+                            <Filter className="w-5 h-5 text-white/60" />
                         </div>
                         <div>
-                            <h3 className="text-lg font-semibold text-neutral-900">Traffic Inspector</h3>
-                            <p className="text-sm text-neutral-500">Live request history through your tunnels</p>
+                            <h3 className="text-xl font-black">Packet Streams</h3>
+                            <p className="text-sm text-white/40 font-medium">Real-time inspection of tunnel traffic</p>
                         </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">
+                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(16,185,129,1)]" />
+                            Capturing Live
+                        </span>
                     </div>
                 </div>
 
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                <div className="relative group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-primary transition-colors" />
                     <input
                         type="text"
-                        placeholder="Filter by path, method, status..."
-                        className="w-full pl-10 pr-4 py-2 bg-neutral-50 border border-neutral-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 transition-all outline-none"
+                        placeholder="Search by path, method, or status..."
+                        className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/5 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all outline-none text-white selection:bg-primary/30"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -68,54 +73,60 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
 
             <div className="flex-1 overflow-auto">
                 <table className="w-full text-left border-collapse">
-                    <thead className="sticky top-0 bg-neutral-50 text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                        <tr>
-                            <th className="px-6 py-3">Method</th>
-                            <th className="px-6 py-3">Status</th>
-                            <th className="px-6 py-3">Path</th>
-                            <th className="px-6 py-3">Time</th>
-                            <th className="px-6 py-3 text-right">Action</th>
+                    <thead className="sticky top-0 bg-[#0c0c0c]/80 backdrop-blur-md z-10 border-b border-white/5">
+                        <tr className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">
+                            <th className="px-8 py-4">Method</th>
+                            <th className="px-8 py-4">Status</th>
+                            <th className="px-8 py-4">Cloud Path</th>
+                            <th className="px-8 py-4">Time</th>
+                            <th className="px-8 py-4 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-neutral-100">
+                    <tbody className="divide-y divide-white/[0.03]">
                         {filteredHistory.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-neutral-400">
-                                    No requests matching your filters
+                                <td colSpan={5} className="px-8 py-20 text-center">
+                                    <div className="space-y-2">
+                                        <Terminal className="w-10 h-10 text-white/5 mx-auto" />
+                                        <p className="text-white/20 font-black uppercase text-[10px] tracking-widest">No matching logs found</p>
+                                    </div>
                                 </td>
                             </tr>
                         ) : (
                             filteredHistory.map((req) => (
                                 <React.Fragment key={req.id}>
                                     <tr
-                                        className={`hover:bg-neutral-50 cursor-pointer transition-colors ${selectedId === req.id ? 'bg-primary-50/30' : ''}`}
+                                        className={`hover:bg-white/[0.02] cursor-pointer transition-all ${selectedId === req.id ? 'bg-primary/5' : ''}`}
                                         onClick={() => setSelectedId(selectedId === req.id ? null : req.id)}
                                     >
-                                        <td className="px-6 py-4">
-                                            <span className={`text-xs font-bold px-2 py-1 rounded-md ${req.method === 'POST' ? 'bg-blue-50 text-blue-700' :
-                                                req.method === 'GET' ? 'bg-emerald-50 text-emerald-700' : 'bg-neutral-100 text-neutral-700'
+                                        <td className="px-8 py-5">
+                                            <span className={`text-[10px] font-black px-2 py-1 rounded-md border ${req.method === 'POST' ? 'border-blue-500/30 text-blue-400 bg-blue-500/5' :
+                                                    req.method === 'GET' ? 'border-primary/30 text-primary bg-primary/5' :
+                                                        'border-white/10 text-white/40'
                                                 }`}>
                                                 {req.method}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${getStatusBadgeClass(req.status_code)}`}>
+                                        <td className="px-8 py-5">
+                                            <span className={`text-[10px] font-black px-3 py-1 rounded-full border ${getStatusStyles(req.status_code)}`}>
                                                 {req.status_code}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 truncate max-w-xs font-mono text-sm">
-                                            <span className="text-neutral-400 mr-1">{req.subdomain}.</span>
-                                            {req.path}
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-2 max-w-md">
+                                                <span className="text-white/20 font-bold shrink-0">{req.subdomain}.</span>
+                                                <span className="text-sm font-mono text-white/60 truncate">{req.path}</span>
+                                            </div>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-neutral-500">
-                                            {format(new Date(req.timestamp), 'HH:mm:ss')}
+                                        <td className="px-8 py-5 text-xs font-bold text-white/20">
+                                            {format(new Date(req.timestamp), 'HH:mm:ss.SSS')}
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-8 py-5 text-right">
                                             <button
                                                 onClick={(e) => handleReplay(req.id, e)}
                                                 disabled={replaying === req.id}
-                                                className="p-1.5 hover:bg-white rounded-lg transition-all text-neutral-400 hover:text-primary-600 border border-transparent hover:border-primary-100 disabled:opacity-50"
-                                                title="Replay request"
+                                                className="p-2.5 bg-white/5 border border-white/5 rounded-xl text-white/40 hover:text-primary hover:border-primary/20 hover:bg-primary/10 transition-all disabled:opacity-20"
+                                                title="Replay Frame"
                                             >
                                                 <Play className={`w-4 h-4 ${replaying === req.id ? 'animate-spin' : ''}`} />
                                             </button>
@@ -123,55 +134,71 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                     </tr>
 
                                     {selectedId === req.id && (
-                                        <tr className="bg-neutral-50/50">
-                                            <td colSpan={5} className="px-6 py-6 font-mono text-xs">
-                                                <div className="grid grid-cols-2 gap-8">
-                                                    <div>
-                                                        <div className="flex items-center gap-2 mb-3 text-neutral-900 font-bold border-b border-neutral-200 pb-2">
-                                                            <div className="p-1 bg-blue-100 rounded">
-                                                                <Terminal className="w-3 h-3 text-blue-600" />
-                                                            </div>
-                                                            Request Headers
-                                                        </div>
-                                                        <div className="space-y-1">
-                                                            {Object.entries(req.req_headers).map(([k, v]) => (
-                                                                <div key={k} className="flex gap-2">
-                                                                    <span className="text-primary-600 font-bold shrink-0">{k}:</span>
-                                                                    <span className="text-neutral-600 break-all">{v.join(', ')}</span>
+                                        <tr>
+                                            <td colSpan={5} className="px-8 py-0">
+                                                <div className="bg-white/[0.02] border-x border-b border-white/5 rounded-b-3xl p-8 mb-4 animate-in slide-in-from-top-2 duration-300">
+                                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                                                        <div className="space-y-6">
+                                                            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="p-2 bg-blue-500/10 rounded-lg">
+                                                                        <ArrowRight className="w-4 h-4 text-blue-400" />
+                                                                    </div>
+                                                                    <span className="font-black text-xs uppercase tracking-widest text-white/40">Request Frame</span>
                                                                 </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-2 mb-3 text-neutral-900 font-bold border-b border-neutral-200 pb-2">
-                                                            <div className="p-1 bg-emerald-100 rounded">
-                                                                <Shield className="w-3 h-3 text-emerald-600" />
                                                             </div>
-                                                            Response Headers
+                                                            <div className="space-y-2 font-mono text-xs">
+                                                                {Object.entries(req.req_headers).map(([k, v]) => (
+                                                                    <div key={k} className="flex gap-4 p-2 rounded-lg hover:bg-white/[0.02] transition-colors">
+                                                                        <span className="text-blue-400 font-bold shrink-0 w-32 truncate">{k}:</span>
+                                                                        <span className="text-white/40 break-all">{v.join(', ')}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                        <div className="space-y-1">
-                                                            {Object.entries(req.resp_headers).map(([k, v]) => (
-                                                                <div key={k} className="flex gap-2">
-                                                                    <span className="text-emerald-600 font-bold shrink-0">{k}:</span>
-                                                                    <span className="text-neutral-600 break-all">{v.join(', ')}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
 
-                                                <div className="mt-6">
-                                                    <div className="flex items-center gap-2 mb-2 text-neutral-500 font-bold uppercase text-[10px] tracking-widest">
-                                                        Details
-                                                    </div>
-                                                    <div className="flex gap-4">
-                                                        <div className="flex items-center gap-1.5 text-neutral-500">
-                                                            <Clock className="w-3 h-3" />
-                                                            <span>Duration: {(req.duration / 1000000).toFixed(2)}ms</span>
+                                                        <div className="space-y-6">
+                                                            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="p-2 bg-emerald-500/10 rounded-lg">
+                                                                        <Shield className="w-4 h-4 text-emerald-400" />
+                                                                    </div>
+                                                                    <span className="font-black text-xs uppercase tracking-widest text-white/40">Response Stack</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="space-y-2 font-mono text-xs">
+                                                                {Object.entries(req.resp_headers).map(([k, v]) => (
+                                                                    <div key={k} className="flex gap-4 p-2 rounded-lg hover:bg-white/[0.02] transition-colors">
+                                                                        <span className="text-emerald-400 font-bold shrink-0 w-32 truncate">{k}:</span>
+                                                                        <span className="text-white/40 break-all">{v.join(', ')}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                        <div className="flex items-center gap-1.5 text-neutral-500">
-                                                            <Globe className="w-3 h-3" />
-                                                            <span>Timestamp: {req.timestamp}</span>
+                                                    </div>
+
+                                                    <div className="mt-12 flex items-center gap-8 pt-8 border-t border-white/5">
+                                                        <div className="flex items-center gap-3">
+                                                            <Clock className="w-4 h-4 text-white/10" />
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-white/10 uppercase tracking-widest">Latency</span>
+                                                                <span className="text-sm font-black text-white/60">{(req.duration / 1000000).toFixed(2)}ms</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <Globe className="w-4 h-4 text-white/10" />
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-white/10 uppercase tracking-widest">Route</span>
+                                                                <span className="text-sm font-black text-white/60">{req.subdomain}.gorenel.io</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="ml-auto">
+                                                            <button
+                                                                className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                                                                onClick={() => setSelectedId(null)}
+                                                            >
+                                                                Collapse Inspector
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>

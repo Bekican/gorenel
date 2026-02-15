@@ -1,5 +1,5 @@
 import React from 'react';
-import { Activity, Copy, ExternalLink, Server, Plus } from 'lucide-react';
+import { Copy, ExternalLink, Server, Plus, Zap, ArrowDown, ArrowUp } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Tunnel {
@@ -25,121 +25,129 @@ interface TunnelsListProps {
 export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, onOpenConnect }) => {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // Could add toast notification here
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusInfo = (status: string) => {
     switch (status) {
       case 'active':
-        return 'badge-success';
+        return { text: 'Active', pulse: true, color: 'text-primary', glow: 'bg-primary shadow-[0_0_8px_rgba(16,185,129,1)]' };
       case 'idle':
-        return 'badge-warning';
+        return { text: 'Idle', pulse: false, color: 'text-yellow-400', glow: 'bg-yellow-400' };
       case 'error':
-        return 'badge-error';
+        return { text: 'Error', pulse: true, color: 'text-rose-500', glow: 'bg-rose-500' };
       default:
-        return 'badge';
+        return { text: 'Offline', pulse: false, color: 'text-white/20', glow: 'bg-white/10' };
     }
   };
 
   return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary-50 rounded-lg">
-            <Server className="w-5 h-5 text-primary-600" />
+    <div className="card space-y-8">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="p-4 bg-primary/10 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+            <Server className="w-6 h-6 text-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-neutral-900">Active Tunnels</h3>
-            <p className="text-sm text-neutral-500">{tunnels.length} tunnel(s) running</p>
+            <h3 className="text-xl font-black">Managed Tunnels</h3>
+            <p className="text-sm text-white/40 font-medium">{tunnels.length} Active Cloud Endpoints</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={onOpenConnect}
-            className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-sm transition-all active:scale-95"
-          >
-            <Plus className="w-4 h-4" />
-            New Tunnel
-          </button>
-          <div className="flex items-center gap-2 bg-green-50 px-2.5 py-1 rounded-full border border-green-100">
-            <Activity className="w-4 h-4 text-green-600 animate-pulse" />
-            <span className="text-xs text-green-700 font-medium">Live</span>
-          </div>
-        </div>
+
+        <button
+          onClick={onOpenConnect}
+          className="btn-primary-premium text-sm py-2.5"
+        >
+          <Plus className="w-4 h-4" /> New Tunnel
+        </button>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-4">
         {tunnels.length === 0 ? (
-          <div className="text-center py-12 bg-neutral-50 rounded-lg border border-neutral-100 dashed border-2">
-            <Activity className="w-12 h-12 text-neutral-400 mx-auto mb-4" />
-            <p className="text-neutral-600 font-medium mb-1">No active tunnels</p>
-            <p className="text-sm text-neutral-400">
-              Start a tunnel from the CLI to see it here
+          <div className="text-center py-20 border-2 border-dashed border-white/5 rounded-[2rem] bg-white/[0.01]">
+            < Zap className="w-12 h-12 text-white/10 mx-auto mb-4" />
+            <h4 className="font-bold text-white/50 mb-1">No Active Tunnels</h4>
+            <p className="text-sm text-white/20 font-medium max-w-xs mx-auto">
+              Run the connector from your terminal to establish a secure link.
             </p>
           </div>
         ) : (
-          tunnels.map((tunnel) => (
-            <div
-              key={tunnel.id}
-              className="bg-white border border-neutral-200 rounded-xl p-4 hover:shadow-md hover:border-primary-300 transition-all duration-200 group"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-1">
-                    <span className="font-mono text-primary-700 font-bold bg-primary-50 px-2 py-0.5 rounded text-sm">
-                      {tunnel.subdomain}
-                    </span>
-                    <span className={getStatusColor(tunnel.status)}>
-                      {tunnel.status}
-                    </span>
+          tunnels.map((tunnel) => {
+            const status = getStatusInfo(tunnel.status);
+            return (
+              <div
+                key={tunnel.id}
+                className="group relative bg-white/[0.02] border border-white/5 rounded-3xl p-6 hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300"
+              >
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-black border border-white/5 flex items-center justify-center font-black text-xl text-primary shrink-0">
+                      {tunnel.subdomain.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-3">
+                        <span className="font-black text-lg tracking-tight">{tunnel.subdomain}.gorenel.io</span>
+                        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest ${status.color}`}>
+                          <div className={`w-1 h-1 rounded-full ${status.glow} ${status.pulse ? 'animate-pulse' : ''}`} />
+                          {status.text}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs font-bold text-white/30 tracking-tight">
+                        <span className="flex items-center gap-1.5">
+                          <div className="w-1 h-1 rounded-full bg-white/10" />
+                          Local: <span className="text-white/60">127.0.0.1:{tunnel.localPort}</span>
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <Zap className="w-3 h-3" />
+                          <span className="text-white/60">{tunnel.requestCount.toLocaleString()} Hits</span>
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-3 text-sm text-neutral-500 mt-2">
-                    <span className="flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-neutral-300"></span>
-                      localhost:{tunnel.localPort}
-                    </span>
-                    <span className="text-neutral-300">•</span>
-                    <span className="flex items-center gap-1">
-                      {tunnel.requestCount.toLocaleString()} requests
-                    </span>
+
+                  <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-4 text-xs font-black tracking-widest uppercase">
+                      <div className="text-center">
+                        <span className="block text-white/20 mb-1">Traffic In</span>
+                        <span className="flex items-center gap-1 text-emerald-400">
+                          <ArrowDown className="w-3 h-3" /> {formatBytes(tunnel.bandwidth.in)}
+                        </span>
+                      </div>
+                      <div className="w-px h-8 bg-white/5" />
+                      <div className="text-center">
+                        <span className="block text-white/20 mb-1">Traffic Out</span>
+                        <span className="flex items-center gap-1 text-violet-400">
+                          <ArrowUp className="w-3 h-3" /> {formatBytes(tunnel.bandwidth.out)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => copyToClipboard(tunnel.publicUrl)}
+                        className="p-3 bg-white/5 border border-white/5 rounded-2xl text-white/40 hover:text-white hover:bg-white/10 transition-all"
+                        title="Copy Public URL"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                      <a
+                        href={tunnel.publicUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-3 bg-white/5 border border-white/5 rounded-2xl text-white/40 hover:text-primary hover:border-primary/20 hover:bg-primary/10 transition-all"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => copyToClipboard(tunnel.publicUrl)}
-                    className="p-2 hover:bg-neutral-100 rounded-lg transition-colors text-neutral-400 hover:text-neutral-700"
-                    title="Copy URL"
-                  >
-                    <Copy className="w-4 h-4" />
-                  </button>
-                  <a
-                    href={tunnel.publicUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 hover:bg-neutral-100 rounded-lg transition-colors text-neutral-400 hover:text-neutral-700"
-                    title="Open in new tab"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
+                <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-white/10">
+                  <span>Session ID: {tunnel.id}</span>
+                  <span>Started {formatDistanceToNow(new Date(tunnel.startedAt), { addSuffix: true })}</span>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between text-xs text-neutral-400 pt-3 border-t border-neutral-100 mt-3">
-                <span>
-                  Started {formatDistanceToNow(new Date(tunnel.startedAt), { addSuffix: true })}
-                </span>
-                <div className="flex items-center gap-3 font-mono">
-                  <span className="flex items-center gap-1 text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    ↓ {formatBytes(tunnel.bandwidth.in)}
-                  </span>
-                  <span className="flex items-center gap-1 text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
-                    ↑ {formatBytes(tunnel.bandwidth.out)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
