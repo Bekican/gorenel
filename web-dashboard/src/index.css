@@ -27,11 +27,16 @@
   }
 
   body {
-    @apply bg-black text-white antialiased selection:bg-primary/30 selection:text-primary-foreground;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.03) 0, transparent 50%), 
+    @apply bg-black text-white antialiased;
+    background-image:
+      radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.03) 0, transparent 50%),
       radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.03) 0, transparent 50%);
     background-attachment: fixed;
+  }
+
+  ::selection {
+    background-color: hsl(var(--primary) / 0.3);
+    color: hsl(var(--primary-foreground));
   }
 }
 
@@ -43,11 +48,11 @@
   .card {
     @apply glass rounded-[2rem] p-8 transition-all duration-300;
   }
-  
+
   .metric-card {
     @apply card hover:border-white/10 hover:bg-white/[0.05] group;
   }
-  
+
   .btn-premium {
     @apply px-6 py-3 rounded-2xl font-bold transition-all active:scale-95 flex items-center gap-2;
   }
@@ -59,7 +64,7 @@
   .btn-secondary-premium {
     @apply btn-premium bg-white/5 border border-white/10 hover:bg-white/10;
   }
-  
+
   .badge-premium {
     @apply inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border;
   }
@@ -69,7 +74,7 @@
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-br from-white to-white/40;
   }
-  
+
   .glow-emerald {
     box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
   }
