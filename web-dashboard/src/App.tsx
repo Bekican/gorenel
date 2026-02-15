@@ -1,15 +1,14 @@
-```
 import React, { Suspense, useEffect, useState } from 'react';
-import { 
-  Zap, 
-  Users, 
-  TrendingUp, 
-  AlertCircle, 
-  LayoutDashboard, 
-  Globe, 
-  Microscope, 
-  Settings, 
-  LogOut, 
+import {
+  Zap,
+  Users,
+  TrendingUp,
+  AlertCircle,
+  LayoutDashboard,
+  Globe,
+  Microscope,
+  Settings,
+  LogOut,
   Activity,
   ChevronRight,
   ShieldCheck,
@@ -124,13 +123,12 @@ function App() {
   const NavItem = ({ id, icon: Icon, label }: { id: NavTab, icon: any, label: string }) => (
     <button
       onClick={() => setActiveTab(id)}
-      className={`w - full flex items - center gap - 3 px - 4 py - 3 rounded - 2xl transition - all ${
-  activeTab === id
-    ? 'bg-primary/10 text-primary glow-emerald'
-    : 'text-white/40 hover:text-white hover:bg-white/5'
-} `}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${activeTab === id
+          ? 'bg-primary/10 text-primary glow-emerald'
+          : 'text-white/40 hover:text-white hover:bg-white/5'
+        }`}
     >
-      <Icon className={`w - 5 h - 5 ${ activeTab === id ? 'text-primary' : '' } `} />
+      <Icon className={`w-5 h-5 ${activeTab === id ? 'text-primary' : ''}`} />
       <span className="font-bold text-sm tracking-tight">{label}</span>
       {activeTab === id && <ChevronRight className="w-4 h-4 ml-auto" />}
     </button>
@@ -157,7 +155,7 @@ function App() {
           <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
           <NavItem id="tunnels" icon={Globe} label="Standard Tunnels" />
           <NavItem id="ai_gateway" icon={Cpu} label="AI Gateway" />
-          
+
           <div className="mt-8 px-4 mb-4">
             <span className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">Developer Tools</span>
           </div>
@@ -171,10 +169,10 @@ function App() {
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(16,185,129,1)]" />
               <span className="text-xs font-bold text-white/50">System Online</span>
             </div>
-            <p className="text-[10px] text-white/30 leading-relaxed font-medium">Node: EU-Central-1<br/>Agent Version: 1.0.0-gold</p>
+            <p className="text-[10px] text-white/30 leading-relaxed font-medium">Node: EU-Central-1<br />Agent Version: 1.0.0-gold</p>
           </div>
-          
-          <button 
+
+          <button
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-white/40 hover:text-red-400 hover:bg-red-400/10 transition-all group"
           >
@@ -194,107 +192,107 @@ function App() {
         )}
 
         <header className="flex items-center justify-between mb-12">
-           <div>
-              <h2 className="text-4xl font-black tracking-tight mb-2 text-gradient">
-                {activeTab === 'overview' && "Command Center"}
-                {activeTab === 'tunnels' && "Traffic Tunnels"}
-                {activeTab === 'ai_gateway' && "AI Intelligence"}
-                {activeTab === 'traffic' && "Deep Inspection"}
-                {activeTab === 'settings' && "Modification Rules"}
-              </h2>
-              <p className="text-white/40 font-medium">
-                {activeTab === 'overview' && "Real-time system integrity and global metrics."}
-                {activeTab === 'tunnels' && "Manage and monitor your public endpoints."}
-                {activeTab === 'ai_gateway' && "Unified interface for LLM proxying and caching."}
-                {activeTab === 'traffic' && "Detailed request/response logs and replay tools."}
-                {activeTab === 'settings' && "Define dynamic traffic manipulation logic."}
-              </p>
-           </div>
-           
-           <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setIsConnectOpen(true)}
-                className="btn-primary-premium"
-              >
-                Connect Localhost <ChevronRight className="w-4 h-4" />
-              </button>
-           </div>
+          <div>
+            <h2 className="text-4xl font-black tracking-tight mb-2 text-gradient">
+              {activeTab === 'overview' && "Command Center"}
+              {activeTab === 'tunnels' && "Traffic Tunnels"}
+              {activeTab === 'ai_gateway' && "AI Intelligence"}
+              {activeTab === 'traffic' && "Deep Inspection"}
+              {activeTab === 'settings' && "Modification Rules"}
+            </h2>
+            <p className="text-white/40 font-medium">
+              {activeTab === 'overview' && "Real-time system integrity and global metrics."}
+              {activeTab === 'tunnels' && "Manage and monitor your public endpoints."}
+              {activeTab === 'ai_gateway' && "Unified interface for LLM proxying and caching."}
+              {activeTab === 'traffic' && "Detailed request/response logs and replay tools."}
+              {activeTab === 'settings' && "Define dynamic traffic manipulation logic."}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsConnectOpen(true)}
+              className="btn-primary-premium"
+            >
+              Connect Localhost <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </header>
 
         <Suspense fallback={<div className="flex items-center justify-center p-20"><Activity className="w-8 h-8 text-primary animate-spin" /></div>}>
-           {activeTab === 'overview' && (
-              <div className="space-y-12">
-                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <MetricCard title="Active Tunnels" value={metrics?.tunnels.active_count || 0} icon={Globe} color="emerald" />
-                    <MetricCard title="Total Requests" value={analytics?.total_requests || 0} icon={TrendingUp} color="emerald" trend={{value: 12, isPositive: true}} />
-                    <MetricCard title="System Load" value={metrics?.system.goroutines || 0} icon={Activity} color="emerald" />
-                    <MetricCard title="Avg Latency" value={`${ ((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(0) } ms`} icon={Zap} color="emerald" />
-                 </div>
-
-                 <div className="grid grid-cols-2 gap-8">
-                    <RealtimeChart data={analytics?.time_series || []} metric="requests" title="Global Requests / Sec" color="#10b981" />
-                    <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title="P95 Response Latency" color="#8b5cf6" />
-                 </div>
-
-                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2">
-                       <GeoMap data={analytics?.top_countries || []} />
-                    </div>
-                    <div className="space-y-8">
-                       <AnomalyAlerts anomalies={anomalies} />
-                       <div className="card bg-gradient-to-br from-primary/10 to-transparent">
-                          <div className="flex items-center gap-3 mb-4">
-                             <ShieldCheck className="w-6 h-6 text-primary" />
-                             <h3 className="font-black">Safe Shield Active</h3>
-                          </div>
-                          <p className="text-xs text-white/50 leading-relaxed font-medium">Automatic anomaly detection is protecting 100% of your incoming traffic using a distributed consensus model.</p>
-                       </div>
-                    </div>
-                 </div>
+          {activeTab === 'overview' && (
+            <div className="space-y-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <MetricCard title="Active Tunnels" value={metrics?.tunnels.active_count || 0} icon={Globe} color="emerald" />
+                <MetricCard title="Total Requests" value={analytics?.total_requests || 0} icon={TrendingUp} color="emerald" trend={{ value: 12, isPositive: true }} />
+                <MetricCard title="System Load" value={metrics?.system.goroutines || 0} icon={Activity} color="emerald" />
+                <MetricCard title="Avg Latency" value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(0)} ms`} icon={Zap} color="emerald" />
               </div>
-           )}
 
-           {activeTab === 'tunnels' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                 <TunnelsList tunnels={tunnels} onOpenConnect={() => setIsConnectOpen(true)} />
+              <div className="grid grid-cols-2 gap-8">
+                <RealtimeChart data={analytics?.time_series || []} metric="requests" title="Global Requests / Sec" color="#10b981" />
+                <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title="P95 Response Latency" color="#8b5cf6" />
               </div>
-           )}
 
-           {activeTab === 'ai_gateway' && (
-              <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                      <div className="lg:col-span-2">
-                         <ModelComparison stats={mlStats} />
-                      </div>
-                      <div className="card space-y-6">
-                         <h3 className="font-black text-xl">Provider Heath</h3>
-                         <div className="space-y-4">
-                            {['OpenAI', 'Anthropic', 'Local-Llama'].map(p => (
-                               <div key={p} className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
-                                  <span className="font-bold text-sm">{p}</span>
-                                  <div className="flex items-center gap-2">
-                                     <span className="text-[10px] text-primary font-black uppercase tracking-widest">Active</span>
-                                     <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_4px_rgba(16,185,129,1)]" />
-                                  </div>
-                               </div>
-                            ))}
-                         </div>
-                      </div>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                  <GeoMap data={analytics?.top_countries || []} />
+                </div>
+                <div className="space-y-8">
+                  <AnomalyAlerts anomalies={anomalies} />
+                  <div className="card bg-gradient-to-br from-primary/10 to-transparent">
+                    <div className="flex items-center gap-3 mb-4">
+                      <ShieldCheck className="w-6 h-6 text-primary" />
+                      <h3 className="font-black">Safe Shield Active</h3>
+                    </div>
+                    <p className="text-xs text-white/50 leading-relaxed font-medium">Automatic anomaly detection is protecting 100% of your incoming traffic using a distributed consensus model.</p>
                   </div>
+                </div>
               </div>
-           )}
+            </div>
+          )}
 
-           {activeTab === 'traffic' && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                 <TrafficInspector history={history} />
-              </div>
-           )}
+          {activeTab === 'tunnels' && (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <TunnelsList tunnels={tunnels} onOpenConnect={() => setIsConnectOpen(true)} />
+            </div>
+          )}
 
-           {activeTab === 'settings' && (
-              <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
-                 <ModificationRules rules={rules} onRulesChange={fetchData} />
+          {activeTab === 'ai_gateway' && (
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                  <ModelComparison stats={mlStats} />
+                </div>
+                <div className="card space-y-6">
+                  <h3 className="font-black text-xl">Provider Heath</h3>
+                  <div className="space-y-4">
+                    {['OpenAI', 'Anthropic', 'Local-Llama'].map(p => (
+                      <div key={p} className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
+                        <span className="font-bold text-sm">{p}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-primary font-black uppercase tracking-widest">Active</span>
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_4px_rgba(16,185,129,1)]" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
-           )}
+            </div>
+          )}
+
+          {activeTab === 'traffic' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <TrafficInspector history={history} />
+            </div>
+          )}
+
+          {activeTab === 'settings' && (
+            <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <ModificationRules rules={rules} onRulesChange={fetchData} />
+            </div>
+          )}
         </Suspense>
 
         <ConnectModal isOpen={isConnectOpen} onClose={() => setIsConnectOpen(false)} />
@@ -304,4 +302,3 @@ function App() {
 }
 
 export default App;
-```
