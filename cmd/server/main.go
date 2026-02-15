@@ -71,8 +71,8 @@ func main() {
 	tm := server.NewTunnelManager()
 	authManager := server.NewAuthManager()
 
-	// Initialize Advanced Rate Limiter (60 req/min default)
-	rateLimiter := limiter.NewRateLimiter(60, 1*time.Minute)
+	// Initialize Advanced Rate Limiter (1000 req/min to support dashboard polling)
+	rateLimiter := limiter.NewRateLimiter(1000, 1*time.Minute)
 
 	// Initialize Traffic Inspector (keep last 100 requests)
 	inspector := server.NewTrafficInspector(100)
