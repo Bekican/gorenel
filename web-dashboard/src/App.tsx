@@ -134,7 +134,7 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen flex text-white selection:bg-emerald-500/30 overflow-x-hidden font-sans">
+    <div className="min-h-screen flex text-white selection:bg-emerald-500/30 font-sans">
 
       {/* Background Mesh Gradients (Fixed) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -142,56 +142,58 @@ function App() {
         <div className="absolute bottom-[20%] right-[10%] w-[30%] h-[30%] bg-blue-600/5 rounded-full blur-[100px] animate-pulse-slow delay-1000" />
       </div>
 
-      {/* Floating Sidebar */}
-      <aside className="w-64 z-20 p-4 hidden md:flex flex-col h-screen">
-        <div className="flex-1 bg-[#0A0C10]/60 backdrop-blur-xl border border-white/5 rounded-3xl flex flex-col p-6 shadow-2xl">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-              <Zap className="w-4 h-4 text-black fill-current" />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-lg tracking-tight">GORENEL</span>
-            </div>
-          </div>
-
-          <nav className="flex-1 space-y-6">
-            <div className="space-y-1">
-              <div className="px-4 mb-2">
-                <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Platform</span>
+      {/* Floating Sidebar - Sticky */}
+      <aside className="w-64 z-20 p-4 hidden md:block shrink-0">
+        <div className="sticky top-4 h-[calc(100vh-2rem)]">
+          <div className="h-full bg-[#0A0C10]/60 backdrop-blur-xl border border-white/5 rounded-3xl flex flex-col p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-10">
+              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(52,211,153,0.3)]">
+                <Zap className="w-4 h-4 text-black fill-current" />
               </div>
-              <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
-              <NavItem id="tunnels" icon={Globe} label="Tunnels" />
-              <NavItem id="ai_gateway" icon={Cpu} label="AI Gateway" />
-            </div>
-
-            <div className="space-y-1">
-              <div className="px-4 mb-2">
-                <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Developers</span>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg tracking-tight">GORENEL</span>
               </div>
-              <NavItem id="traffic" icon={Microscope} label="Inspector" />
-              <NavItem id="settings" icon={Settings} label="Rules" />
-            </div>
-          </nav>
-
-          <div className="mt-auto pt-6 border-t border-white/5 space-y-4">
-            <div className="flex items-center gap-2 text-xs text-white/40 px-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              EU-Central-1 • v1.0.0
             </div>
 
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </button>
+            <nav className="flex-1 space-y-6">
+              <div className="space-y-1">
+                <div className="px-4 mb-2">
+                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Platform</span>
+                </div>
+                <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
+                <NavItem id="tunnels" icon={Globe} label="Tunnels" />
+                <NavItem id="ai_gateway" icon={Cpu} label="AI Gateway" />
+              </div>
+
+              <div className="space-y-1">
+                <div className="px-4 mb-2">
+                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Developers</span>
+                </div>
+                <NavItem id="traffic" icon={Microscope} label="Inspector" />
+                <NavItem id="settings" icon={Settings} label="Rules" />
+              </div>
+            </nav>
+
+            <div className="mt-auto pt-6 border-t border-white/5 space-y-4">
+              <div className="flex items-center gap-2 text-xs text-white/40 px-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                EU-Central-1 • v1.0.0
+              </div>
+
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
+              >
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto relative z-10 scrollbar-hide">
+      <main className="flex-1 relative z-10 min-w-0">
         <div className="p-6 md:p-8 lg:p-12 max-w-[1600px] mx-auto space-y-10">
 
           {/* Transparent Header */}
@@ -235,12 +237,8 @@ function App() {
 
                 {/* Charts - Floating */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="[&_.recharts-wrapper]:pointer-events-none [&_.recharts-tooltip-cursor]:pointer-events-auto [&_.recharts-active-dot]:pointer-events-auto [&_.recharts-tooltip-wrapper]:pointer-events-auto">
-                    <RealtimeChart data={analytics?.time_series || []} metric="requests" title="Global Requests / Sec" color="#10b981" />
-                  </div>
-                  <div className="[&_.recharts-wrapper]:pointer-events-none [&_.recharts-tooltip-cursor]:pointer-events-auto [&_.recharts-active-dot]:pointer-events-auto [&_.recharts-tooltip-wrapper]:pointer-events-auto">
-                    <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title="P95 Latency (ms)" color="#eff6ff" />
-                  </div>
+                  <RealtimeChart data={analytics?.time_series || []} metric="requests" title="Global Requests / Sec" color="#10b981" />
+                  <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title="P95 Latency (ms)" color="#eff6ff" />
                 </div>
 
                 {/* Bottom Section */}
