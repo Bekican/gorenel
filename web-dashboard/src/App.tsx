@@ -134,7 +134,7 @@ function App() {
   );
 
   return (
-    <div className="min-h-screen flex text-white selection:bg-emerald-500/30 overflow-hidden font-sans">
+    <div className="min-h-screen flex text-white selection:bg-emerald-500/30 overflow-x-hidden font-sans">
 
       {/* Background Mesh Gradients (Fixed) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -235,8 +235,12 @@ function App() {
 
                 {/* Charts - Floating */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <RealtimeChart data={analytics?.time_series || []} metric="requests" title="Global Requests / Sec" color="#10b981" />
-                  <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title="P95 Latency (ms)" color="#eff6ff" />
+                  <div className="[&_.recharts-wrapper]:pointer-events-none [&_.recharts-tooltip-cursor]:pointer-events-auto [&_.recharts-active-dot]:pointer-events-auto [&_.recharts-tooltip-wrapper]:pointer-events-auto">
+                    <RealtimeChart data={analytics?.time_series || []} metric="requests" title="Global Requests / Sec" color="#10b981" />
+                  </div>
+                  <div className="[&_.recharts-wrapper]:pointer-events-none [&_.recharts-tooltip-cursor]:pointer-events-auto [&_.recharts-active-dot]:pointer-events-auto [&_.recharts-tooltip-wrapper]:pointer-events-auto">
+                    <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title="P95 Latency (ms)" color="#eff6ff" />
+                  </div>
                 </div>
 
                 {/* Bottom Section */}
