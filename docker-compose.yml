@@ -1,110 +1,50 @@
 version: '3.8'
 
 services:
-  # Gorenel Server
   gorenel-server:
     build:
       context: .
-      dockerfile: Dockerfile.server
-      args:
-        VERSION: dev
-        BUILD_TIME: ${BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}
+      dockerfile: Dockerfile
     container_name: gorenel-server
     ports:
-      - "7000:7000"   # Control plane
-      - "8080:8080"   # HTTP proxy
-      - "9090:9090"   # Monitoring
-    volumes:
-      - ./logs:/home/gorenel/logs
-      - ./configs:/home/gorenel/configs:ro
+      - "7000:7000" # Control Port
+      - "8080:8080" # Proxy Port
+      - "9090:9090" # Monitoring API
     environment:
-      - GORENEL_BASE_DOMAIN=tunnel.local
-      - GORENEL_LOG_LEVEL=info
-    networks:
-      - gorenel-net
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
-
-  # Prometheus (Monitoring)
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: gorenel-prometheus
-    ports:
-      - "9091:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus-data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    networks:
-      - gorenel-net
-    restart: unless-stopped
-
-  # Grafana (Visualization)
-  grafana:
-    image: grafana/grafana:latest
-    container_name: gorenel-grafana
-    ports:
-      - "3001:3000"
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_INSTALL_PLUGINS=grafana-piechart-panel
-    networks:
-      - gorenel-net
-    restart: unless-stopped
+      - GO_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD}
+      - REDIS_ADDR=redis:6379
+      - ML_URL=http://ml-engine:5000
     depends_on:
-      - prometheus
-
-  # ClickHouse (Analytics Database)
-  clickhouse:
-    image: clickhouse/clickhouse-server:latest
-    container_name: gorenel-clickhouse
-    ports:
-      - "8123:8123"   # HTTP
-      - "9000:9000"   # Native
-    volumes:
-      - clickhouse-data:/var/lib/clickhouse
-      - ./monitoring/clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    environment:
-      - CLICKHOUSE_DB=gorenel
-      - CLICKHOUSE_USER=admin
-      - CLICKHOUSE_PASSWORD=admin
+      - redis
     networks:
-      - gorenel-net
-    restart: unless-stopped
+      - gorenel-network
 
-  # Redis (Optional: Session Storage)
+  gorenel-dashboard:
+    build:
+      context: ./web-dashboard
+      dockerfile: Dockerfile
+    container_name: gorenel-dashboard
+    ports:
+      - "80:80"
+    depends_on:
+      - gorenel-server
+    networks:
+      - gorenel-network
+
   redis:
     image: redis:7-alpine
     container_name: gorenel-redis
     ports:
       - "6379:6379"
+    networks:
+      - gorenel-network
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes
-    networks:
-      - gorenel-net
-    restart: unless-stopped
 
 networks:
-  gorenel-net:
+  gorenel-network:
     driver: bridge
 
 volumes:
-  prometheus-data:
-  grafana-data:
-  clickhouse-data:
   redis-data:

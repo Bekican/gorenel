@@ -55,7 +55,7 @@ func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.Aut
 	}
 }
 
-func (m *MonitoringServer) Start() error {
+func (m *MonitoringServer) Start(port string) error {
 	mux := http.NewServeMux()
 
 	// Rate limit wrapper
@@ -94,8 +94,8 @@ func (m *MonitoringServer) Start() error {
 	mux.HandleFunc("/api/ml/stats", m.corsMiddleware(rl(m.mlStatsHandler)))
 
 	l, _ := zap.NewProduction()
-	l.Info("Monitoring server başlatılıyor", zap.String("port", ":9090"))
-	return http.ListenAndServe(":9090", mux)
+	l.Info("Monitoring server başlatılıyor", zap.String("port", port))
+	return http.ListenAndServe(port, mux)
 }
 
 // corsMiddleware adds CORS headers to allow cross-origin requests

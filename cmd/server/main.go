@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Bekican/gorenel/internal/config"
 	"github.com/Bekican/gorenel/internal/handler"
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/ml"
@@ -21,6 +22,7 @@ import (
 	"github.com/Bekican/gorenel/pkg/auth"
 	"github.com/Bekican/gorenel/pkg/logger"
 	"github.com/hashicorp/yamux"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
@@ -37,20 +39,15 @@ func (m *MockOAuth) GetUserProfile(code string) (*auth.UserProfile, error) {
 	}, nil
 }
 
-func initOAuthProvider(logger *zap.Logger) auth.OAuthProvider {
-	env := os.Getenv("GO_ENV")
-	if env == "production" {
-		clientID := os.Getenv("GOOGLE_CLIENT_ID")
-		clientSecret := os.Getenv("GOOGLE_CLIENT_SECRET")
-		redirectURL := os.Getenv("GOOGLE_REDIRECT_URL")
-
-		if clientID == "" || clientSecret == "" || redirectURL == "" {
+func initOAuthProvider(logger *zap.Logger, cfg *config.Config) auth.OAuthProvider {
+	if cfg.Env == "production" {
+		if cfg.GoogleClientID == "" || cfg.GoogleClientSecret == "" || cfg.GoogleRedirectURL == "" {
 			logger.Warn("GO_ENV=production but GOOGLE_CLIENT_ID/SECRET/URL is missing. Falling back to MockOAuth for safety.")
 			return &MockOAuth{}
 		}
 
-		logger.Info("Google OAuth provider initialized", zap.String("client_id", clientID[:5]+"..."))
-		return auth.NewGoogleOAuth(clientID, clientSecret, redirectURL)
+		logger.Info("Google OAuth provider initialized", zap.String("client_id", cfg.GoogleClientID[:5]+"..."))
+		return auth.NewGoogleOAuth(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
 	}
 
 	logger.Info("Mock OAuth provider initialized (dev mode)")
@@ -67,15 +64,20 @@ func main() {
 
 	zapLogger.Info("Gorenel Server başlatılıyor")
 
+	cfg, err := config.Load()
+	if err != nil {
+		zapLogger.Fatal("Konfigürasyon yüklenemedi", zap.Error(err))
+	}
+
 	// Core components
 	tm := server.NewTunnelManager()
 	authManager := server.NewAuthManager()
 
-	// Initialize Advanced Rate Limiter (1000 req/min to support dashboard polling)
-	rateLimiter := limiter.NewRateLimiter(1000, 1*time.Minute)
+	// Initialize Advanced Rate Limiter
+	rateLimiter := limiter.NewRateLimiter(cfg.RateLimitRequests, cfg.RateLimitWindow)
 
-	// Initialize Traffic Inspector (keep last 100 requests)
-	inspector := server.NewTrafficInspector(100)
+	// Initialize Traffic Inspector
+	inspector := server.NewTrafficInspector(cfg.InspectorHistorySize)
 
 	//eventStreaming
 	eventStream := server.NewEventStream(1000)
@@ -103,38 +105,39 @@ func main() {
 	//Geo location service
 	geoLocator := server.NewGeoLocator(true)
 
-	// Auth components
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD"
-		if os.Getenv("GO_ENV") == "production" {
-			zapLogger.Warn("JWT_SECRET is not set in production! Using fallback.")
-		}
+	// Database / Persistence
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: cfg.RedisAddr,
+	})
+	// Ping Redis to ensure connection
+	ctxPing, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	if err := redisClient.Ping(ctxPing).Err(); err != nil {
+		zapLogger.Warn("Redis bağlantısı kurulamadı, bazı özellikler kısıtlı olabilir", zap.Error(err))
 	}
-	jwtSvc := auth.NewJWTService(jwtSecret)
-	userRepo := handler.NewInMemoryUserRepo()
+	cancel()
 
-	oauthProvider := initOAuthProvider(zapLogger)
-	authHandler := handler.NewAuthHandler(oauthProvider, jwtSvc, userRepo)
+	userRepo := handler.NewRedisUserRepository(redisClient)
+
+	// Auth components
+	jwtSvc := auth.NewJWTService(cfg.JWTSecret)
+
+	oauthProvider := initOAuthProvider(zapLogger, cfg)
+	authHandler := handler.NewAuthHandler(oauthProvider, jwtSvc, userRepo, cfg.Env == "production")
 
 	// ML client uses the same shared logger
 
 	// Initialize shared ML client
-	mlURL := os.Getenv("ML_URL")
-	if mlURL == "" {
-		mlURL = "http://localhost:5000"
-	}
-	mlClient := ml.NewClient(mlURL, zapLogger)
+	mlClient := ml.NewClient(cfg.MLURL, zapLogger)
 
 	// Proxy servers
 	tcpProxy := server.NewTCPProxy()
 	udpProxy := server.NewUDPProxy()
 	anomalyStore := server.NewAnomalyStore(100) // Son 100 anomali kaydı
-	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient)
+	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient, cfg.RedisAddr)
 
 	go func() {
-		zapLogger.Info("HTTP Proxy başlatılıyor", zap.String("port", protocol.ProxyPort))
-		if err := httpProxy.Start(); err != nil {
+		zapLogger.Info("HTTP Proxy başlatılıyor", zap.String("port", cfg.ProxyPort))
+		if err := httpProxy.Start(cfg.ProxyPort); err != nil {
 			zapLogger.Fatal("HTTP Proxy hatası", zap.Error(err))
 		}
 	}()
@@ -142,22 +145,22 @@ func main() {
 	// Monitoring server
 	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient)
 	go func() {
-		if err := monitor.Start(); err != nil {
+		if err := monitor.Start(cfg.MonitorPort); err != nil {
 			zapLogger.Fatal("Monitoring server hatası", zap.Error(err))
 		}
 	}()
 
 	// Control Port'u dinle (Client'lar buraya bağlanacak)
-	listener, err := net.Listen("tcp", protocol.ControlPort)
+	listener, err := net.Listen("tcp", cfg.ControlPort)
 	if err != nil {
 		zapLogger.Fatal("Port dinlenemedi", zap.Error(err))
 	}
 	defer listener.Close()
 
 	zapLogger.Info("Gorenel Server hazır",
-		zap.String("control_port", protocol.ControlPort),
-		zap.String("proxy_port", protocol.ProxyPort),
-		zap.String("monitoring", "http://localhost:9090/metrics"),
+		zap.String("control_port", cfg.ControlPort),
+		zap.String("proxy_port", cfg.ProxyPort),
+		zap.String("monitoring_port", cfg.MonitorPort),
 		zap.Bool("auth_enabled", true),
 		zap.String("rate_limiter", "sliding_window"),
 	)
@@ -181,7 +184,7 @@ func main() {
 			}
 
 			zapLogger.Info("Yeni bağlantı", zap.String("remote_addr", conn.RemoteAddr().String()))
-			go handleClient(conn, tm, authManager, tcpProxy, udpProxy, zapLogger)
+			go handleClient(conn, tm, authManager, tcpProxy, udpProxy, zapLogger, cfg)
 		}
 	}()
 
@@ -196,7 +199,7 @@ func main() {
 	zapLogger.Info("Gorenel Server kapatıldı")
 }
 
-func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy, logger *zap.Logger) {
+func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy, logger *zap.Logger, cfg *config.Config) {
 	defer conn.Close()
 
 	// 1. REGISTER mesajını oku
@@ -278,7 +281,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.A
 	} else {
 		// DEFAULT: HTTP Subdomain
 		subdomain = utils.GenerateSubDomain(8)
-		fullURL = fmt.Sprintf("http://%s.%s%s", subdomain, protocol.BaseDomain, protocol.ProxyPort)
+		fullURL = fmt.Sprintf("http://%s.%s%s", subdomain, protocol.BaseDomain, cfg.ProxyPort)
 		logger.Info("HTTP Subdomain atandı", zap.String("url", fullURL))
 	}
 

@@ -27,7 +27,7 @@ type HTTPProxy struct {
 	anomalyStore   *AnomalyStore
 }
 
-func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client) *HTTPProxy {
+func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string) *HTTPProxy {
 	return &HTTPProxy{
 		tunnelManager:  tm,
 		advancedRL:     rl,
@@ -36,16 +36,16 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 		inspector:      ti,
 		mlClient:       mlc,
 		logger:         logger,
-		redisPublisher: NewRedisPublisher("localhost:6379"),
+		redisPublisher: NewRedisPublisher(redisAddr),
 		anomalyStore:   as,
 	}
 }
 
-func (p *HTTPProxy) Start() error {
-	p.logger.Info("HTTP Proxy listening", zap.String("port", protocol.ProxyPort))
+func (p *HTTPProxy) Start(port string) error {
+	p.logger.Info("HTTP Proxy listening", zap.String("port", port))
 
 	server := &http.Server{
-		Addr:    protocol.ProxyPort,
+		Addr:    port,
 		Handler: p,
 	}
 

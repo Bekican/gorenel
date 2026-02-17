@@ -17,13 +17,15 @@ type AuthHandler struct {
 	oauth    auth.OAuthProvider
 	tokenSvc *auth.JWTService
 	userRepo auth.UserRepository
+	isProd   bool
 }
 
-func NewAuthHandler(oauth auth.OAuthProvider, tokenSvc *auth.JWTService, repo auth.UserRepository) *AuthHandler {
+func NewAuthHandler(oauth auth.OAuthProvider, tokenSvc *auth.JWTService, repo auth.UserRepository, isProd bool) *AuthHandler {
 	return &AuthHandler{
 		oauth:    oauth,
 		tokenSvc: tokenSvc,
 		userRepo: repo,
+		isProd:   isProd,
 	}
 }
 
@@ -62,8 +64,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 				Value:    tokenString,
 				Expires:  time.Now().Add(24 * time.Hour),
 				HttpOnly: true,
-				Secure:   false,
+				Secure:   h.isProd,
 				Path:     "/",
+				SameSite: http.SameSiteLaxMode,
 			})
 
 			w.Header().Set("Content-Type", "application/json")
@@ -85,8 +88,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		Value:    state,
 		Expires:  time.Now().Add(10 * time.Minute),
 		HttpOnly: true,
-		Secure:   false, // Set to true in production (HTTPS)
+		Secure:   h.isProd,
 		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
 	})
 
 	if h.oauth == nil {
@@ -148,8 +152,8 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		Name:     "auth_token",
 		Value:    tokenString,
 		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,  // Javascript cannot read this!
-		Secure:   false, // Set true in Prod
+		HttpOnly: true,
+		Secure:   h.isProd,
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
 	})
