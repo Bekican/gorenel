@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -11,6 +13,7 @@ import (
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/ml"
 	"github.com/Bekican/gorenel/internal/protocol"
+	"github.com/caddyserver/certmagic"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -25,9 +28,11 @@ type HTTPProxy struct {
 	logger         *zap.Logger
 	redisPublisher *RedisPublisher
 	anomalyStore   *AnomalyStore
+	baseDomain     string
+	acmeEmail      string
 }
 
-func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string) *HTTPProxy {
+func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, acmeEmail string) *HTTPProxy {
 	return &HTTPProxy{
 		tunnelManager:  tm,
 		advancedRL:     rl,
@@ -38,11 +43,36 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 		logger:         logger,
 		redisPublisher: NewRedisPublisher(redisAddr),
 		anomalyStore:   as,
+		baseDomain:     baseDomain,
+		acmeEmail:      acmeEmail,
 	}
 }
 
 func (p *HTTPProxy) Start(port string) error {
-	p.logger.Info("HTTP Proxy listening", zap.String("port", port))
+	p.logger.Info("HTTP Proxy initiating", zap.String("port", port))
+
+	if p.baseDomain != "" && p.acmeEmail != "" {
+		certmagic.DefaultACME.Email = p.acmeEmail
+		// production'da let's encrypt kullanılmalı, staging testi için:
+		// certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
+
+		magic := certmagic.NewDefault()
+
+		// On-demand certificates for subdomains
+		magic.OnDemand = &certmagic.OnDemandConfig{
+			DecisionFunc: func(ctx context.Context, name string) error {
+				if strings.HasSuffix(name, p.baseDomain) {
+					return nil
+				}
+				return fmt.Errorf("domain not allowed")
+			},
+		}
+
+		p.logger.Info("HTTPS automation enabled via Certmagic", zap.String("base_domain", p.baseDomain))
+
+		// Serve both HTTP (redirect) and HTTPS
+		return certmagic.HTTPS([]string{p.baseDomain, "*" + p.baseDomain}, p)
+	}
 
 	server := &http.Server{
 		Addr:    port,

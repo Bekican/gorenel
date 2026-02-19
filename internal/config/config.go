@@ -14,17 +14,28 @@ type Config struct {
 	ProxyPort   string `mapstructure:"PROXY_PORT"`
 	MonitorPort string `mapstructure:"MONITOR_PORT"`
 	DBURL       string `mapstructure:"DB_URL"`
+	RedisAddr   string `mapstructure:"REDIS_ADDR"`
+	MLURL       string `mapstructure:"ML_URL"`
 
-	// Redis
-	RedisAddr string `mapstructure:"REDIS_ADDR"`
+	// Analytics (ClickHouse)
+	ClickHouseAddr     string `mapstructure:"CLICKHOUSE_ADDR"`
+	ClickHouseDB       string `mapstructure:"CLICKHOUSE_DB"`
+	ClickHouseUser     string `mapstructure:"CLICKHOUSE_USER"`
+	ClickHousePassword string `mapstructure:"CLICKHOUSE_PASSWORD"`
 
-	// ML
-	MLURL string `mapstructure:"ML_URL"`
+	// SSL/TLS (Certmagic)
+	BaseDomain string `mapstructure:"BASE_DOMAIN"`
+	AcmeEmail  string `mapstructure:"ACME_EMAIL"`
 
 	// OAuth
 	GoogleClientID     string `mapstructure:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret string `mapstructure:"GOOGLE_CLIENT_SECRET"`
 	GoogleRedirectURL  string `mapstructure:"GOOGLE_REDIRECT_URL"`
+
+	// Iyzico (Payments)
+	IyzicoAPIKey    string `mapstructure:"IYZICO_API_KEY"`
+	IyzicoSecretKey string `mapstructure:"IYZICO_SECRET_KEY"`
+	IyzicoBaseURL   string `mapstructure:"IYZICO_BASE_URL"`
 
 	// Rate Limiting
 	RateLimitRequests int           `mapstructure:"RATE_LIMIT_REQUESTS"`
@@ -43,6 +54,12 @@ func Load() (*Config, error) {
 	viper.SetDefault("REDIS_ADDR", "localhost:6379")
 	viper.SetDefault("DB_URL", "postgres://postgres:postgres@localhost:5432/gorenel?sslmode=disable")
 	viper.SetDefault("ML_URL", "http://localhost:5000")
+
+	viper.SetDefault("CLICKHOUSE_ADDR", "localhost:9000")
+	viper.SetDefault("CLICKHOUSE_DB", "gorenel")
+	viper.SetDefault("BASE_DOMAIN", ".gorenel.io")
+	viper.SetDefault("ACME_EMAIL", "admin@gorenel.io")
+
 	viper.SetDefault("RATE_LIMIT_REQUESTS", 1000)
 	viper.SetDefault("RATE_LIMIT_WINDOW", 1*time.Minute)
 	viper.SetDefault("INSPECTOR_HISTORY_SIZE", 100)

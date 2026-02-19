@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Bekican/gorenel/internal/analytics"
 	"github.com/Bekican/gorenel/internal/config"
 	"github.com/Bekican/gorenel/internal/handler"
 	"github.com/Bekican/gorenel/internal/limiter"
@@ -93,6 +94,16 @@ func main() {
 		zapLogger.Error("PostgresAPIKeyRepository init hatası", zap.Error(err))
 	}
 
+	// 3. Analytics (ClickHouse)
+	chRepo, err := analytics.NewClickHouseRepo(cfg.ClickHouseAddr, cfg.ClickHouseDB, cfg.ClickHouseUser, cfg.ClickHousePassword)
+	if err != nil {
+		zapLogger.Warn("Clickhouse bağlantısı kurulamadı, yüksek hacimli analiz kısıtlı olabilir", zap.Error(err))
+	} else {
+		if err := chRepo.InitSchema(); err != nil {
+			zapLogger.Error("Clickhouse şema init hatası", zap.Error(err))
+		}
+	}
+
 	// Core components
 	tm := server.NewTunnelManager()
 	authManager := server.NewAuthManager(apiKeyRepo)
@@ -111,7 +122,7 @@ func main() {
 	eventStream.Subscribe(analyticsEngine)
 
 	//batch logger
-	batchLogger, err := server.NewBatchLogger("./logs/batches", 1000, 5*time.Minute)
+	batchLogger, err := server.NewBatchLogger("./logs/batches", 1000, 5*time.Minute, chRepo)
 	if err != nil {
 		zapLogger.Fatal("Batch logger başlatılamadı", zap.Error(err))
 	}
@@ -155,7 +166,7 @@ func main() {
 	tcpProxy := server.NewTCPProxy()
 	udpProxy := server.NewUDPProxy()
 	anomalyStore := server.NewAnomalyStore(100) // Son 100 anomali kaydı
-	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient, cfg.RedisAddr)
+	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient, cfg.RedisAddr, cfg.BaseDomain, cfg.AcmeEmail)
 
 	go func() {
 		zapLogger.Info("HTTP Proxy başlatılıyor", zap.String("port", cfg.ProxyPort))

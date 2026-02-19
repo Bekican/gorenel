@@ -84,3 +84,80 @@ func (g *GoogleOAuth) GetUserProfile(code string) (*UserProfile, error) {
 		Provider:  "google",
 	}, nil
 }
+
+// GitHubOAuth handles GitHub specific logic
+type GitHubOAuth struct {
+	Config *oauth2.Config
+}
+
+func NewGitHubOAuth(clientID, clientSecret, redirectURL string) *GitHubOAuth {
+	return &GitHubOAuth{
+		Config: &oauth2.Config{
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
+			RedirectURL:  redirectURL,
+			Scopes:       []string{"user:email", "read:user"},
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  "https://github.com/login/oauth/authorize",
+				TokenURL: "https://github.com/login/oauth/access_token",
+			},
+		},
+	}
+}
+
+func (gh *GitHubOAuth) GetAuthURL(state string) string {
+	return gh.Config.AuthCodeURL(state)
+}
+
+func (gh *GitHubOAuth) GetUserProfile(code string) (*UserProfile, error) {
+	token, err := gh.Config.Exchange(context.Background(), code)
+	if err != nil {
+		return nil, err
+	}
+
+	client := gh.Config.Client(context.Background(), token)
+
+	// Get user profile
+	resp, err := client.Get("https://api.github.com/user")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var githubUser struct {
+		Login     string `json:"login"`
+		Name      string `json:"name"`
+		Email     string `json:"email"`
+		AvatarURL string `json:"avatar_url"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&githubUser); err != nil {
+		return nil, err
+	}
+
+	// GitHub email might be null if private, we might need to fetch it separately
+	if githubUser.Email == "" {
+		resp, err = client.Get("https://api.github.com/user/emails")
+		if err == nil {
+			defer resp.Body.Close()
+			var emails []struct {
+				Email   string `json:"email"`
+				Primary bool   `json:"primary"`
+			}
+			if err := json.NewDecoder(resp.Body).Decode(&emails); err == nil {
+				for _, e := range emails {
+					if e.Primary {
+						githubUser.Email = e.Email
+						break
+					}
+				}
+			}
+		}
+	}
+
+	return &UserProfile{
+		Email:     githubUser.Email,
+		Name:      githubUser.Name,
+		AvatarURL: githubUser.AvatarURL,
+		Provider:  "github",
+	}, nil
+}

@@ -13,10 +13,18 @@ services:
     environment:
       - GO_ENV=production
       - JWT_SECRET=${JWT_SECRET:-SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD}
+      - DB_URL=postgres://postgres:postgres@postgres:5432/gorenel?sslmode=disable
       - REDIS_ADDR=redis:6379
       - ML_URL=http://ml-engine:5000
+      - CLICKHOUSE_ADDR=clickhouse:9000
+      - CLICKHOUSE_DB=gorenel
+      - BASE_DOMAIN=${BASE_DOMAIN:-.gorenel.io}
+      - ACME_EMAIL=${ACME_EMAIL:-admin@gorenel.io}
     depends_on:
       - redis
+      - postgres
+      - clickhouse
+      - ml-engine
     networks:
       - gorenel-network
 
@@ -32,6 +40,14 @@ services:
     networks:
       - gorenel-network
 
+  ml-engine:
+    build:
+      context: ./services/ml
+      dockerfile: Dockerfile
+    container_name: gorenel-ml-engine
+    networks:
+      - gorenel-network
+
   redis:
     image: redis:7-alpine
     container_name: gorenel-redis
@@ -42,9 +58,34 @@ services:
     volumes:
       - redis-data:/data
 
+  postgres:
+    image: postgres:15-alpine
+    container_name: gorenel-postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=gorenel
+    networks:
+      - gorenel-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    container_name: gorenel-clickhouse
+    ports:
+      - "8123:8123" # HTTP
+      - "9000:9000" # Native
+    networks:
+      - gorenel-network
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+
 networks:
   gorenel-network:
     driver: bridge
 
 volumes:
   redis-data:
+  postgres-data:
+  clickhouse-data:

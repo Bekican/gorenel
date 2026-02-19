@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Bekican/gorenel/internal/analytics"
 	"go.uber.org/zap"
 )
 
@@ -23,6 +24,8 @@ type BatchLogger struct {
 	currentFile *os.File
 	gzipWriter  *gzip.Writer
 
+	chRepo *analytics.ClickHouseRepo
+
 	TotalBatches int64
 	TotalEvents  int64
 	mu           sync.RWMutex
@@ -32,7 +35,7 @@ type BatchLogger struct {
 }
 
 // yeni batch logger oluşturuyoruz
-func NewBatchLogger(outputDir string, batchSize int, flushInterval time.Duration) (*BatchLogger, error) {
+func NewBatchLogger(outputDir string, batchSize int, flushInterval time.Duration, chRepo *analytics.ClickHouseRepo) (*BatchLogger, error) {
 	if err := os.MkdirAll(outputDir, 0755); err != nil {
 		return nil, fmt.Errorf("outputdir oluşturulamadı:%w", err)
 	}
@@ -43,6 +46,7 @@ func NewBatchLogger(outputDir string, batchSize int, flushInterval time.Duration
 		flushInterval: flushInterval,
 		buffer:        make([]*RequestEvent, 0, batchSize),
 		outputDir:     outputDir,
+		chRepo:        chRepo,
 		done:          make(chan struct{}),
 		logger:        l,
 	}
@@ -97,7 +101,16 @@ func (bl *BatchLogger) flushLocked() error {
 		return nil
 	}
 
-	//yeni dosya aç
+	// ClickHouse'a gönder
+	if bl.chRepo != nil {
+		go func(events []*RequestEvent) {
+			if err := bl.chRepo.BatchInsert(events); err != nil {
+				bl.logger.Error("ClickHouse insert hatası", zap.Error(err))
+			}
+		}(append([]*RequestEvent{}, bl.buffer...)) // Copy buffer for async insert
+	}
+
+	// Dosyaya da yaz (Backup)
 	filename := fmt.Sprintf("events_%s.jsonl.gz", time.Now().Format("20060102_150405"))
 	filepath := filepath.Join(bl.outputDir, filename)
 
