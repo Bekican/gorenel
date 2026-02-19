@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -69,9 +70,32 @@ func main() {
 		zapLogger.Fatal("Konfigürasyon yüklenemedi", zap.Error(err))
 	}
 
+	// Database / Persistence
+	// 1. PostgreSQL
+	db, err := sql.Open("postgres", cfg.DBURL)
+	if err != nil {
+		zapLogger.Fatal("PostgreSQL bağlantısı açılamadı", zap.Error(err))
+	}
+	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		zapLogger.Warn("PostgreSQL ping başarısız", zap.Error(err))
+	}
+
+	// 2. Repositories
+	userRepo := handler.NewPostgresUserRepository(db)
+	if err := userRepo.Init(); err != nil {
+		zapLogger.Error("PostgresUserRepository init hatası", zap.Error(err))
+	}
+
+	apiKeyRepo := server.NewPostgresAPIKeyRepository(db)
+	if err := apiKeyRepo.Init(); err != nil {
+		zapLogger.Error("PostgresAPIKeyRepository init hatası", zap.Error(err))
+	}
+
 	// Core components
 	tm := server.NewTunnelManager()
-	authManager := server.NewAuthManager()
+	authManager := server.NewAuthManager(apiKeyRepo)
 
 	// Initialize Advanced Rate Limiter
 	rateLimiter := limiter.NewRateLimiter(cfg.RateLimitRequests, cfg.RateLimitWindow)
@@ -115,8 +139,6 @@ func main() {
 		zapLogger.Warn("Redis bağlantısı kurulamadı, bazı özellikler kısıtlı olabilir", zap.Error(err))
 	}
 	cancel()
-
-	userRepo := handler.NewRedisUserRepository(redisClient)
 
 	// Auth components
 	jwtSvc := auth.NewJWTService(cfg.JWTSecret)

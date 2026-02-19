@@ -20,15 +20,38 @@ type APIKey struct {
 
 type AuthManager struct {
 	keys map[string]*APIKey
+	repo APIKeyRepository
 	mu   sync.RWMutex
 }
 
-func NewAuthManager() *AuthManager {
+type APIKeyRepository interface {
+	GetByHash(hash string) (*APIKey, error)
+	Create(apiKey *APIKey) error
+	IncrementUsage(hash string) error
+	ListAll() ([]*APIKey, error)
+	Delete(hash string) error
+}
+
+func NewAuthManager(repo APIKeyRepository) *AuthManager {
 	am := &AuthManager{
 		keys: make(map[string]*APIKey),
+		repo: repo,
 	}
-	am.AddKey("demo-key-12345", "demo-user", 100)
-	am.AddKey("premium-key-67890", "premium-user", 1000)
+
+	// Load existing keys from DB
+	if repo != nil {
+		keys, err := repo.ListAll()
+		if err == nil {
+			for _, k := range keys {
+				keyHash := hashKey(k.Key)
+				am.keys[keyHash] = k
+			}
+		}
+	} else {
+		// Fallback for dev mode
+		am.AddKey("demo-key-12345", "demo-user", 100)
+		am.AddKey("premium-key-67890", "premium-user", 1000)
+	}
 
 	return am
 }
@@ -37,14 +60,20 @@ func (am *AuthManager) AddKey(key, userID string, rateLimit int) {
 	am.mu.Lock()
 	defer am.mu.Unlock()
 
-	keyHash := hashKey(key)
-	am.keys[keyHash] = &APIKey{
+	apiKey := &APIKey{
 		Key:        key,
 		UserID:     userID,
 		CreatedAt:  time.Now(),
 		ExpiresAt:  nil,
 		UsageCount: 0,
 		RateLimit:  rateLimit,
+	}
+
+	keyHash := hashKey(key)
+	am.keys[keyHash] = apiKey
+
+	if am.repo != nil {
+		am.repo.Create(apiKey)
 	}
 }
 
@@ -72,6 +101,9 @@ func (am *AuthManager) IncrementUsage(key string) {
 	keyHash := hashKey(key)
 	if apiKey, exists := am.keys[keyHash]; exists {
 		apiKey.UsageCount++
+		if am.repo != nil {
+			am.repo.IncrementUsage(keyHash)
+		}
 	}
 }
 
@@ -92,6 +124,9 @@ func (am *AuthManager) RevokeKey(key string) {
 
 	keyHash := hashKey(key)
 	delete(am.keys, keyHash)
+	if am.repo != nil {
+		am.repo.Delete(keyHash)
+	}
 }
 
 // Tüm api keyleri listeleyecek

@@ -13,6 +13,7 @@ type Config struct {
 	ControlPort string `mapstructure:"CONTROL_PORT"`
 	ProxyPort   string `mapstructure:"PROXY_PORT"`
 	MonitorPort string `mapstructure:"MONITOR_PORT"`
+	DBURL       string `mapstructure:"DB_URL"`
 
 	// Redis
 	RedisAddr string `mapstructure:"REDIS_ADDR"`
@@ -40,6 +41,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("PROXY_PORT", ":8080")
 	viper.SetDefault("MONITOR_PORT", ":9090")
 	viper.SetDefault("REDIS_ADDR", "localhost:6379")
+	viper.SetDefault("DB_URL", "postgres://postgres:postgres@localhost:5432/gorenel?sslmode=disable")
 	viper.SetDefault("ML_URL", "http://localhost:5000")
 	viper.SetDefault("RATE_LIMIT_REQUESTS", 1000)
 	viper.SetDefault("RATE_LIMIT_WINDOW", 1*time.Minute)
