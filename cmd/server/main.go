@@ -122,7 +122,7 @@ func main() {
 	eventStream.Subscribe(analyticsEngine)
 
 	//batch logger
-	batchLogger, err := server.NewBatchLogger("./logs/batches", 1000, 5*time.Minute, chRepo)
+	batchLogger, err := server.NewBatchLogger("./logs/batches", 5, 10*time.Second, chRepo)
 	if err != nil {
 		zapLogger.Fatal("Batch logger başlatılamadı", zap.Error(err))
 	}
