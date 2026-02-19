@@ -30,9 +30,10 @@ type HTTPProxy struct {
 	anomalyStore   *AnomalyStore
 	baseDomain     string
 	acmeEmail      string
+	env            string
 }
 
-func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, acmeEmail string) *HTTPProxy {
+func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, acmeEmail, env string) *HTTPProxy {
 	return &HTTPProxy{
 		tunnelManager:  tm,
 		advancedRL:     rl,
@@ -45,13 +46,14 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 		anomalyStore:   as,
 		baseDomain:     baseDomain,
 		acmeEmail:      acmeEmail,
+		env:            env,
 	}
 }
 
 func (p *HTTPProxy) Start(port string) error {
 	p.logger.Info("HTTP Proxy initiating", zap.String("port", port))
 
-	if p.baseDomain != "" && p.acmeEmail != "" {
+	if p.env == "production" && p.baseDomain != "" && p.acmeEmail != "" {
 		certmagic.DefaultACME.Email = p.acmeEmail
 		// production'da let's encrypt kullanılmalı, staging testi için:
 		// certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA

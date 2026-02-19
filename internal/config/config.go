@@ -50,7 +50,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("JWT_SECRET", "SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD")
 	viper.SetDefault("CONTROL_PORT", ":7000")
 	viper.SetDefault("PROXY_PORT", ":8080")
-	viper.SetDefault("MONITOR_PORT", ":9090")
+	viper.SetDefault("MONITOR_PORT", ":9091")
 	viper.SetDefault("REDIS_ADDR", "localhost:6379")
 	viper.SetDefault("DB_URL", "postgres://postgres:postgres@localhost:5432/gorenel?sslmode=disable")
 	viper.SetDefault("ML_URL", "http://localhost:5000")

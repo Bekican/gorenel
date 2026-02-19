@@ -166,7 +166,7 @@ func main() {
 	tcpProxy := server.NewTCPProxy()
 	udpProxy := server.NewUDPProxy()
 	anomalyStore := server.NewAnomalyStore(100) // Son 100 anomali kaydı
-	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient, cfg.RedisAddr, cfg.BaseDomain, cfg.AcmeEmail)
+	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient, cfg.RedisAddr, cfg.BaseDomain, cfg.AcmeEmail, cfg.Env)
 
 	go func() {
 		zapLogger.Info("HTTP Proxy başlatılıyor", zap.String("port", cfg.ProxyPort))
