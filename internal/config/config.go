@@ -55,7 +55,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("DB_URL", "postgres://postgres:postgres@localhost:5432/gorenel?sslmode=disable")
 	viper.SetDefault("ML_URL", "http://localhost:5000")
 
-	viper.SetDefault("CLICKHOUSE_ADDR", "localhost:9000")
+	viper.SetDefault("CLICKHOUSE_ADDR", "localhost:9001")
 	viper.SetDefault("CLICKHOUSE_DB", "gorenel")
 	viper.SetDefault("BASE_DOMAIN", ".gorenel.io")
 	viper.SetDefault("ACME_EMAIL", "admin@gorenel.io")

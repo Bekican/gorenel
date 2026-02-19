@@ -75,7 +75,7 @@ services:
     container_name: gorenel-clickhouse
     ports:
       - "8123:8123" # HTTP
-      - "9000:9000" # Native
+      - "9001:9000" # Native
     networks:
       - gorenel-network
     volumes:
