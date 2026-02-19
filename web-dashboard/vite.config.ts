@@ -14,11 +14,11 @@ export default defineConfig({
   // Production için (K8s) bu yönlendirmeleri nginx.conf içinde yapmalısınız.
   server: {
     proxy: {
-      '/health': 'http://localhost:9090',
-      '/metrics': 'http://localhost:9090',
-      '/info': 'http://localhost:9090',
-      '/analytics': 'http://localhost:9090',
-      '/api': 'http://localhost:9090',
+      '/health': 'http://localhost:9091',
+      '/metrics': 'http://localhost:9091',
+      '/info': 'http://localhost:9091',
+      '/analytics': 'http://localhost:9091',
+      '/api': 'http://localhost:9091',
     },
   },
 })
