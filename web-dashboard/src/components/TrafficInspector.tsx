@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Play, Clock, Globe, Shield, Terminal, Filter, MoreHorizontal, ArrowRight, CornerDownRight } from 'lucide-react';
+import { Search, Play, Clock, Globe, Shield, Terminal, Filter, ArrowRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { type CapturedRequest, api } from '../api/client';
 
@@ -101,8 +101,8 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                     >
                                         <td className="px-8 py-5">
                                             <span className={`text-[10px] font-black px-2 py-1 rounded-md border ${req.method === 'POST' ? 'border-blue-500/30 text-blue-400 bg-blue-500/5' :
-                                                    req.method === 'GET' ? 'border-primary/30 text-primary bg-primary/5' :
-                                                        'border-white/10 text-white/40'
+                                                req.method === 'GET' ? 'border-primary/30 text-primary bg-primary/5' :
+                                                    'border-white/10 text-white/40'
                                                 }`}>
                                                 {req.method}
                                             </span>
@@ -146,14 +146,53 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                     </div>
                                                                     <span className="font-black text-xs uppercase tracking-widest text-white/40">Request Frame</span>
                                                                 </div>
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        let curl = `curl -X ${req.method} "${req.subdomain}.gorenel.io${req.path}" ${Object.entries(req.req_headers).map(([k, v]) => `-H "${k}: ${v.join(', ')}"`).join(' ')}`;
+                                                                        if (req.req_body) {
+                                                                            try {
+                                                                                const decoded = atob(req.req_body);
+                                                                                curl += ` -d '${decoded.replace(/'/g, "'\\''")}'`;
+                                                                            } catch {
+                                                                                curl += ` -d '${req.req_body.replace(/'/g, "'\\''")}'`;
+                                                                            }
+                                                                        }
+                                                                        navigator.clipboard.writeText(curl);
+                                                                    }}
+                                                                    className="text-[10px] font-black uppercase text-blue-400 hover:text-white transition-colors"
+                                                                >
+                                                                    Copy as Curl
+                                                                </button>
                                                             </div>
-                                                            <div className="space-y-2 font-mono text-xs">
-                                                                {Object.entries(req.req_headers).map(([k, v]) => (
-                                                                    <div key={k} className="flex gap-4 p-2 rounded-lg hover:bg-white/[0.02] transition-colors">
-                                                                        <span className="text-blue-400 font-bold shrink-0 w-32 truncate">{k}:</span>
-                                                                        <span className="text-white/40 break-all">{v.join(', ')}</span>
+                                                            <div className="space-y-4">
+                                                                <div className="space-y-2 font-mono text-xs max-h-48 overflow-auto pr-2">
+                                                                    {Object.entries(req.req_headers).map(([k, v]) => (
+                                                                        <div key={k} className="flex gap-4 p-2 rounded-lg hover:bg-white/[0.02] transition-colors">
+                                                                            <span className="text-blue-400 font-bold shrink-0 w-32 truncate">{k}:</span>
+                                                                            <span className="text-white/40 break-all">{v.join(', ')}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                                {req.req_body && (
+                                                                    <div className="mt-4 p-4 rounded-2xl bg-black/40 border border-white/5 font-mono text-[10px] text-white/60 overflow-hidden">
+                                                                        <div className="mb-2 text-white/20 font-black uppercase tracking-widest">Payload</div>
+                                                                        <pre className="overflow-auto max-h-48 scrollbar-hide">
+                                                                            {(() => {
+                                                                                try {
+                                                                                    const decoded = atob(req.req_body);
+                                                                                    try {
+                                                                                        return JSON.stringify(JSON.parse(decoded), null, 2);
+                                                                                    } catch {
+                                                                                        return decoded;
+                                                                                    }
+                                                                                } catch {
+                                                                                    return req.req_body;
+                                                                                }
+                                                                            })()}
+                                                                        </pre>
                                                                     </div>
-                                                                ))}
+                                                                )}
                                                             </div>
                                                         </div>
 
@@ -166,13 +205,34 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                     <span className="font-black text-xs uppercase tracking-widest text-white/40">Response Stack</span>
                                                                 </div>
                                                             </div>
-                                                            <div className="space-y-2 font-mono text-xs">
-                                                                {Object.entries(req.resp_headers).map(([k, v]) => (
-                                                                    <div key={k} className="flex gap-4 p-2 rounded-lg hover:bg-white/[0.02] transition-colors">
-                                                                        <span className="text-emerald-400 font-bold shrink-0 w-32 truncate">{k}:</span>
-                                                                        <span className="text-white/40 break-all">{v.join(', ')}</span>
+                                                            <div className="space-y-4">
+                                                                <div className="space-y-2 font-mono text-xs max-h-48 overflow-auto pr-2">
+                                                                    {Object.entries(req.resp_headers).map(([k, v]) => (
+                                                                        <div key={k} className="flex gap-4 p-2 rounded-lg hover:bg-white/[0.02] transition-colors">
+                                                                            <span className="text-emerald-400 font-bold shrink-0 w-32 truncate">{k}:</span>
+                                                                            <span className="text-white/40 break-all">{v.join(', ')}</span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                                {req.resp_body && (
+                                                                    <div className="mt-4 p-4 rounded-2xl bg-black/40 border border-white/5 font-mono text-[10px] text-white/60 overflow-hidden">
+                                                                        <div className="mb-2 text-white/20 font-black uppercase tracking-widest">Body Output</div>
+                                                                        <pre className="overflow-auto max-h-48 scrollbar-hide">
+                                                                            {(() => {
+                                                                                try {
+                                                                                    const decoded = atob(req.resp_body);
+                                                                                    try {
+                                                                                        return JSON.stringify(JSON.parse(decoded), null, 2);
+                                                                                    } catch {
+                                                                                        return decoded;
+                                                                                    }
+                                                                                } catch {
+                                                                                    return req.resp_body;
+                                                                                }
+                                                                            })()}
+                                                                        </pre>
                                                                     </div>
-                                                                ))}
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>

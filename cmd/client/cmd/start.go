@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -277,6 +278,28 @@ func handleStreams(ctx context.Context, session *yamux.Session, localPort int) {
 func proxyToLocalhost(stream net.Conn, localAddr string) {
 	defer stream.Close()
 
+	startTime := time.Now()
+	var method, path string
+
+	// Sniff request if it's HTTP
+	if tunnelType == "http" {
+		buf := make([]byte, 1024)
+		n, _ := stream.Read(buf)
+		if n > 0 {
+			line := buf[:n]
+			parts := strings.Split(string(line), " ")
+			if len(parts) >= 2 {
+				method = parts[0]
+				path = parts[1]
+			}
+			// Wrap stream to not lose read data
+			stream = &MultiConn{
+				Reader: io.MultiReader(bytes.NewReader(buf[:n]), stream),
+				Conn:   stream,
+			}
+		}
+	}
+
 	localConn, err := net.Dial("tcp", localAddr)
 	if err != nil {
 		log.Printf("Localhost'a bağlanılamadı: %v", err)
@@ -296,12 +319,68 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 
 	// Localhost → Stream
 	go func() {
+		// Attempt to sniff response status code if HTTP
+		var statusCode int
+		if tunnelType == "http" {
+			buf := make([]byte, 1024)
+			n, _ := localConn.Read(buf)
+			if n > 0 {
+				line := buf[:n]
+				parts := strings.Split(string(line), " ")
+				if len(parts) >= 2 && strings.HasPrefix(parts[1], "HTTP/") {
+					fmt.Sscanf(parts[1], "%d", &statusCode)
+				} else if len(parts) >= 2 && strings.HasPrefix(parts[0], "HTTP/") {
+					fmt.Sscanf(parts[1], "%d", &statusCode)
+				}
+
+				// Wrap localConn to not lose read data
+				localConn = &MultiConn{
+					Reader: io.MultiReader(bytes.NewReader(buf[:n]), localConn),
+					Conn:   localConn,
+				}
+			}
+		}
+
 		n, _ := io.Copy(stream, localConn)
 		atomic.AddInt64(&bytesSent, n)
+
+		if tunnelType == "http" && method != "" {
+			dur := time.Since(startTime)
+			statusStr := fmt.Sprintf("%d", statusCode)
+			if statusCode == 0 {
+				statusStr = "???"
+			}
+
+			// Colorize status
+			color := "\033[32m" // Green
+			if statusCode >= 400 {
+				color = "\033[31m"
+			} // Red
+			if statusCode >= 300 && statusCode < 400 {
+				color = "\033[33m"
+			} // Yellow
+			reset := "\033[0m"
+
+			log.Printf("[%s] %s %s -> %s%s%s (%v)",
+				time.Now().Format("15:04:05"),
+				method, path, color, statusStr, reset,
+				dur.Round(time.Millisecond))
+		}
+
 		done <- struct{}{}
 	}()
 
 	<-done
+}
+
+// MultiConn wraps an io.Reader and a net.Conn
+type MultiConn struct {
+	io.Reader
+	net.Conn
+}
+
+func (c *MultiConn) Read(p []byte) (int, error) {
+	return c.Reader.Read(p)
 }
 
 // --- UTILITY FONKSİYONLARI ---
