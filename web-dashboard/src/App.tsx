@@ -88,7 +88,7 @@ function App() {
       setRules(rulesData || []);
       setLoading(false);
     } catch (err) {
-      setError('Connection refused. Is the Gorenel server running on port 9090?');
+      setError('Connection refused. Is the Gorenel server running on port 9091?');
       setLoading(false);
     }
   };
