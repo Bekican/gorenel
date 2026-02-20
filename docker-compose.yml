@@ -76,6 +76,11 @@ services:
     ports:
       - "8123:8123" # HTTP
       - "9001:9000" # Native
+    environment:
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+      - CLICKHOUSE_DB=gorenel
     networks:
       - gorenel-network
     volumes:

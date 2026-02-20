@@ -5,3 +5,12 @@ bin/
 *.log
 .vscode/
 Thumbs.db
+
+# Generated logs & archives
+logs/
+server_stdout.log
+server_stderr.log
+
+# Environment files (contain secrets)
+.env
+!.env.example
