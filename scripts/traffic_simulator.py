@@ -2,8 +2,8 @@ import requests
 import time
 import random
 
-SUBDOMAIN = "4zxeoher"
-BASE_URL = "http://localhost:8080"
+SUBDOMAIN = "z3b0uu2w"
+BASE_URL = "http://localhost:8085"
 HOST = f"{SUBDOMAIN}.gorenel.io"
 
 PATHS = [
