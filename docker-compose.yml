@@ -8,8 +8,8 @@ services:
     container_name: gorenel-server
     ports:
       - "7000:7000" # Control Port
-      - "8080:8080" # Proxy Port
-      - "9090:9090" # Monitoring API
+      - "8085:8085" # Proxy Port
+      - "9091:9091" # Monitoring API
     environment:
       - GO_ENV=production
       - JWT_SECRET=${JWT_SECRET:-SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD}

@@ -32,9 +32,9 @@ RUN mkdir -p logs/batches logs/archives
 
 # Expose ports
 # 7000: Control Port
-# 8080: Proxy Port
-# 9090: Monitoring Server
-EXPOSE 7000 8080 9090
+# 8085: Proxy Port
+# 9091: Monitoring Server
+EXPOSE 7000 8085 9091
 
 # Standard production environment variables
 ENV GO_ENV=production

@@ -50,13 +50,13 @@ USER gorenel
 
 # Expose ports
 # 7000: Control plane
-# 8080: HTTP proxy
-# 9090: Monitoring
-EXPOSE 7000 8080 9090
+# 8085: HTTP proxy
+# 9091: Monitoring
+EXPOSE 7000 8085 9091
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:9090/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:9091/health || exit 1
 
 # Environment variables
 ENV PATH="/home/gorenel:${PATH}"
