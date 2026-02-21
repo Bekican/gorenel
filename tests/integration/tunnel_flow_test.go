@@ -38,14 +38,40 @@ func TestFullTunnelFlow(t *testing.T) {
 	// Step 3: Simulate REGISTER flow
 	registerMsg := protocol.NewRegisterMessage("test-client", "1.0.0", "test-api-key", "")
 
-	// Send register message through Yamux
+	// Step 4: Server-side handler (in a goroutine)
+	go func() {
+		stream, err := serverSession.AcceptStream()
+		if err != nil {
+			return
+		}
+		defer stream.Close()
+
+		msg, err := protocol.ReadMessage(stream)
+		if err != nil {
+			return
+		}
+
+		if msg.Type == protocol.MsgTypeRegister {
+			resp := protocol.RegisterResponse{
+				Subdomain: "test-sub",
+				FullURL:   "http://test-sub.gorenel.io:8080",
+			}
+			respJSON, _ := json.Marshal(resp)
+			protocol.WriteMessage(stream, protocol.Message{
+				Type:    protocol.MsgTypeRegistered,
+				Payload: string(respJSON),
+			})
+		}
+	}()
+
+	// Step 5: Client-side registration
 	stream, err := clientSession.OpenStream()
 	helper.RequireNoError(err, "Failed to open stream")
 
 	err = protocol.WriteMessage(stream, registerMsg)
 	helper.RequireNoError(err, "Failed to write register message")
 
-	// Step 4: Server should respond with subdomain
+	// Step 6: Server should respond with subdomain
 	response, err := protocol.ReadMessage(stream)
 	helper.RequireNoError(err, "Failed to read response")
 
@@ -58,9 +84,7 @@ func TestFullTunnelFlow(t *testing.T) {
 	assert.NotEmpty(t, regResp.Subdomain)
 	assert.NotEmpty(t, regResp.FullURL)
 
-	// Step 5: Simulate HTTP request through tunnel
-	// This would involve setting up the full HTTP proxy chain
-	// For now, we test that the stream is open and functional
+	// Step 7: Cleanup
 	assert.NotNil(t, stream)
 	assert.False(t, clientSession.IsClosed(), "Client session should be open")
 
