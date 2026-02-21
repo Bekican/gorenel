@@ -5,7 +5,7 @@ import "time"
 const (
 	ControlPort = ":7000"
 
-	ProxyPort = ":8080"
+	ProxyPort = ":8085"
 
 	HandshakeTimeout = 10 * time.Second
 	ReadTimeout      = 30 * time.Second
