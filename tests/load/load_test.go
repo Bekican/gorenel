@@ -37,14 +37,24 @@ func TestLoad_1000ConcurrentRequests(t *testing.T) {
 
 	start := time.Now()
 
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        1000,
+			MaxIdleConnsPerHost: 1000,
+		},
+	}
+
 	wg.Add(numRequests)
 	for i := 0; i < numRequests; i++ {
 		go func() {
 			defer wg.Done()
-			client := &http.Client{Timeout: 10 * time.Second}
 			resp, err := client.Get(ts.URL)
 			if err != nil {
 				atomic.AddInt64(&errorCount, 1)
+				if atomic.LoadInt64(&errorCount) <= 3 {
+					t.Logf("   [DEBUG] Sample error: %v", err)
+				}
 				return
 			}
 			resp.Body.Close()

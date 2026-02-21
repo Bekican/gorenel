@@ -42,7 +42,7 @@ func (rl *AdvancedRateLimiter) Allow(userID string) bool {
 	if tierID == "" {
 		tierID = "free"
 	}
-	quota := rl.tiers[userID]
+	quota := rl.tiers[tierID]
 
 	log, exists := rl.usage[userID]
 

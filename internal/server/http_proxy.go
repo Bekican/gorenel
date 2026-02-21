@@ -320,7 +320,7 @@ func (p *HTTPProxy) publishEvent(subdomain string, r *http.Request, clientIP str
 	event.StatusCode = statusCode
 	event.ResponseTime = responseTime
 	event.BytesReceived = bytesIn
-	event.ByteSent = bytesOut
+	event.BytesSent = bytesOut
 	event.Error = errorMsg
 
 	if p.geoLocator != nil {

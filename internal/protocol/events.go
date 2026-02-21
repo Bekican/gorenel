@@ -20,7 +20,7 @@ type RequestEvent struct {
 
 	StatusCode    int           `json:"status_code"`
 	ResponseTime  time.Duration `json:"response_time_ms"`
-	ByteSent      int64         `json:"bytes_sent"`
+	BytesSent     int64         `json:"bytes_sent"`
 	BytesReceived int64         `json:"bytes_received"`
 
 	SessionID string `json:"session_id,omitempty"`

@@ -65,7 +65,7 @@ func (r *ClickHouseRepo) BatchInsert(events []*protocol.RequestEvent) error {
 			int32(e.StatusCode),
 			e.ResponseTime.Milliseconds(),
 			e.BytesReceived,
-			e.ByteSent,
+			e.BytesSent,
 			e.GeoCountry,
 			e.GeoCity,
 			e.Timestamp,

@@ -300,7 +300,7 @@ func (ae *AnalyticsEngine) Consume(event *RequestEvent) error {
 		Timestamp:    event.Timestamp,
 		RequestCount: 1,
 		BytesIn:      event.BytesReceived,
-		BytesOut:     event.ByteSent,
+		BytesOut:     event.BytesSent,
 		AvgLatency:   event.ResponseTime,
 	})
 	ae.dataMu.Unlock()
