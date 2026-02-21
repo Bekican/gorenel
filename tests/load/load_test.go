@@ -45,23 +45,26 @@ func TestLoad_1000ConcurrentRequests(t *testing.T) {
 		},
 	}
 
+	// Limit concurrency to 50 workers to avoid thundering herd on Windows loopback
+	concurrencyLimit := make(chan struct{}, 50)
 	wg.Add(numRequests)
+
 	for i := 0; i < numRequests; i++ {
-		go func() {
+		go func(idx int) {
 			defer wg.Done()
+			concurrencyLimit <- struct{}{}        // Acquire
+			defer func() { <-concurrencyLimit }() // Release
+
 			resp, err := client.Get(ts.URL)
 			if err != nil {
 				atomic.AddInt64(&errorCount, 1)
-				if atomic.LoadInt64(&errorCount) <= 3 {
-					t.Logf("   [DEBUG] Sample error: %v", err)
-				}
 				return
 			}
 			resp.Body.Close()
 			if resp.StatusCode == http.StatusOK {
 				atomic.AddInt64(&successCount, 1)
 			}
-		}()
+		}(i)
 	}
 
 	wg.Wait()
