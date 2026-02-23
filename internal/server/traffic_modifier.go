@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 )
 
 // ModificationRule represents a single rule to modify a request
@@ -13,6 +14,8 @@ type ModificationRule struct {
 	AddHeaders    map[string]string `json:"add_headers,omitempty"`
 	RemoveHeaders []string          `json:"remove_headers,omitempty"`
 	ReplacePath   string            `json:"replace_path,omitempty"`
+	DelayMS       int               `json:"delay_ms,omitempty"`    // Simulated latency
+	StatusCode    int               `json:"status_code,omitempty"` // Override response status code
 }
 
 // TrafficModifier manages a set of rules and applies them to incoming requests
@@ -45,6 +48,11 @@ func (m *TrafficModifier) Apply(r *http.Request) {
 			// Apply Path Replacement if specified
 			if rule.ReplacePath != "" {
 				r.URL.Path = rule.ReplacePath
+			}
+
+			// Apply Delay if specified
+			if rule.DelayMS > 0 {
+				time.Sleep(time.Duration(rule.DelayMS) * time.Millisecond)
 			}
 		}
 	}

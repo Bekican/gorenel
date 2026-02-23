@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Settings2, Globe, Server, ShieldPlus, X, ChevronRight, Hash } from 'lucide-react';
+import { Plus, Trash2, Settings2, Globe, Server, ShieldPlus, X, ChevronRight, Hash, Activity, ShieldAlert, Timer } from 'lucide-react';
 import { type ModificationRule, api } from '../api/client';
 
 interface ModificationRulesProps {
@@ -14,6 +14,8 @@ export const ModificationRules: React.FC<ModificationRulesProps> = ({ rules, onR
         add_headers: {},
         remove_headers: [],
         replace_path: '',
+        delay_ms: 0,
+        status_code: 0,
     });
 
     const [headerKey, setHeaderKey] = useState('');
@@ -37,7 +39,7 @@ export const ModificationRules: React.FC<ModificationRulesProps> = ({ rules, onR
         try {
             await api.addModificationRule(newRule);
             setIsAdding(false);
-            setNewRule({ path_pattern: '/*', add_headers: {}, remove_headers: [], replace_path: '' });
+            setNewRule({ path_pattern: '/*', add_headers: {}, remove_headers: [], replace_path: '', delay_ms: 0, status_code: 0 });
             onRulesChange();
         } catch (err) {
             console.error('Failed to save rule:', err);
@@ -101,6 +103,33 @@ export const ModificationRules: React.FC<ModificationRulesProps> = ({ rules, onR
                                     className="w-full px-5 py-4 bg-black border border-white/5 rounded-2xl text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all outline-none text-white"
                                     value={newRule.replace_path}
                                     onChange={(e) => setNewRule({ ...newRule, replace_path: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <Activity className="w-3 h-3 text-rose-500" /> Chaos Delay (ms)
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="500"
+                                    className="w-full px-5 py-4 bg-black border border-white/5 rounded-2xl text-sm font-mono focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500/50 transition-all outline-none text-white"
+                                    value={newRule.delay_ms || ''}
+                                    onChange={(e) => setNewRule({ ...newRule, delay_ms: parseInt(e.target.value) || 0 })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+                                    <ShieldAlert className="w-3 h-3 text-amber-500" /> Status Override
+                                </label>
+                                <input
+                                    type="number"
+                                    placeholder="500"
+                                    className="w-full px-5 py-4 bg-black border border-white/5 rounded-2xl text-sm font-mono focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50 transition-all outline-none text-white"
+                                    value={newRule.status_code || ''}
+                                    onChange={(e) => setNewRule({ ...newRule, status_code: parseInt(e.target.value) || 0 })}
                                 />
                             </div>
                         </div>
@@ -202,6 +231,18 @@ export const ModificationRules: React.FC<ModificationRulesProps> = ({ rules, onR
                                                     <span className="line-through opacity-40">{h}</span>
                                                 </div>
                                             ))}
+                                            {rule.delay_ms && rule.delay_ms > 0 && (
+                                                <div className="flex items-center gap-2 bg-rose-400/5 border border-rose-400/20 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-rose-400">
+                                                    <Timer className="w-3 h-3" />
+                                                    <span>Delay: {rule.delay_ms}ms</span>
+                                                </div>
+                                            )}
+                                            {rule.status_code && rule.status_code > 0 && (
+                                                <div className="flex items-center gap-2 bg-amber-400/5 border border-amber-400/20 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-400">
+                                                    <ShieldAlert className="w-3 h-3" />
+                                                    <span>HTTP {rule.status_code}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

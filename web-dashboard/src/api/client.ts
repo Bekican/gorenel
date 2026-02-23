@@ -148,6 +148,8 @@ export interface ModificationRule {
   add_headers?: Record<string, string>;
   remove_headers?: string[];
   replace_path?: string;
+  delay_ms?: number;
+  status_code?: number;
 }
 
 export type ModelStatsResponse = Record<string, ModelStat>;

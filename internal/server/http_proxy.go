@@ -120,6 +120,16 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if p.inspector != nil && p.inspector.GetModifier() != nil {
 		p.inspector.GetModifier().Apply(r)
+
+		// Check for Status Code override (Gorenel Chaos Mode)
+		for _, rule := range p.inspector.GetModifier().GetRules() {
+			if rule.StatusCode > 0 && p.inspector.GetModifier().matches(r.URL.Path, rule.PathPattern) {
+				statusCode = rule.StatusCode
+				w.WriteHeader(statusCode)
+				fmt.Fprintf(w, "Gorenel Modifier: Overridden with status %d", statusCode)
+				return
+			}
+		}
 	}
 
 	// RateLimiter kontrolü
