@@ -94,6 +94,9 @@ export interface AnomalyRecord {
   path: string;
   client_ip: string;
   anomaly_score: number;
+  detected_by: string;
+  if_score?: number;
+  ae_score?: number;
 }
 
 export interface AnomaliesResponse {
@@ -153,6 +156,9 @@ export interface AIMetadata {
     completion: number;
     total: number;
   };
+  is_security_risk?: boolean;
+  risk_score?: number;
+  risk_reason?: string;
 }
 
 export interface ModificationRule {
@@ -163,6 +169,7 @@ export interface ModificationRule {
   replace_path?: string;
   delay_ms?: number;
   status_code?: number;
+  mock_body?: string;
 }
 
 export type ModelStatsResponse = Record<string, ModelStat>;

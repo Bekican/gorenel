@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
@@ -123,13 +124,26 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if p.inspector != nil && p.inspector.GetModifier() != nil {
 		p.inspector.GetModifier().Apply(r)
 
-		// Check for Status Code override (Gorenel Chaos Mode)
+		// Check for Status Code / Mock Body override (Gorenel Chaos & Morphing Mode)
 		for _, rule := range p.inspector.GetModifier().GetRules() {
-			if rule.StatusCode > 0 && p.inspector.GetModifier().matches(r.URL.Path, rule.PathPattern) {
-				statusCode = rule.StatusCode
-				w.WriteHeader(statusCode)
-				fmt.Fprintf(w, "Gorenel Modifier: Overridden with status %d", statusCode)
-				return
+			if p.inspector.GetModifier().matches(r.URL.Path, rule.PathPattern) {
+				if rule.MockBody != "" {
+					sc := rule.StatusCode
+					if sc == 0 {
+						sc = http.StatusOK
+					}
+					statusCode = sc
+					w.Header().Set("X-Gorenel-Morph", "Active")
+					w.WriteHeader(statusCode)
+					w.Write([]byte(rule.MockBody))
+					return
+				}
+				if rule.StatusCode > 0 {
+					statusCode = rule.StatusCode
+					w.WriteHeader(statusCode)
+					fmt.Fprintf(w, "Gorenel Modifier: Overridden with status %d", statusCode)
+					return
+				}
 			}
 		}
 	}
@@ -160,7 +174,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Tunnel bulunamadı", statusCode)
 
 		// Tunnel bulunmasa bile ML analizi yap (Scanner'ları yakalamak için)
-		p.triggerMLAnalysis(r, time.Since(startTime), statusCode, 0, clientIP, targetKey)
+		p.triggerMLAnalysis(r, time.Since(startTime), statusCode, 0, clientIP, targetKey, nil)
 		return
 	}
 
@@ -178,15 +192,20 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer stream.Close()
 
-	reqBody, _ := InterceptBody(r)
+	// Phase 5: Streaming Body Capture
+	var reqBodyBuf bytes.Buffer
+	if r.Body != nil {
+		r.Body = io.NopCloser(io.TeeReader(r.Body, &reqBodyBuf))
+	}
+
 	captured := &CapturedRequest{
 		ID:         uuid.New().String(),
 		Subdomain:  targetKey,
 		Method:     r.Method,
 		Path:       r.URL.Path,
 		ReqHeaders: r.Header,
-		ReqBody:    reqBody,
-		Timestamp:  startTime,
+		// ReqBody will be populated after forwarding
+		Timestamp: startTime,
 	}
 
 	captureWriter := NewResponseCaptureWriter(w)
@@ -197,6 +216,9 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Upstream error", statusCode)
 		return
 	}
+
+	// Now populate the captured req body
+	captured.ReqBody = reqBodyBuf.Bytes()
 
 	bytesReceived, err := io.Copy(captureWriter, stream)
 	if err != nil {
@@ -255,7 +277,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ML Anomali Kontrolu
-	p.triggerMLAnalysis(r, responseTime, captureWriter.StatusCode, bytesReceived, clientIP, targetKey)
+	p.triggerMLAnalysis(r, responseTime, captureWriter.StatusCode, bytesReceived, clientIP, targetKey, captured.AIMetadata)
 
 	p.logger.Debug("İstek tamamlandı",
 		zap.String("method", r.Method),
@@ -264,7 +286,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, statusCode int, bytesReceived int64, clientIP string, targetKey string) {
+func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, statusCode int, bytesReceived int64, clientIP string, targetKey string, aiMeta *AIMetadata) {
 	if p.mlClient == nil {
 		return
 	}
@@ -279,16 +301,46 @@ func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, s
 	}
 
 	p.mlClient.PredictCompareAsync(requestData, func(resp *ml.ComparisonResponse, err error) {
+		isAnomaly := false
 		if err == nil && resp.Consensus.AnyAnomaly {
-			// Hangi modeller anomali dedi?
-			detectedBy := strings.Join(resp.Consensus.FlaggedBy, ", ")
+			isAnomaly = true
+		}
 
-			// En yüksek anomali skorunu bul (görsellemede kullanmak için)
+		// Also consider AI Security risk as an anomaly trigger
+		if aiMeta != nil && aiMeta.IsSecurityRisk {
+			isAnomaly = true
+		}
+
+		if isAnomaly {
+			// Hangi modeller anomali dedi?
+			flaggedBy := []string{}
+			if err == nil {
+				flaggedBy = append(flaggedBy, resp.Consensus.FlaggedBy...)
+			}
+			if aiMeta != nil && aiMeta.IsSecurityRisk {
+				flaggedBy = append(flaggedBy, "AI_SECURITY_ANALYSER")
+			}
+			detectedBy := strings.Join(flaggedBy, ", ")
+
+			// En yüksek anomali skorunu bul
 			var maxScore float64
-			for _, mResult := range resp.Models {
-				if mResult.AnomalyScore > maxScore {
-					maxScore = mResult.AnomalyScore
+			var ifScore, aeScore float64
+			if err == nil {
+				for name, mResult := range resp.Models {
+					if mResult.AnomalyScore > maxScore {
+						maxScore = mResult.AnomalyScore
+					}
+					if name == "isolation_forest" {
+						ifScore = mResult.AnomalyScore
+					} else if name == "autoencoder" {
+						aeScore = mResult.AnomalyScore
+					}
 				}
+			}
+
+			// If AI risk is higher, use it
+			if aiMeta != nil && aiMeta.RiskScore > maxScore {
+				maxScore = aiMeta.RiskScore
 			}
 
 			p.logger.Warn("Anomali tespit edildi!",
@@ -309,6 +361,8 @@ func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, s
 					ClientIP:     clientIP,
 					AnomalyScore: maxScore,
 					DetectedBy:   detectedBy,
+					IFScore:      ifScore,
+					AEScore:      aeScore,
 				})
 			}
 		}

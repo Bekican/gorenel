@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, Settings2, Globe, Server, ShieldPlus, X, ChevronRight, Hash, Activity, ShieldAlert, Timer } from 'lucide-react';
+import { Plus, Trash2, Settings2, Globe, Server, ShieldPlus, X, ChevronRight, Hash, Activity, ShieldAlert, Timer, Zap } from 'lucide-react';
 import { type ModificationRule, api } from '../api/client';
 
 interface ModificationRulesProps {
@@ -16,6 +16,7 @@ export const ModificationRules: React.FC<ModificationRulesProps> = ({ rules, onR
         replace_path: '',
         delay_ms: 0,
         status_code: 0,
+        mock_body: '',
     });
 
     const [headerKey, setHeaderKey] = useState('');
@@ -39,7 +40,7 @@ export const ModificationRules: React.FC<ModificationRulesProps> = ({ rules, onR
         try {
             await api.addModificationRule(newRule);
             setIsAdding(false);
-            setNewRule({ path_pattern: '/*', add_headers: {}, remove_headers: [], replace_path: '', delay_ms: 0, status_code: 0 });
+            setNewRule({ path_pattern: '/*', add_headers: {}, remove_headers: [], replace_path: '', delay_ms: 0, status_code: 0, mock_body: '' });
             onRulesChange();
         } catch (err) {
             console.error('Failed to save rule:', err);
@@ -115,7 +116,7 @@ export const ModificationRules: React.FC<ModificationRulesProps> = ({ rules, onR
                                 <input
                                     type="number"
                                     placeholder="500"
-                                    className="w-full px-5 py-4 bg-black border border-white/5 rounded-2xl text-sm font-mono focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500/50 transition-all outline-none text-white"
+                                    className="w-full px-5 py-4 bg-black border border-white/5 rounded-2xl text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all outline-none text-white"
                                     value={newRule.delay_ms || ''}
                                     onChange={(e) => setNewRule({ ...newRule, delay_ms: parseInt(e.target.value) || 0 })}
                                 />
@@ -127,11 +128,24 @@ export const ModificationRules: React.FC<ModificationRulesProps> = ({ rules, onR
                                 <input
                                     type="number"
                                     placeholder="500"
-                                    className="w-full px-5 py-4 bg-black border border-white/5 rounded-2xl text-sm font-mono focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500/50 transition-all outline-none text-white"
+                                    className="w-full px-5 py-4 bg-black border border-white/5 rounded-2xl text-sm font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all outline-none text-white"
                                     value={newRule.status_code || ''}
                                     onChange={(e) => setNewRule({ ...newRule, status_code: parseInt(e.target.value) || 0 })}
                                 />
                             </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
+                                <Plus className="w-3.5 h-3.5 text-violet-400" /> Response Mocking (Advanced Morphing)
+                            </label>
+                            <textarea
+                                placeholder='{ "message": "Intercepted by Gorenel Edge" }'
+                                className="w-full h-32 px-5 py-4 bg-black border border-white/5 rounded-2xl text-xs font-mono focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500/50 transition-all outline-none text-white/70 resize-none"
+                                value={newRule.mock_body || ''}
+                                onChange={(e) => setNewRule({ ...newRule, mock_body: e.target.value })}
+                            />
+                            <p className="text-[10px] text-white/20 font-medium italic">If provided, Gorenel will return this body immediately and bypass your local server.</p>
                         </div>
 
                         <div className="space-y-4">
@@ -241,6 +255,12 @@ export const ModificationRules: React.FC<ModificationRulesProps> = ({ rules, onR
                                                 <div className="flex items-center gap-2 bg-amber-400/5 border border-amber-400/20 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-amber-400">
                                                     <ShieldAlert className="w-3 h-3" />
                                                     <span>HTTP {rule.status_code}</span>
+                                                </div>
+                                            )}
+                                            {rule.mock_body && (
+                                                <div className="flex items-center gap-2 bg-violet-400/10 border border-violet-400/20 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest text-violet-400 animate-pulse">
+                                                    <Zap className="w-3 h-3" />
+                                                    <span>MOCK BODY ACTIVE</span>
                                                 </div>
                                             )}
                                         </div>

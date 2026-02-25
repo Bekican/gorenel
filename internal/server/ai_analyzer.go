@@ -52,6 +52,9 @@ func (a *AIAnalyzer) parseOpenAIRequest(body []byte) *AIMetadata {
 	}
 	meta.Prompt = promptBuilder.String()
 
+	// Phase 5: Detection
+	a.DetectInjection(meta)
+
 	return meta
 }
 
@@ -78,6 +81,9 @@ func (a *AIAnalyzer) parseAnthropicRequest(body []byte) *AIMetadata {
 		promptBuilder.WriteString(m.Role + ": " + m.Content + "\n")
 	}
 	meta.Prompt = promptBuilder.String()
+
+	// Phase 5: Detection
+	a.DetectInjection(meta)
 
 	return meta
 }
@@ -143,4 +149,42 @@ func (a *AIAnalyzer) parseAnthropicResponse(meta *AIMetadata, body []byte) {
 	meta.Tokens.Prompt = resp.Usage.InputTokens
 	meta.Tokens.Completion = resp.Usage.OutputTokens
 	meta.Tokens.Total = resp.Usage.InputTokens + resp.Usage.OutputTokens
+}
+
+// DetectInjection performs heuristic analysis for prompt injection attempts
+func (a *AIAnalyzer) DetectInjection(meta *AIMetadata) {
+	if meta == nil || meta.Prompt == "" {
+		return
+	}
+
+	prompt := strings.ToLower(meta.Prompt)
+
+	// High risk patterns
+	injectionPatterns := []string{
+		"ignore previous instructions",
+		"ignore all previous",
+		"system prompt",
+		"you are now",
+		"dan mode",
+		"stay out of character",
+		"do not mention",
+		"reveal your rules",
+		"developer mode",
+	}
+
+	riskCount := 0
+	for _, pattern := range injectionPatterns {
+		if strings.Contains(prompt, pattern) {
+			riskCount++
+		}
+	}
+
+	if riskCount > 0 {
+		meta.IsSecurityRisk = true
+		meta.RiskScore = float64(riskCount) * 0.35 // Simple linear scoring
+		if meta.RiskScore > 1.0 {
+			meta.RiskScore = 1.0
+		}
+		meta.RiskReason = "Prompt Injection Pattern Detected"
+	}
 }

@@ -32,6 +32,9 @@ type AIMetadata struct {
 		Completion int `json:"completion"`
 		Total      int `json:"total"`
 	} `json:"tokens"`
+	IsSecurityRisk bool    `json:"is_security_risk"`
+	RiskScore      float64 `json:"risk_score"`
+	RiskReason     string  `json:"risk_reason"`
 }
 
 type TrafficInspector struct {

@@ -26,7 +26,7 @@ const (
 )
 
 const (
-	BaseDomain = ".gorenel.io"
+	BaseDomain = "gorenel.io"
 
 	SubdomainLength = 12
 )

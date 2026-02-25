@@ -26,6 +26,7 @@ const AnomalyAlerts = React.lazy(() => import('./components/AnomalyAlerts').then
 const ModelComparison = React.lazy(() => import('./components/ModelComparison').then(module => ({ default: module.ModelComparison })));
 const TrafficInspector = React.lazy(() => import('./components/TrafficInspector').then(module => ({ default: module.TrafficInspector })));
 const ModificationRules = React.lazy(() => import('./components/ModificationRules').then(module => ({ default: module.ModificationRules })));
+const ThreatRadar = React.lazy(() => import('./components/ThreatRadar').then(module => ({ default: module.ThreatRadar })));
 import { LoginPage } from './components/LoginPage';
 import { ConnectModal } from './components/ConnectModal';
 import { ShareView } from './components/ShareView';
@@ -284,19 +285,26 @@ function App() {
                   <div className="lg:col-span-2">
                     <ModelComparison stats={mlStats} />
                   </div>
-                  <div className="p-8 rounded-3xl bg-[#0A0C10]/40 border border-white/5 backdrop-blur-md">
-                    <h3 className="font-bold text-lg mb-6">Provider Status</h3>
-                    <div className="space-y-4">
-                      {['OpenAI', 'Anthropic', 'Local-Llama'].map(p => (
-                        <div key={p} className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.02]">
-                          <span className="font-medium">{p}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Operational</span>
-                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                          </div>
+                  <div className="lg:col-span-1">
+                    {anomalies.length > 0 ? (
+                      <ThreatRadar latestAnomaly={anomalies[0]} />
+                    ) : (
+                      <ThreatRadar />
+                    )}
+                  </div>
+                </div>
+                <div className="p-8 rounded-3xl bg-[#0A0C10]/40 border border-white/5 backdrop-blur-md">
+                  <h3 className="font-bold text-lg mb-6">Provider Status</h3>
+                  <div className="space-y-4">
+                    {['OpenAI', 'Anthropic', 'Local-Llama'].map(p => (
+                      <div key={p} className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.02]">
+                        <span className="font-medium">{p}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Operational</span>
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -315,10 +323,10 @@ function App() {
             )}
           </Suspense>
         </div>
-      </main>
+      </main >
 
       <ConnectModal isOpen={isConnectOpen} onClose={() => setIsConnectOpen(false)} />
-    </div>
+    </div >
   );
 }
 

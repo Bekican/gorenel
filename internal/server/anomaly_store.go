@@ -15,6 +15,8 @@ type AnomalyRecord struct {
 	ClientIP     string    `json:"client_ip"`
 	AnomalyScore float64   `json:"anomaly_score"`
 	DetectedBy   string    `json:"detected_by"` // "isolation_forest", "autoencoder", "both"
+	IFScore      float64   `json:"if_score"`    // Isolation Forest specific
+	AEScore      float64   `json:"ae_score"`    // AutoEncoder specific
 }
 
 // AnomalyStore thread-safe anomali deposu

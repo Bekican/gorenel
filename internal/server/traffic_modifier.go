@@ -16,6 +16,7 @@ type ModificationRule struct {
 	ReplacePath   string            `json:"replace_path,omitempty"`
 	DelayMS       int               `json:"delay_ms,omitempty"`    // Simulated latency
 	StatusCode    int               `json:"status_code,omitempty"` // Override response status code
+	MockBody      string            `json:"mock_body,omitempty"`   // Return static response body
 }
 
 // TrafficModifier manages a set of rules and applies them to incoming requests
