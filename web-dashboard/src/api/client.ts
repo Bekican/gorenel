@@ -140,6 +140,19 @@ export interface CapturedRequest {
   status_code: number;
   timestamp: string;
   duration: number; // in nanoseconds
+  ai_metadata?: AIMetadata;
+}
+
+export interface AIMetadata {
+  model: string;
+  provider: string;
+  prompt: string;
+  completion: string;
+  tokens: {
+    prompt: number;
+    completion: number;
+    total: number;
+  };
 }
 
 export interface ModificationRule {
@@ -235,6 +248,17 @@ export const api = {
 
   deleteModificationRule: async (id: string): Promise<void> => {
     await apiClient.delete(`/api/inspector/rules?id=${id}`);
+  },
+
+  // Trace Sharing
+  shareTrace: async (id: string): Promise<{ share_id: string; url: string }> => {
+    const { data } = await apiClient.post<{ share_id: string; url: string }>(`/api/shares?id=${id}`);
+    return data;
+  },
+
+  getSharedTrace: async (shareId: string): Promise<CapturedRequest> => {
+    const { data } = await apiClient.get<CapturedRequest>(`/api/shares/${shareId}`);
+    return data;
   },
 };
 

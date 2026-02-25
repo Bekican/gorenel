@@ -176,7 +176,7 @@ func main() {
 	}()
 
 	// Monitoring server
-	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient)
+	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient, cfg.RedisAddr)
 	go func() {
 		if err := monitor.Start(cfg.MonitorPort); err != nil {
 			zapLogger.Fatal("Monitoring server hatası", zap.Error(err))

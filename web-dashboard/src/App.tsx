@@ -28,6 +28,7 @@ const TrafficInspector = React.lazy(() => import('./components/TrafficInspector'
 const ModificationRules = React.lazy(() => import('./components/ModificationRules').then(module => ({ default: module.ModificationRules })));
 import { LoginPage } from './components/LoginPage';
 import { ConnectModal } from './components/ConnectModal';
+import { ShareView } from './components/ShareView';
 
 type NavTab = 'overview' | 'tunnels' | 'ai_gateway' | 'traffic' | 'settings';
 
@@ -106,6 +107,13 @@ function App() {
     setUser(null);
     localStorage.removeItem('gorenel_user');
   };
+
+  // Handle public share links
+  const path = window.location.pathname;
+  if (path.startsWith('/share/')) {
+    const shareId = path.split('/')[2];
+    return <ShareView shareId={shareId} />;
+  }
 
   if (!user) return <LoginPage onLoginSuccess={(u) => { setUser(u); localStorage.setItem('gorenel_user', JSON.stringify(u)); }} />;
   if (loading) return (

@@ -19,6 +19,19 @@ type CapturedRequest struct {
 	StatusCode  int           `json:"status_code"`
 	Timestamp   time.Time     `json:"timestamp"`
 	Duration    time.Duration `json:"duration"`
+	AIMetadata  *AIMetadata   `json:"ai_metadata,omitempty"`
+}
+
+type AIMetadata struct {
+	Model      string `json:"model"`
+	Provider   string `json:"provider"` // OpenAI, Anthropic, etc.
+	Prompt     string `json:"prompt"`
+	Completion string `json:"completion"`
+	Tokens     struct {
+		Prompt     int `json:"prompt"`
+		Completion int `json:"completion"`
+		Total      int `json:"total"`
+	} `json:"tokens"`
 }
 
 type TrafficInspector struct {

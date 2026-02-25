@@ -40,9 +40,10 @@ type MonitoringServer struct {
 	tokenSvc        *auth.JWTService
 	anomalyStore    *AnomalyStore
 	mlClient        *ml.Client
+	traceSharer     *TraceSharer
 }
 
-func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client) *MonitoringServer {
+func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client, redisAddr string) *MonitoringServer {
 	return &MonitoringServer{
 		tunnelManager:   tm,
 		analyticsEngine: ae,
@@ -52,6 +53,7 @@ func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.Aut
 		tokenSvc:        ts,
 		anomalyStore:    as,
 		mlClient:        mlc,
+		traceSharer:     NewTraceSharer(redisAddr),
 	}
 }
 
@@ -82,6 +84,10 @@ func (m *MonitoringServer) Start(port string) error {
 		mux.HandleFunc("/api/inspector/history", m.corsMiddleware(rl(m.inspectorHistoryHandler)))
 		mux.HandleFunc("/api/inspector/replay", m.corsMiddleware(rl(m.inspectorReplayHandler)))
 		mux.HandleFunc("/api/inspector/rules", m.corsMiddleware(rl(m.inspectorRulesHandler)))
+
+		// Trace Sharing
+		mux.HandleFunc("/api/shares", m.corsMiddleware(rl(m.shareTraceHandler)))
+		mux.HandleFunc("/api/shares/", m.corsMiddleware(rl(m.getSharedTraceHandler)))
 	}
 
 	// Tunnels endpoint
@@ -352,6 +358,63 @@ func (m *MonitoringServer) inspectorRulesHandler(w http.ResponseWriter, r *http.
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+// --- Trace Sharing Handlers ---
+
+func (m *MonitoringServer) shareTraceHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		http.Error(w, "Missing request ID", http.StatusBadRequest)
+		return
+	}
+
+	captured := m.inspector.GetByID(id)
+	if captured == nil {
+		http.Error(w, "Request not found", http.StatusNotFound)
+		return
+	}
+
+	shareID, err := m.traceSharer.Share(r.Context(), captured)
+	if err != nil {
+		http.Error(w, "Failed to share trace", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"share_id": shareID,
+		"url":      fmt.Sprintf("/share/%s", shareID),
+	})
+}
+
+func (m *MonitoringServer) getSharedTraceHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract ID from path /api/shares/{id}
+	path := r.URL.Path
+	shareID := path[len("/api/shares/"):]
+	if shareID == "" {
+		http.Error(w, "Missing share ID", http.StatusBadRequest)
+		return
+	}
+
+	captured, err := m.traceSharer.Get(r.Context(), shareID)
+	if err != nil {
+		http.Error(w, "Shared trace not found or expired", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(captured)
 }
 
 // increment request

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Play, Clock, Globe, Shield, Terminal, Filter, ArrowRight } from 'lucide-react';
+import { Search, Play, Clock, Globe, Shield, Terminal, Filter, ArrowRight, Sparkles, Bot, Cpu, Share2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { type CapturedRequest, api } from '../api/client';
 
@@ -116,6 +116,12 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                             <div className="flex items-center gap-2 max-w-md">
                                                 <span className="text-white/20 font-bold shrink-0">{req.subdomain}.</span>
                                                 <span className="text-sm font-mono text-white/60 truncate">{req.path}</span>
+                                                {req.ai_metadata && (
+                                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-violet-500/10 border border-violet-500/20 rounded-md text-[9px] font-black uppercase text-violet-400 animate-pulse">
+                                                        <Sparkles className="w-2.5 h-2.5" />
+                                                        AI {req.ai_metadata.provider}
+                                                    </div>
+                                                )}
                                             </div>
                                         </td>
                                         <td className="px-8 py-5 text-xs font-bold text-white/20">
@@ -137,6 +143,53 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                         <tr>
                                             <td colSpan={5} className="px-8 py-0">
                                                 <div className="bg-white/[0.02] border-x border-b border-white/5 rounded-b-3xl p-8 mb-4 animate-in slide-in-from-top-2 duration-300">
+
+                                                    {req.ai_metadata && (
+                                                        <div className="mb-8 p-6 bg-violet-500/5 border border-violet-500/10 rounded-[2rem] space-y-6">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="p-3 bg-violet-500/10 rounded-2xl border border-violet-500/20">
+                                                                        <Bot className="w-5 h-5 text-violet-400" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <h4 className="text-lg font-black text-violet-100">AI Intelligence Inspector</h4>
+                                                                        <p className="text-xs text-violet-400/60 font-medium">Protocol-aware LLM payload analysis</p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="text-right">
+                                                                        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest">Model</div>
+                                                                        <div className="text-sm font-mono font-black text-white/60">{req.ai_metadata.model}</div>
+                                                                    </div>
+                                                                    <div className="h-8 w-px bg-white/5" />
+                                                                    <div className="text-right">
+                                                                        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest">Total Tokens</div>
+                                                                        <div className="text-sm font-mono font-black text-violet-400">{req.ai_metadata.tokens.total}</div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                                <div className="space-y-3">
+                                                                    <label className="text-[10px] font-black text-white/20 uppercase tracking-widest flex items-center gap-2">
+                                                                        <Cpu className="w-3 h-3" /> Input Prompt ({req.ai_metadata.tokens.prompt} tokens)
+                                                                    </label>
+                                                                    <div className="p-4 bg-black/40 border border-white/5 rounded-2xl text-xs text-white/70 font-medium leading-relaxed max-h-60 overflow-auto whitespace-pre-wrap">
+                                                                        {req.ai_metadata.prompt}
+                                                                    </div>
+                                                                </div>
+                                                                <div className="space-y-3">
+                                                                    <label className="text-[10px] font-black text-white/20 uppercase tracking-widest flex items-center gap-2">
+                                                                        <Terminal className="w-3 h-3 text-emerald-500" /> Model Completion ({req.ai_metadata.tokens.completion} tokens)
+                                                                    </label>
+                                                                    <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl text-xs text-emerald-100/70 font-medium leading-relaxed max-h-60 overflow-auto whitespace-pre-wrap italic">
+                                                                        {req.ai_metadata.completion || "Streaming completion in progress or inaccessible..."}
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
                                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
                                                         <div className="space-y-6">
                                                             <div className="flex items-center justify-between border-b border-white/5 pb-4">
@@ -252,7 +305,24 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                 <span className="text-sm font-black text-white/60">{req.subdomain}.gorenel.io</span>
                                                             </div>
                                                         </div>
-                                                        <div className="ml-auto">
+                                                        <div className="ml-auto flex items-center gap-4">
+                                                            <button
+                                                                className="flex items-center gap-2 px-6 py-3 bg-violet-500/10 hover:bg-violet-500/20 text-violet-400 border border-violet-500/20 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
+                                                                onClick={async (e) => {
+                                                                    e.stopPropagation();
+                                                                    try {
+                                                                        const { share_id } = await api.shareTrace(req.id);
+                                                                        const shareUrl = `${window.location.origin}/share/${share_id}`;
+                                                                        await navigator.clipboard.writeText(shareUrl);
+                                                                        alert('Share link copied to clipboard!');
+                                                                    } catch (err) {
+                                                                        console.error('Sharing failed:', err);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <Share2 className="w-4 h-4" />
+                                                                Share Trace
+                                                            </button>
                                                             <button
                                                                 className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
                                                                 onClick={() => setSelectedId(null)}

@@ -31,6 +31,7 @@ type HTTPProxy struct {
 	baseDomain     string
 	acmeEmail      string
 	env            string
+	aiAnalyzer     *AIAnalyzer
 }
 
 func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, acmeEmail, env string) *HTTPProxy {
@@ -47,6 +48,7 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 		baseDomain:     baseDomain,
 		acmeEmail:      acmeEmail,
 		env:            env,
+		aiAnalyzer:     NewAIAnalyzer(),
 	}
 }
 
@@ -211,6 +213,20 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	captured.StatusCode = captureWriter.StatusCode
 	captured.Duration = time.Since(startTime)
 	if p.inspector != nil {
+		// AI Analysis Phase
+		if p.aiAnalyzer != nil {
+			aiMeta := p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, captured.ReqBody)
+			if aiMeta != nil {
+				p.aiAnalyzer.AnalyzeResponse(aiMeta, captured.RespBody)
+				captured.AIMetadata = aiMeta
+				p.logger.Info("AI Traffic Detected",
+					zap.String("provider", aiMeta.Provider),
+					zap.String("model", aiMeta.Model),
+					zap.Int("tokens", aiMeta.Tokens.Total),
+				)
+			}
+		}
+
 		p.inspector.Record(captured)
 	}
 
