@@ -10,6 +10,7 @@ interface AnomalyRecord {
     client_ip: string;
     anomaly_score: number;
     detected_by?: string;
+    risk_reason?: string;
 }
 
 interface Props {
@@ -101,6 +102,11 @@ export const AnomalyAlerts: React.FC<Props> = ({ anomalies }) => {
                                     {severity.label}
                                 </span>
                             </div>
+                            {anomaly.risk_reason && (
+                                <p className="text-xs text-red-500 font-medium mb-2 px-2 py-1 bg-red-50 rounded-lg border border-red-100">
+                                    ⚠ {anomaly.risk_reason}
+                                </p>
+                            )}
                             <div className="flex items-center justify-between text-xs text-neutral-500">
                                 <div className="flex items-center gap-3">
                                     <span>{anomaly.subdomain}</span>

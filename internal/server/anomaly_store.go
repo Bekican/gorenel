@@ -17,6 +17,7 @@ type AnomalyRecord struct {
 	DetectedBy   string    `json:"detected_by"` // "isolation_forest", "autoencoder", "both"
 	IFScore      float64   `json:"if_score"`    // Isolation Forest specific
 	AEScore      float64   `json:"ae_score"`    // AutoEncoder specific
+	RiskReason   string    `json:"risk_reason"` // AI Security risk explanation
 }
 
 // AnomalyStore thread-safe anomali deposu

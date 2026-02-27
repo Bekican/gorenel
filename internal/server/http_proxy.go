@@ -380,6 +380,10 @@ func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, s
 
 			// Anomali deposuna kaydet
 			if p.anomalyStore != nil {
+				riskReason := ""
+				if aiMeta != nil {
+					riskReason = aiMeta.RiskReason
+				}
 				p.anomalyStore.Add(AnomalyRecord{
 					ID:           uuid.New().String(),
 					Timestamp:    time.Now(),
@@ -391,6 +395,7 @@ func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, s
 					DetectedBy:   detectedBy,
 					IFScore:      ifScore,
 					AEScore:      aeScore,
+					RiskReason:   riskReason,
 				})
 			}
 		}
