@@ -173,8 +173,21 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.logger.Warn("Tunnel not found", zap.String("host", host))
 		http.Error(w, "Tunnel bulunamadı", statusCode)
 
-		// Tunnel bulunmasa bile ML analizi yap (Scanner'ları yakalamak için)
-		p.triggerMLAnalysis(r, time.Since(startTime), statusCode, 0, clientIP, targetKey, nil)
+		// Phase 5: Tunnel bulunmasa bile body'yi oku ve AI güvenlik taraması yap
+		var aiMeta *AIMetadata
+		if r.Body != nil && p.aiAnalyzer != nil {
+			bodyBytes, err := io.ReadAll(r.Body)
+			if err == nil && len(bodyBytes) > 0 {
+				aiMeta = p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, bodyBytes)
+				if aiMeta != nil {
+					p.logger.Info("AI Security scan (no tunnel)",
+						zap.Bool("is_risk", aiMeta.IsSecurityRisk),
+						zap.Float64("risk_score", aiMeta.RiskScore),
+					)
+				}
+			}
+		}
+		p.triggerMLAnalysis(r, time.Since(startTime), statusCode, 0, clientIP, targetKey, aiMeta)
 		return
 	}
 
@@ -214,6 +227,21 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		statusCode = http.StatusBadGateway
 		p.logger.Error("Request forwarding failed", zap.Error(err))
 		http.Error(w, "Upstream error", statusCode)
+
+		// Phase 5 Fix: Upstream fail olsa bile AI analizi ve anomali kaydı yap
+		captured.ReqBody = reqBodyBuf.Bytes()
+		if p.inspector != nil && p.aiAnalyzer != nil {
+			aiMeta := p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, captured.ReqBody)
+			if aiMeta != nil {
+				captured.AIMetadata = aiMeta
+				p.logger.Info("AI Security scan on failed upstream",
+					zap.String("provider", aiMeta.Provider),
+					zap.Bool("is_risk", aiMeta.IsSecurityRisk),
+				)
+			}
+			p.inspector.Record(captured)
+			p.triggerMLAnalysis(r, time.Since(startTime), statusCode, 0, clientIP, targetKey, aiMeta)
+		}
 		return
 	}
 

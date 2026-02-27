@@ -11,11 +11,12 @@ def verify_phase5():
     # 0. Get an active subdomain
     print("Fetching active tunnels...")
     resp = requests.get(f"{MONITORING_URL}/api/tunnels")
-    tunnels = resp.json()
+    data = resp.json()
+    tunnels = data.get("tunnels", [])
     if not tunnels:
         print("❌ No active tunnels found. Please ensure the client is running.")
         return
-    active_subdomain = list(tunnels.keys())[0]
+    active_subdomain = tunnels[0]["subdomain"]
     print(f"Using active subdomain: {active_subdomain}")
 
     # 1. Send a Prompt Injection Request
