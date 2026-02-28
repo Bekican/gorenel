@@ -131,28 +131,54 @@ func runStart(cmd *cobra.Command, args []string) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-	// Tunnel'ı başlat (goroutine içinde)
-	errChan := make(chan error, 1)
+	// Tunnel persistence loop
 	go func() {
-		errChan <- startTunnel(ctx, serverAddr, localPort, customDomain, tunnelType)
+		delay := 1 * time.Second
+		maxDelay := 30 * time.Second
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+
+			err := startTunnel(ctx, serverAddr, localPort, customDomain, tunnelType)
+			if err != nil {
+				if ctx.Err() != nil {
+					return
+				}
+				log.Printf("⚠️ Bağlantı sorunu: %v", err)
+				log.Printf("🔄 %v saniye içinde tekrar bağlanılacak...", delay.Seconds())
+
+				select {
+				case <-ctx.Done():
+					return
+				case <-time.After(delay):
+				}
+
+				// Exponential backoff
+				delay *= 2
+				if delay > maxDelay {
+					delay = maxDelay
+				}
+			} else {
+				// Reset delay on success
+				delay = 1 * time.Second
+			}
+		}
 	}()
 
-	// Metrikleri göster (her 10 saniyede bir)
+	// Show metrics (every 10 seconds)
 	if Verbose {
 		go printMetrics(ctx)
 	}
 
-	// Bekleme
-	select {
-	case <-sigChan:
-		log.Println("\nGraceful shutdown başlatılıyor...")
-		cancel()
-		time.Sleep(2 * time.Second) // Cleanup için zaman tanı
-	case err := <-errChan:
-		if err != nil {
-			log.Fatalf("Hata: %v", err)
-		}
-	}
+	// Wait for signal
+	<-sigChan
+	log.Println("\nGraceful shutdown başlatılıyor...")
+	cancel()
+	time.Sleep(1 * time.Second)
 
 	log.Println("Tunnel kapatıldı")
 	printFinalMetrics()

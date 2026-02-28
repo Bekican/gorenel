@@ -112,6 +112,17 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		dur := time.Since(startTime)
 		p.publishEvent(targetKey, r, clientIP, statusCode, dur, 0, bytesOut, "")
+
+		// Panic recovery
+		if err := recover(); err != nil {
+			p.logger.Error("PANIC RECOVERED in ServeHTTP",
+				zap.Any("panic", err),
+				zap.String("host", r.Host),
+				zap.String("path", r.URL.Path),
+			)
+			// If headers haven't been sent yet, send 500.
+			// However, in many cases they might have been.
+		}
 	}()
 
 	if targetKey == "" {
@@ -205,10 +216,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer stream.Close()
 
-	// Phase 5: Streaming Body Capture
+	// Phase 5: Streaming Body Capture (Bounded to 5MB to prevent OOM)
 	var reqBodyBuf bytes.Buffer
 	if r.Body != nil {
-		r.Body = io.NopCloser(io.TeeReader(r.Body, &reqBodyBuf))
+		bw := &BoundedWriter{W: &reqBodyBuf, Limit: 5 * 1024 * 1024}
+		r.Body = io.NopCloser(io.TeeReader(r.Body, bw))
 	}
 
 	captured := &CapturedRequest{
@@ -447,4 +459,29 @@ func (p *HTTPProxy) publishEvent(subdomain string, r *http.Request, clientIP str
 	} else {
 		p.eventStream.publish(event)
 	}
+}
+
+// BoundedWriter writes at most Limit bytes to the underlying writer,
+// discard the rest, but always returns the original length to keep streams flowing.
+type BoundedWriter struct {
+	W     io.Writer
+	Limit int64
+	n     int64
+}
+
+func (bw *BoundedWriter) Write(p []byte) (n int, err error) {
+	if bw.n >= bw.Limit {
+		return len(p), nil // Discard
+	}
+	rem := bw.Limit - bw.n
+	toWrite := len(p)
+	if int64(toWrite) > rem {
+		toWrite = int(rem)
+	}
+	nWritten, err := bw.W.Write(p[:toWrite])
+	bw.n += int64(nWritten)
+	if err != nil {
+		return nWritten, err
+	}
+	return len(p), nil
 }

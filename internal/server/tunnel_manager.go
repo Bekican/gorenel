@@ -109,8 +109,8 @@ func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session
 // GetTunnel attempts to find a session matching the provided host.
 // It first checks if the host is a direct subdomain, then checks custom domain mappings.
 func (tm *TunnelManager) GetTunnel(host string) (*yamux.Session, bool) {
-	tm.mu.RLock()
-	defer tm.mu.RUnlock()
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
 
 	// 1. Durum: Host direkt bir subdomain (örn: "xyz-123")
 	if info, exists := tm.tunnels[host]; exists {
