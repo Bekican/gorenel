@@ -159,32 +159,62 @@ func (a *AIAnalyzer) DetectInjection(meta *AIMetadata) {
 
 	prompt := strings.ToLower(meta.Prompt)
 
-	// High risk patterns
-	injectionPatterns := []string{
-		"ignore previous instructions",
-		"ignore all previous",
-		"system prompt",
-		"you are now",
-		"dan mode",
-		"stay out of character",
-		"do not mention",
-		"reveal your rules",
-		"developer mode",
+	type weightedPattern struct {
+		pattern string
+		weight  float64
 	}
 
-	riskCount := 0
-	for _, pattern := range injectionPatterns {
-		if strings.Contains(prompt, pattern) {
-			riskCount++
+	patterns := []weightedPattern{
+		// Critical (0.50) — direct manipulation attempts
+		{"ignore previous instructions", 0.50},
+		{"ignore all previous", 0.50},
+		{"jailbreak", 0.50},
+		{"bypass safety", 0.50},
+		{"bypass filters", 0.50},
+		{"önceki talimatları unut", 0.50},
+		{"tüm talimatları yoksay", 0.50},
+		{"güvenlik filtrelerini atla", 0.50},
+
+		// High (0.35) — prompt extraction & role override
+		{"system prompt", 0.35},
+		{"reveal your rules", 0.35},
+		{"developer mode", 0.35},
+		{"dan mode", 0.35},
+		{"what are your instructions", 0.35},
+		{"repeat everything above", 0.35},
+		{"show me your prompt", 0.35},
+		{"output your rules", 0.35},
+		{"sistem promptunu göster", 0.35},
+		{"kurallarını göster", 0.35},
+
+		// Medium (0.20) — social engineering & roleplay
+		{"you are now", 0.20},
+		{"pretend you are", 0.20},
+		{"act as if", 0.20},
+		{"roleplay as", 0.20},
+		{"stay out of character", 0.20},
+		{"do not mention", 0.20},
+		{"base64 decode", 0.20},
+		{"translate from hex", 0.20},
+		{"şimdi sen bir", 0.20},
+	}
+
+	var totalScore float64
+	var matched []string
+
+	for _, p := range patterns {
+		if strings.Contains(prompt, p.pattern) {
+			totalScore += p.weight
+			matched = append(matched, p.pattern)
 		}
 	}
 
-	if riskCount > 0 {
+	if len(matched) > 0 {
 		meta.IsSecurityRisk = true
-		meta.RiskScore = float64(riskCount) * 0.35 // Simple linear scoring
-		if meta.RiskScore > 1.0 {
-			meta.RiskScore = 1.0
+		if totalScore > 1.0 {
+			totalScore = 1.0
 		}
-		meta.RiskReason = "Prompt Injection Pattern Detected"
+		meta.RiskScore = totalScore
+		meta.RiskReason = "Prompt Injection: " + strings.Join(matched, ", ")
 	}
 }
