@@ -1,7 +1,5 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import {
-  Zap,
-  Users,
   TrendingUp,
   LayoutDashboard,
   Globe,
@@ -14,7 +12,6 @@ import {
   Cpu
 } from 'lucide-react';
 import { api, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type ModelStatsResponse, type CapturedRequest, type ModificationRule } from './api/client';
-import { ErrorBoundary } from './components/ErrorBoundary';
 import './index.css';
 
 // Lazy load components
@@ -45,7 +42,6 @@ function App() {
   const [history, setHistory] = useState<CapturedRequest[]>([]);
   const [rules, setRules] = useState<ModificationRule[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -90,7 +86,7 @@ function App() {
       setRules(rulesData || []);
       setLoading(false);
     } catch (err) {
-      setError('Connection refused. Is the Gorenel server running on port 9091?');
+      console.error('Connection refused. Is the Gorenel server running on port 9091?');
       setLoading(false);
     }
   };
@@ -120,7 +116,7 @@ function App() {
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <Zap className="w-12 h-12 text-primary animate-pulse" />
+        <Activity className="w-12 h-12 text-primary animate-pulse" />
         <div className="h-1 w-32 bg-white/10 rounded-full overflow-hidden">
           <div className="h-full bg-primary animate-progress origin-left"></div>
         </div>
@@ -156,8 +152,8 @@ function App() {
         <div className="sticky top-4 h-[calc(100vh-2rem)]">
           <div className="h-full bg-[#0A0C10]/60 backdrop-blur-xl border border-white/5 rounded-3xl flex flex-col p-6 shadow-2xl">
             <div className="flex items-center gap-3 mb-10">
-              <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                <Zap className="w-4 h-4 text-black fill-current" />
+              <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+                <img src="/logo.png" alt="Gorenel Logo" className="w-full h-full object-cover" />
               </div>
               <div className="flex flex-col">
                 <span className="font-bold text-lg tracking-tight">GORENEL</span>
@@ -241,7 +237,7 @@ function App() {
                   <MetricCard title="Active Tunnels" value={metrics?.tunnels.active_count || 0} icon={Globe} color="emerald" />
                   <MetricCard title="Total Requests" value={analytics?.total_requests || 0} icon={TrendingUp} color="blue" trend={{ value: 12, isPositive: true }} />
                   <MetricCard title="System Load" value={`${metrics?.system.goroutines || 0}`} icon={Activity} color="violet" />
-                  <MetricCard title="Avg Latency" value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(0)} ms`} icon={Zap} color="rose" />
+                  <MetricCard title="Avg Latency" value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(0)} ms`} icon={Activity} color="rose" />
                 </div>
 
                 {/* Charts - Floating */}

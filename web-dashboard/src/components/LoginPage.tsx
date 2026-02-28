@@ -41,8 +41,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
             <div className="max-w-md w-full relative z-10 space-y-12">
                 {/* Logo Section */}
                 <div className="text-center space-y-4">
-                    <div className="inline-flex p-4 bg-white/5 rounded-[2rem] border border-white/10 shadow-[0_0_40px_rgba(16,185,129,0.1)] mb-4">
-                        <Zap className="w-12 h-12 text-primary" />
+                    <div className="inline-flex overflow-hidden w-24 h-24 bg-white/5 rounded-[2rem] border border-white/10 shadow-[0_0_50px_rgba(16,185,129,0.15)] mb-4">
+                        <img src="/logo.png" alt="Gorenel" className="w-full h-full object-cover" />
                     </div>
                     <div className="space-y-1">
                         <h1 className="text-5xl font-black tracking-tighter text-white">
