@@ -107,6 +107,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Use a response wrapper to capture status code for analytics
 	statusCode := http.StatusOK // Default, will be overwritten by errors or response
 	var bytesOut int64
+	var bytesReceived int64
 
 	// Ensure analytics are published for ALL requests, even on early return
 	defer func() {
@@ -262,7 +263,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Now populate the captured req body
 	captured.ReqBody = reqBodyBuf.Bytes()
 
-	bytesReceived, err := io.Copy(captureWriter, stream)
+	bytesReceived, err = io.Copy(captureWriter, stream)
 	if err != nil {
 		p.logger.Error("Response copy error", zap.Error(err))
 	}
