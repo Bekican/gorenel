@@ -319,7 +319,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ML Anomali Kontrolu
-	p.triggerMLAnalysis(r, responseTime, captureWriter.StatusCode, bytesReceived, clientIP, targetKey, captured.AIMetadata)
+	p.triggerMLAnalysis(r, responseTime, captureWriter.StatusCode, nCopy, clientIP, targetKey, captured.AIMetadata)
 
 	p.logger.Debug("İstek tamamlandı",
 		zap.String("method", r.Method),
