@@ -262,11 +262,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Now populate the captured req body
 	captured.ReqBody = reqBodyBuf.Bytes()
 
-	nCopy, err := io.Copy(captureWriter, stream)
+	bytesReceived, err := io.Copy(captureWriter, stream)
 	if err != nil {
 		p.logger.Error("Response copy error", zap.Error(err))
 	}
-	bytesOut = nCopy
+	bytesOut = bytesReceived
 	statusCode = captureWriter.StatusCode
 	if statusCode == 0 {
 		statusCode = http.StatusOK
@@ -295,7 +295,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update Tunnel Stats
-	p.tunnelManager.UpdateStats(targetKey, 0, nCopy)
+	p.tunnelManager.UpdateStats(targetKey, 0, bytesReceived)
 
 	responseTime := time.Since(startTime)
 
@@ -307,7 +307,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			StatusCode:   captureWriter.StatusCode,
 			ResponseTime: responseTime.Milliseconds(),
 			RequestSize:  r.ContentLength,
-			ResponseSize: nCopy,
+			ResponseSize: bytesReceived,
 			ClientIP:     clientIP,
 			Timestamp:    time.Now().Format(time.RFC3339),
 		}
@@ -319,7 +319,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ML Anomali Kontrolu
-	p.triggerMLAnalysis(r, responseTime, captureWriter.StatusCode, nCopy, clientIP, targetKey, captured.AIMetadata)
+	p.triggerMLAnalysis(r, responseTime, captureWriter.StatusCode, bytesReceived, clientIP, targetKey, captured.AIMetadata)
 
 	p.logger.Debug("İstek tamamlandı",
 		zap.String("method", r.Method),
