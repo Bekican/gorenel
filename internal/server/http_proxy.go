@@ -146,7 +146,9 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					statusCode = sc
 					w.Header().Set("X-Gorenel-Morph", "Active")
 					w.WriteHeader(statusCode)
-					w.Write([]byte(rule.MockBody))
+					if _, err := w.Write([]byte(rule.MockBody)); err != nil {
+						p.logger.Error("MockBody write error", zap.Error(err))
+					}
 					return
 				}
 				if rule.StatusCode > 0 {
@@ -260,11 +262,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Now populate the captured req body
 	captured.ReqBody = reqBodyBuf.Bytes()
 
-	bytesReceived, err := io.Copy(captureWriter, stream)
+	nCopy, err := io.Copy(captureWriter, stream)
 	if err != nil {
 		p.logger.Error("Response copy error", zap.Error(err))
 	}
-	bytesOut = bytesReceived
+	bytesOut = nCopy
 	statusCode = captureWriter.StatusCode
 	if statusCode == 0 {
 		statusCode = http.StatusOK
@@ -293,7 +295,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update Tunnel Stats
-	p.tunnelManager.UpdateStats(targetKey, 0, bytesReceived)
+	p.tunnelManager.UpdateStats(targetKey, 0, nCopy)
 
 	responseTime := time.Since(startTime)
 
@@ -305,7 +307,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			StatusCode:   captureWriter.StatusCode,
 			ResponseTime: responseTime.Milliseconds(),
 			RequestSize:  r.ContentLength,
-			ResponseSize: bytesReceived,
+			ResponseSize: nCopy,
 			ClientIP:     clientIP,
 			Timestamp:    time.Now().Format(time.RFC3339),
 		}

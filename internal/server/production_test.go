@@ -14,6 +14,9 @@ func TestHTTPProxy_PanicRecovery(t *testing.T) {
 }
 
 func TestBoundedWriter(t *testing.T) {
+	if t == nil {
+		return
+	}
 	var buf bytes.Buffer
 	bw := &BoundedWriter{W: &buf, Limit: 10}
 

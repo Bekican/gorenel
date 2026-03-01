@@ -52,7 +52,7 @@ func (tm *TunnelManager) AllocatePort() (int, error) {
 			// Portun sistemde gerçekten boş olup olmadığını kontrol et
 			ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 			if err == nil {
-				ln.Close()
+				_ = ln.Close()
 				// Artık AllocatePort sadece portu rezerve eder
 				// Kayıt işlemi Register aşamasında yapılacak veya burada geçici işaretlenebilir
 				return port, nil
