@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Zap, Lock, Mail, Loader2, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, Loader2, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import { api } from '../api/client';
 
 interface LoginPageProps {
@@ -133,7 +133,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                         </div>
                         <div className="w-1 h-1 bg-white/5 rounded-full" />
                         <div className="flex items-center gap-1.5">
-                            <Zap className="w-3 h-3" />
+                            <ShieldCheck className="w-3 h-3 text-primary" />
                             <span className="text-[10px] font-black uppercase tracking-widest">Ultra Low Latency</span>
                         </div>
                     </div>
