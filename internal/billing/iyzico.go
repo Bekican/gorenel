@@ -1,7 +1,7 @@
 package billing
 
 import (
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -24,7 +24,7 @@ func NewIyzicoClient(apiKey, secretKey, baseURL string) *IyzicoClient {
 // GenerateHash generates the security hash required by Iyzico
 func (c *IyzicoClient) GenerateHash(rnd string) string {
 	hashStr := c.APIKey + rnd + c.SecretKey
-	h := sha1.New()
+	h := sha256.New()
 	h.Write([]byte(hashStr))
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }

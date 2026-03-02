@@ -216,6 +216,19 @@ func main() {
 				}
 			}
 
+			// Security: Apply rate limiting to raw TCP connections
+			clientIP, _, splitErr := net.SplitHostPort(conn.RemoteAddr().String())
+			if splitErr != nil {
+				clientIP = conn.RemoteAddr().String()
+			}
+
+			// Control Port connections are rare (only on client startup), so we limit token usage strictly
+			if !rateLimiter.Allow("control_tcp_"+clientIP, 5) {
+				zapLogger.Warn("Control Port TCP connection rate limit exceeded", zap.String("ip", clientIP))
+				conn.Close()
+				continue
+			}
+
 			zapLogger.Info("Yeni bağlantı", zap.String("remote_addr", conn.RemoteAddr().String()))
 			go handleClient(conn, tm, authManager, tcpProxy, udpProxy, zapLogger, cfg)
 		}
