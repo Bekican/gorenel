@@ -11,7 +11,7 @@ services:
       - "8085:8085" # Proxy Port
       - "9091:9091" # Monitoring API
     environment:
-      - GO_ENV=production
+      - GO_ENV=development
       - JWT_SECRET=${JWT_SECRET:-SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD}
       - DB_URL=postgres://postgres:postgres@postgres:5432/gorenel?sslmode=disable
       - REDIS_ADDR=redis:6379
