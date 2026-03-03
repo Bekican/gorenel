@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Shield, Clock, Globe, ArrowRight, Bot, Cpu, Zap, Activity } from 'lucide-react';
+import { Shield, Clock, ArrowRight, Bot, Cpu, Zap, Activity } from 'lucide-react';
 import { type CapturedRequest, api } from '../api/client';
 import { format } from 'date-fns';
 
