@@ -112,7 +112,7 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 		origin := r.Header.Get("Origin")
 
 		// Security: Production secure CORS whitelist
-		if origin != "" && (strings.HasPrefix(origin, "http://localhost:") || strings.HasPrefix(origin, "http://127.0.0.1:") || strings.HasSuffix(origin, "gorenel.io")) {
+		if origin != "" && (origin == "http://localhost" || strings.HasPrefix(origin, "http://localhost:") || origin == "http://127.0.0.1" || strings.HasPrefix(origin, "http://127.0.0.1:") || strings.HasSuffix(origin, "gorenel.io")) {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		} else if origin != "" {
 			// Disallow unauthorized origins
