@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"strings"
 	"time"
 
@@ -75,6 +76,11 @@ func Load() (*Config, error) {
 	var config Config
 	if err := viper.Unmarshal(&config); err != nil {
 		return nil, err
+	}
+
+	// Security Check: Fail if using default JWT secret in production
+	if config.Env == "production" && config.JWTSecret == "SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD" {
+		return nil, errors.New("JWT_SECRET must be set to a secure random string in production environment")
 	}
 
 	return &config, nil

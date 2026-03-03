@@ -44,8 +44,7 @@ func (m *MockOAuth) GetUserProfile(code string) (*auth.UserProfile, error) {
 func initOAuthProvider(logger *zap.Logger, cfg *config.Config) auth.OAuthProvider {
 	if cfg.Env == "production" {
 		if cfg.GoogleClientID == "" || cfg.GoogleClientSecret == "" || cfg.GoogleRedirectURL == "" {
-			logger.Warn("GO_ENV=production but GOOGLE_CLIENT_ID/SECRET/URL is missing. Falling back to MockOAuth for safety.")
-			return &MockOAuth{}
+			logger.Fatal("GO_ENV=production but GOOGLE_CLIENT_ID/SECRET/URL is missing. Cannot use MockOAuth in production.")
 		}
 
 		logger.Info("Google OAuth provider initialized", zap.String("client_id", cfg.GoogleClientID[:5]+"..."))
@@ -83,6 +82,11 @@ func main() {
 		zapLogger.Warn("PostgreSQL ping başarısız", zap.Error(err))
 	}
 
+	// Optimize connection pool for production
+	db.SetMaxOpenConns(50)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(5 * time.Minute)
+
 	// 2. Repositories
 	userRepo := handler.NewPostgresUserRepository(db)
 	if err := userRepo.Init(); err != nil {
@@ -108,8 +112,19 @@ func main() {
 	tm := server.NewTunnelManager()
 	authManager := server.NewAuthManager(apiKeyRepo)
 
-	// Initialize Advanced Rate Limiter
-	rateLimiter := limiter.NewRateLimiter(cfg.RateLimitRequests, cfg.RateLimitWindow)
+	// Database / Persistence (Redis)
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: cfg.RedisAddr,
+	})
+	// Ping Redis to ensure connection
+	ctxPing, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	if err := redisClient.Ping(ctxPing).Err(); err != nil {
+		zapLogger.Warn("Redis bağlantısı kurulamadı, bazı özellikler kısıtlı olabilir", zap.Error(err))
+	}
+	cancel()
+
+	// Initialize Advanced Rate Limiter (Redis-backed)
+	rateLimiter := limiter.NewRateLimiter(redisClient, cfg.RateLimitRequests, cfg.RateLimitWindow)
 
 	// Initialize Traffic Inspector
 	inspector := server.NewTrafficInspector(cfg.InspectorHistorySize)
@@ -139,17 +154,6 @@ func main() {
 
 	//Geo location service
 	geoLocator := server.NewGeoLocator(true)
-
-	// Database / Persistence
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: cfg.RedisAddr,
-	})
-	// Ping Redis to ensure connection
-	ctxPing, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	if err := redisClient.Ping(ctxPing).Err(); err != nil {
-		zapLogger.Warn("Redis bağlantısı kurulamadı, bazı özellikler kısıtlı olabilir", zap.Error(err))
-	}
-	cancel()
 
 	// Auth components
 	jwtSvc := auth.NewJWTService(cfg.JWTSecret)
