@@ -159,7 +159,7 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 	})
 
 	// 6. Redirect to Frontend Dashboard
-	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
+	http.Redirect(w, r, "/dashboard?login=success", http.StatusSeeOther)
 	return nil
 }
 
