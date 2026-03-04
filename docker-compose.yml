@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   gorenel-server:
     build:
@@ -34,7 +32,7 @@ services:
       dockerfile: Dockerfile
     container_name: gorenel-dashboard
     ports:
-      - "8081:80"
+      - "4000:80"
     depends_on:
       - gorenel-server
     networks:
@@ -51,8 +49,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: gorenel-redis
-    ports:
-      - "6379:6379"
     networks:
       - gorenel-network
     volumes:
@@ -73,9 +69,6 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: gorenel-clickhouse
-    ports:
-      - "8123:8123" # HTTP
-      - "9001:9000" # Native
     environment:
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
