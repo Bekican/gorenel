@@ -114,14 +114,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     </form>
 
                     {/* Footer Info */}
-                    <div className="pt-8 border-t border-white/5 space-y-4">
-                        <div className="flex items-center justify-center gap-2">
-                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                            <p className="text-[10px] font-black text-white/10 uppercase tracking-widest text-center">
-                                Operator credentials: <span className="text-white/30 font-mono lower-case">demo@gorenel.io</span>
-                            </p>
+                    {import.meta.env.VITE_SHOW_DEMO === 'true' && (
+                        <div className="pt-8 border-t border-white/5 space-y-4">
+                            <div className="flex items-center justify-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                <p className="text-[10px] font-black text-white/10 uppercase tracking-widest text-center">
+                                    Operator credentials: <span className="text-white/30 font-mono lower-case">demo@gorenel.io</span>
+                                </p>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Sub-footer */}
