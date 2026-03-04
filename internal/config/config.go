@@ -79,8 +79,16 @@ func Load() (*Config, error) {
 	}
 
 	// Security Check: Fail if using default JWT secret in production
-	if config.Env == "production" && config.JWTSecret == "SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD" {
-		return nil, errors.New("JWT_SECRET must be set to a secure random string in production environment")
+	if config.Env == "production" {
+		if config.JWTSecret == "SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD" {
+			return nil, errors.New("JWT_SECRET must be set to a secure random string in production environment")
+		}
+		if config.GoogleClientID == "" || config.GoogleClientSecret == "" {
+			return nil, errors.New("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set in production environment")
+		}
+		if config.ClickHouseAddr == "" || config.ClickHouseUser == "" {
+			return nil, errors.New("CLICKHOUSE_ADDR and CLICKHOUSE_USER must be set in production environment")
+		}
 	}
 
 	return &config, nil

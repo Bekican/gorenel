@@ -54,3 +54,14 @@ yarn-error.log*
 # Docker/K8s local
 helm/gorenel/charts/*.tgz
 helm/gorenel/Chart.lock
+
+# Gorenel Specific Cleanup
+*.exe
+*.exe~
+tmp_server
+*.log
+bench.txt
+build_verify.txt
+gofmt_offenders.txt
+metrics.json
+claude.md
