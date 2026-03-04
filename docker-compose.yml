@@ -34,7 +34,7 @@ services:
       dockerfile: Dockerfile
     container_name: gorenel-dashboard
     ports:
-      - "80:80"
+      - "8081:80"
     depends_on:
       - gorenel-server
     networks:
