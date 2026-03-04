@@ -20,7 +20,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o gorenel-server ./cmd/server/main.go
 FROM alpine:latest
 
 # Security: Add CA certificates for HTTPS requests to AI providers
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk --no-cache add ca-certificates tzdata curl
 
 # Security: Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

@@ -42,9 +42,12 @@ type MonitoringServer struct {
 	anomalyStore    *AnomalyStore
 	mlClient        *ml.Client
 	traceSharer     *TraceSharer
+	baseDomain      string
+	proxyPort       string
+	env             string
 }
 
-func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client, redisAddr string) *MonitoringServer {
+func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, proxyPort, env string) *MonitoringServer {
 	return &MonitoringServer{
 		tunnelManager:   tm,
 		analyticsEngine: ae,
@@ -55,6 +58,9 @@ func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.Aut
 		anomalyStore:    as,
 		mlClient:        mlc,
 		traceSharer:     NewTraceSharer(redisAddr),
+		baseDomain:      baseDomain,
+		proxyPort:       proxyPort,
+		env:             env,
 	}
 }
 
@@ -112,12 +118,25 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 		origin := r.Header.Get("Origin")
 
 		// Security: Production secure CORS whitelist
-		if origin != "" && (origin == "http://localhost" || strings.HasPrefix(origin, "http://localhost:") || origin == "http://127.0.0.1" || strings.HasPrefix(origin, "http://127.0.0.1:") || strings.HasSuffix(origin, "gorenel.io")) {
+		isAllowed := false
+		if origin != "" {
+			if origin == "http://localhost" || strings.HasPrefix(origin, "http://localhost:") || origin == "http://127.0.0.1" || strings.HasPrefix(origin, "http://127.0.0.1:") {
+				isAllowed = true
+			} else if m.baseDomain != "" && (origin == "https://"+m.baseDomain || strings.HasSuffix(origin, "."+m.baseDomain)) {
+				isAllowed = true
+			}
+		}
+
+		if isAllowed {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		} else if origin != "" {
-			// Disallow unauthorized origins
-			w.WriteHeader(http.StatusForbidden)
-			return
+			// Disallow unauthorized origins in production
+			if m.env == "production" {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+			// In dev, we can be more lenient but still log it
+			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
@@ -319,9 +338,8 @@ func (m *MonitoringServer) inspectorReplayHandler(w http.ResponseWriter, r *http
 	}
 
 	// Replay target: usually the local proxy or direct to client
-	// For this simulation, we'll replay to the Proxy Port
 	client := &http.Client{Timeout: 10 * time.Second}
-	targetBase := "http://localhost:8080" // Proxy port
+	targetBase := "http://localhost" + m.proxyPort // Use dynamic proxy port
 
 	resp, err := m.inspector.Replay(id, client, targetBase)
 	if err != nil {

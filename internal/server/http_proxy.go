@@ -13,7 +13,6 @@ import (
 
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/ml"
-	"github.com/Bekican/gorenel/internal/protocol"
 	"github.com/caddyserver/certmagic"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -102,7 +101,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	host := r.Host
-	targetKey, isCustom := resolveTargetKey(host)
+	targetKey, isCustom := resolveTargetKey(host, p.baseDomain)
 
 	// Use a response wrapper to capture status code for analytics
 	statusCode := http.StatusOK // Default, will be overwritten by errors or response
@@ -417,16 +416,20 @@ func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, s
 	})
 }
 
-func resolveTargetKey(host string) (key string, isCustom bool) {
+func resolveTargetKey(host string, baseDomain string) (key string, isCustom bool) {
 
 	if idx := strings.Index(host, ":"); idx != -1 {
 		host = host[:idx]
 	}
 
-	// Eğer host ana tünel domaini ile bitiyorsa (örn: .gorenel.io)
-	// protocol.BaseDomain'in ".gorenel.io" formatında olduğunu varsayıyoruz (başına nokta eklenmiş hali)
-	if strings.HasSuffix(host, protocol.BaseDomain) {
-		sub := strings.TrimSuffix(host, protocol.BaseDomain)
+	// Ensure baseDomain has a leading dot for suffix matching if it's not empty
+	dotDomain := baseDomain
+	if dotDomain != "" && !strings.HasPrefix(dotDomain, ".") {
+		dotDomain = "." + dotDomain
+	}
+
+	if dotDomain != "" && strings.HasSuffix(host, dotDomain) {
+		sub := strings.TrimSuffix(host, dotDomain)
 		return sub, false
 	}
 

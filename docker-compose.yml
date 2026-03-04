@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: gorenel-server
+    restart: unless-stopped
     ports:
       - "7000:7000" # Control Port
       - "8085:8085" # Proxy Port
@@ -19,10 +20,19 @@ services:
       - BASE_DOMAIN=${BASE_DOMAIN:-.gorenel.io}
       - ACME_EMAIL=${ACME_EMAIL:-admin@gorenel.io}
     depends_on:
-      - redis
-      - postgres
-      - clickhouse
-      - ml-engine
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      ml-engine:
+        condition: service_started
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9091/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - gorenel-network
 
@@ -31,10 +41,17 @@ services:
       context: ./web-dashboard
       dockerfile: Dockerfile
     container_name: gorenel-dashboard
+    restart: unless-stopped
     ports:
       - "4000:80"
     depends_on:
-      - gorenel-server
+      gorenel-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     networks:
       - gorenel-network
 
@@ -43,12 +60,19 @@ services:
       context: ./services/ml
       dockerfile: Dockerfile
     container_name: gorenel-ml-engine
+    restart: unless-stopped
     networks:
       - gorenel-network
 
   redis:
     image: redis:7-alpine
     container_name: gorenel-redis
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - gorenel-network
     volumes:
@@ -57,10 +81,16 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: gorenel-postgres
+    restart: unless-stopped
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=gorenel
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - gorenel-network
     volumes:
@@ -69,11 +99,17 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: gorenel-clickhouse
+    restart: unless-stopped
     environment:
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD:-}
       - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
       - CLICKHOUSE_DB=gorenel
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
     networks:
       - gorenel-network
     volumes:
