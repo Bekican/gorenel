@@ -22,13 +22,16 @@ FROM alpine:latest
 # Security: Add CA certificates for HTTPS requests to AI providers
 RUN apk --no-cache add ca-certificates tzdata
 
-WORKDIR /root/
+# Security: Create non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+WORKDIR /home/appuser
 
 # Copy the binary from builder
 COPY --from=builder /app/gorenel-server .
 
-# Create logs directory
-RUN mkdir -p logs/batches logs/archives
+# Create logs directory owned by appuser
+RUN mkdir -p logs/batches logs/archives && chown -R appuser:appgroup .
 
 # Expose ports
 # 7000: Control Port
@@ -36,8 +39,7 @@ RUN mkdir -p logs/batches logs/archives
 # 9091: Monitoring Server
 EXPOSE 7000 8085 9091
 
-# Standard production environment variables
-ENV GO_ENV=production
-ENV JWT_SECRET=change_me_in_production
+# Security: Run as non-root user
+USER appuser
 
 CMD ["./gorenel-server"]

@@ -1,16 +1,43 @@
+# Compiled binaries
 *.exe
+*.exe~
 *.test
 *.out
 bin/
-*.log
-.vscode/
-Thumbs.db
+tmp_server
 
-# Generated logs & archives
+# Logs
+*.log
 logs/
 server_stdout.log
 server_stderr.log
 
+# IDE
+.vscode/
+.idea/
+Thumbs.db
+
 # Environment files (contain secrets)
 .env
 !.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node/React
+node_modules/
+web-dashboard/dist/
+web-dashboard/node_modules/
+
+# Temporary dev files
+test-ws.js
+bench.txt
+build_verify.txt
+gofmt_offenders.txt
+metrics.json
+claude.md
