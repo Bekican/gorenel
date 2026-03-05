@@ -149,7 +149,7 @@ func TestLoad_100ConcurrentTunnels(t *testing.T) {
 			sessions[idx] = s
 			clients[idx] = c
 			sub := fmt.Sprintf("load-%d", idx)
-			tm.RegisterTunnel(sub, s, "", 3000+idx, fmt.Sprintf("http://%s.gorenel.io:8080", sub))
+			tm.RegisterTunnel(sub, s, "", 3000+idx, fmt.Sprintf("http://%s.gorenel.net:8080", sub))
 		}(i)
 	}
 	wg.Wait()

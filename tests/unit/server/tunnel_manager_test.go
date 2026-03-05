@@ -23,7 +23,7 @@ func TestTunnelManager_RegisterAndGet(t *testing.T) {
 	defer serverSession.Close()
 	defer clientSession.Close()
 
-	tm.RegisterTunnel("test-sub", serverSession, "", 3000, "http://test-sub.gorenel.io:8080")
+	tm.RegisterTunnel("test-sub", serverSession, "", 3000, "http://test-sub.gorenel.net:8080")
 
 	session, exists := tm.GetTunnel("test-sub")
 	assert.True(t, exists, "Tunnel should exist after registration")
@@ -40,7 +40,7 @@ func TestTunnelManager_RemoveTunnel(t *testing.T) {
 	defer serverSession.Close()
 	defer clientSession.Close()
 
-	tm.RegisterTunnel("remove-me", serverSession, "", 3000, "http://remove-me.gorenel.io:8080")
+	tm.RegisterTunnel("remove-me", serverSession, "", 3000, "http://remove-me.gorenel.net:8080")
 	assert.Equal(t, 1, tm.Count())
 
 	tm.RemoveTunnel("remove-me")
@@ -68,7 +68,7 @@ func TestTunnelManager_CustomDomain(t *testing.T) {
 	defer serverSession.Close()
 	defer clientSession.Close()
 
-	tm.RegisterTunnel("my-sub", serverSession, "api.bekircan.com", 3000, "http://my-sub.gorenel.io:8080")
+	tm.RegisterTunnel("my-sub", serverSession, "api.bekircan.com", 3000, "http://my-sub.gorenel.net:8080")
 
 	_, existsBySub := tm.GetTunnel("my-sub")
 	assert.True(t, existsBySub, "Should find by subdomain")
@@ -92,7 +92,7 @@ func TestTunnelManager_UpdateStats(t *testing.T) {
 	defer serverSession.Close()
 	defer clientSession.Close()
 
-	tm.RegisterTunnel("stats-sub", serverSession, "", 3000, "http://stats-sub.gorenel.io:8080")
+	tm.RegisterTunnel("stats-sub", serverSession, "", 3000, "http://stats-sub.gorenel.net:8080")
 
 	tm.UpdateStats("stats-sub", 1024, 2048)
 	tm.UpdateStats("stats-sub", 512, 256)
@@ -122,7 +122,7 @@ func TestTunnelManager_MultipleTunnels(t *testing.T) {
 		helper.RequireNoError(err, "pair creation")
 		defer s.Close()
 		defer c.Close()
-		tm.RegisterTunnel(fmt.Sprintf("sub-%d", i), s, "", 3000+i, "http://test.gorenel.io:8080")
+		tm.RegisterTunnel(fmt.Sprintf("sub-%d", i), s, "", 3000+i, "http://test.gorenel.net:8080")
 	}
 
 	assert.Equal(t, 5, tm.Count())
@@ -153,7 +153,7 @@ func TestTunnelManager_ConcurrentRegisterRemove(t *testing.T) {
 			}
 			defer c.Close()
 			sub := fmt.Sprintf("concurrent-%d", idx)
-			tm.RegisterTunnel(sub, s, "", 3000+idx, fmt.Sprintf("http://%s.gorenel.io:8080", sub))
+			tm.RegisterTunnel(sub, s, "", 3000+idx, fmt.Sprintf("http://%s.gorenel.net:8080", sub))
 		}(i)
 	}
 	wg.Wait()
@@ -181,7 +181,7 @@ func BenchmarkTunnelManager_RegisterTunnel(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		sub := fmt.Sprintf("bench-%d", i)
-		tm.RegisterTunnel(sub, s, "", 3000, "http://bench.gorenel.io:8080")
+		tm.RegisterTunnel(sub, s, "", 3000, "http://bench.gorenel.net:8080")
 	}
 }
 
@@ -191,7 +191,7 @@ func BenchmarkTunnelManager_GetTunnel(b *testing.B) {
 	defer s.Close()
 	defer c.Close()
 
-	tm.RegisterTunnel("bench-lookup", s, "", 3000, "http://bench.gorenel.io:8080")
+	tm.RegisterTunnel("bench-lookup", s, "", 3000, "http://bench.gorenel.net:8080")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

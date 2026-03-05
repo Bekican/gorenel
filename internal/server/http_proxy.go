@@ -61,21 +61,25 @@ func (p *HTTPProxy) Start(port string) error {
 		// certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
 
 		magic := certmagic.NewDefault()
-
 		// On-demand certificates for subdomains
 		magic.OnDemand = &certmagic.OnDemandConfig{
 			DecisionFunc: func(ctx context.Context, name string) error {
-				if strings.HasSuffix(name, p.baseDomain) {
+				if strings.HasSuffix(name, p.baseDomain) || name == p.baseDomain {
 					return nil
 				}
 				return fmt.Errorf("domain not allowed")
 			},
 		}
 
-		p.logger.Info("HTTPS automation enabled via Certmagic", zap.String("base_domain", p.baseDomain))
+		p.logger.Info("HTTPS automation initiated via Certmagic", zap.String("base_domain", p.baseDomain))
 
-		// Serve both HTTP (redirect) and HTTPS
-		return certmagic.HTTPS([]string{p.baseDomain, "*" + p.baseDomain}, p)
+		// Serve both HTTP (redirect) and HTTPS in a separate goroutine
+		go func() {
+			err := certmagic.HTTPS([]string{p.baseDomain, "*" + p.baseDomain}, p)
+			if err != nil {
+				p.logger.Error("Certmagic HTTPS failure, automation may be limited", zap.Error(err))
+			}
+		}()
 	}
 
 	server := &http.Server{

@@ -74,7 +74,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-black border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-white font-medium placeholder:text-white/10 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all selection:bg-primary/30"
-                                    placeholder="operator@gorenel.io"
+                                    placeholder="operator@gorenel.net"
                                 />
                             </div>
                         </div>

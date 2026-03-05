@@ -125,7 +125,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                                     <div className="p-3 bg-white/5 border border-white/10 rounded-lg animate-fade-in-up delay-100">
                                         <div className="text-xs text-white/40 uppercase tracking-wider mb-1">Public URL</div>
                                         <div className="text-emerald-400 font-bold hover:underline cursor-pointer">
-                                            https://random-name.gorenel.io
+                                            https://random-name.gorenel.net
                                         </div>
                                     </div>
 

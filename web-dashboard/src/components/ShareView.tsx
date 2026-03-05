@@ -64,7 +64,7 @@ export const ShareView: React.FC<ShareViewProps> = ({ shareId }) => {
                             <span className="text-xs font-black">HTTP {trace.status_code}</span>
                         </div>
                         <div className="text-sm font-mono text-white/40 truncate flex-1">
-                            {trace.subdomain}.gorenel.io{trace.path}
+                            {trace.subdomain}.gorenel.net{trace.path}
                         </div>
                     </div>
 

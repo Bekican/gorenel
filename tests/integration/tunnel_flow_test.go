@@ -54,7 +54,7 @@ func TestFullTunnelFlow(t *testing.T) {
 		if msg.Type == protocol.MsgTypeRegister {
 			resp := protocol.RegisterResponse{
 				Subdomain: "test-sub",
-				FullURL:   "http://test-sub.gorenel.io:8080",
+				FullURL:   "http://test-sub.gorenel.net:8080",
 			}
 			respJSON, _ := json.Marshal(resp)
 			protocol.WriteMessage(stream, protocol.Message{

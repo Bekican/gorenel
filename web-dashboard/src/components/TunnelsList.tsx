@@ -85,7 +85,7 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, onOpenConnect
                     </div>
                     <div className="space-y-1">
                       <div className="flex items-center gap-3">
-                        <span className="font-black text-lg tracking-tight">{tunnel.subdomain}.gorenel.io</span>
+                        <span className="font-black text-lg tracking-tight">{tunnel.subdomain}.gorenel.net</span>
                         <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest ${status.color}`}>
                           <div className={`w-1 h-1 rounded-full ${status.glow} ${status.pulse ? 'animate-pulse' : ''}`} />
                           {status.text}

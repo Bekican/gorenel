@@ -68,6 +68,17 @@ func Load() (*Config, error) {
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
 
+	// Explicitly bind environment variables
+	viper.BindEnv("GO_ENV")
+	viper.BindEnv("JWT_SECRET")
+	viper.BindEnv("GOOGLE_CLIENT_ID")
+	viper.BindEnv("GOOGLE_CLIENT_SECRET")
+	viper.BindEnv("GOOGLE_REDIRECT_URL")
+	viper.BindEnv("CLICKHOUSE_ADDR")
+	viper.BindEnv("CLICKHOUSE_USER")
+	viper.BindEnv("BASE_DOMAIN")
+	viper.BindEnv("ACME_EMAIL")
+
 	// Optionally load from .env file
 	viper.SetConfigFile(".env")
 	viper.SetConfigType("env")

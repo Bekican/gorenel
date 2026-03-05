@@ -31,7 +31,7 @@ type BandwidthInfo struct {
 }
 
 // TunnelManager maintains the mapping between host names and active tunnel sessions.
-// It supports both default subdomains (gorenel.io) and user-defined custom domains.
+// It supports both default subdomains (gorenel.net) and user-defined custom domains.
 type TunnelManager struct {
 	tunnels       map[string]*TunnelInfo
 	customDomains map[string]string
