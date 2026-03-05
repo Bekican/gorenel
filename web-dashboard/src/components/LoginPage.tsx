@@ -119,7 +119,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                             <div className="flex items-center justify-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                                 <p className="text-[10px] font-black text-white/10 uppercase tracking-widest text-center">
-                                    Operator credentials: <span className="text-white/30 font-mono lower-case">demo@gorenel.io</span>
+                                    Operator credentials: <span className="text-white/30 font-mono lower-case">demo@gorenel.net</span>
                                 </p>
                             </div>
                         </div>

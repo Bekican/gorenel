@@ -10,15 +10,15 @@ services:
       - "8085:8085" # Proxy Port
       - "9091:9091" # Monitoring API
     environment:
-      - GO_ENV=development
+      - GO_ENV=production
       - JWT_SECRET=${JWT_SECRET:-SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD}
       - DB_URL=postgres://postgres:postgres@postgres:5432/gorenel?sslmode=disable
       - REDIS_ADDR=redis:6379
       - ML_URL=http://ml-engine:5000
       - CLICKHOUSE_ADDR=clickhouse:9000
       - CLICKHOUSE_DB=gorenel
-      - BASE_DOMAIN=${BASE_DOMAIN:-.gorenel.io}
-      - ACME_EMAIL=${ACME_EMAIL:-admin@gorenel.io}
+      - BASE_DOMAIN=${BASE_DOMAIN:-.gorenel.net}
+      - ACME_EMAIL=${ACME_EMAIL:-admin@gorenel.net}
     depends_on:
       redis:
         condition: service_healthy
