@@ -74,7 +74,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     className="w-full bg-black border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-white font-medium placeholder:text-white/10 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all selection:bg-primary/30"
-                                    placeholder="operator@gorenel.net"
+                                    placeholder="operator@gorenel.site"
                                 />
                             </div>
                         </div>
@@ -119,7 +119,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                             <div className="flex items-center justify-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                                 <p className="text-[10px] font-black text-white/10 uppercase tracking-widest text-center">
-                                    Operator credentials: <span className="text-white/30 font-mono lower-case">demo@gorenel.net</span>
+                                    Operator credentials: <span className="text-white/30 font-mono lower-case">demo@gorenel.site</span>
                                 </p>
                             </div>
                         </div>

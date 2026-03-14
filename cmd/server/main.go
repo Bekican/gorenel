@@ -35,7 +35,7 @@ func (m *MockOAuth) GetAuthURL(state string) string {
 }
 func (m *MockOAuth) GetUserProfile(code string) (*auth.UserProfile, error) {
 	return &auth.UserProfile{
-		Email:    "demo@gorenel.net",
+		Email:    "demo@gorenel.site",
 		Name:     "Demo User",
 		Provider: "mock",
 	}, nil

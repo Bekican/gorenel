@@ -202,7 +202,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
-                                                                        let curl = `curl -X ${req.method} "${req.subdomain}.gorenel.net${req.path}" ${Object.entries(req.req_headers).map(([k, v]) => `-H "${k}: ${v.join(', ')}"`).join(' ')}`;
+                                                                        let curl = `curl -X ${req.method} "${req.subdomain}.gorenel.site${req.path}" ${Object.entries(req.req_headers).map(([k, v]) => `-H "${k}: ${v.join(', ')}"`).join(' ')}`;
                                                                         if (req.req_body) {
                                                                             try {
                                                                                 const decoded = atob(req.req_body);
@@ -302,7 +302,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                             <Globe className="w-4 h-4 text-white/10" />
                                                             <div className="flex flex-col">
                                                                 <span className="text-[10px] font-black text-white/10 uppercase tracking-widest">Route</span>
-                                                                <span className="text-sm font-black text-white/60">{req.subdomain}.gorenel.net</span>
+                                                                <span className="text-sm font-black text-white/60">{req.subdomain}.gorenel.site</span>
                                                             </div>
                                                         </div>
                                                         <div className="ml-auto flex items-center gap-4">

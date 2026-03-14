@@ -38,7 +38,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err == nil {
-		if credentials.Email == "demo@gorenel.net" && !h.isProd {
+		if credentials.Email == "demo@gorenel.site" && !h.isProd {
 			// Find or create demo user
 			user, err := h.userRepo.GetByEmail(credentials.Email)
 			if err != nil {

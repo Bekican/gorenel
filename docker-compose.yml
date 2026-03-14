@@ -17,11 +17,11 @@ services:
       - ML_URL=http://ml-engine:5000
       - CLICKHOUSE_ADDR=clickhouse:9000
       - CLICKHOUSE_DB=gorenel
-      - BASE_DOMAIN=${BASE_DOMAIN:-.gorenel.net}
-      - ACME_EMAIL=${ACME_EMAIL:-admin@gorenel.net}
+      - BASE_DOMAIN=${BASE_DOMAIN:-.gorenel.site}
+      - ACME_EMAIL=${ACME_EMAIL:-admin@gorenel.site}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-dummy-prod-id}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-dummy-prod-secret}
-      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL:-https://gorenel.net/api/v1/auth/google/callback}
+      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL:-https://gorenel.site/api/v1/auth/google/callback}
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
     depends_on:
       redis:

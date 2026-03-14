@@ -58,8 +58,8 @@ func Load() (*Config, error) {
 
 	viper.SetDefault("CLICKHOUSE_ADDR", "localhost:9001")
 	viper.SetDefault("CLICKHOUSE_DB", "gorenel")
-	viper.SetDefault("BASE_DOMAIN", "gorenel.net")
-	viper.SetDefault("ACME_EMAIL", "admin@gorenel.net")
+	viper.SetDefault("BASE_DOMAIN", "gorenel.site")
+	viper.SetDefault("ACME_EMAIL", "admin@gorenel.site")
 
 	viper.SetDefault("RATE_LIMIT_REQUESTS", 1000)
 	viper.SetDefault("RATE_LIMIT_WINDOW", 1*time.Minute)

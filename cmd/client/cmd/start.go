@@ -440,7 +440,7 @@ func printRawSuccessBanner(tType string, publicPort int, localPort int) {
 	fmt.Println("\n" + cizgi)
 	fmt.Printf("%s TÜNELİNİZ HAZIR!\n", strings.ToUpper(tType))
 	fmt.Println(cizgi)
-	fmt.Printf("Public Address: gorenel.net:%d\n", publicPort)
+	fmt.Printf("Public Address: gorenel.site:%d\n", publicPort)
 	fmt.Printf("Local Target:   localhost:%d\n", localPort)
 	fmt.Println(cizgi)
 	fmt.Println("Tunnel çalışıyor. Kapatmak için Ctrl+C basın..")
