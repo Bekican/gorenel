@@ -1,5 +1,5 @@
 app = "gorenel-app"
-primary_region = "otp" # Or your preferred region
+primary_region = "fra"
 
 [build]
   dockerfile = "Dockerfile.fly"
