@@ -1,0 +1,18 @@
+FROM docker:dind
+
+# Install docker-compose
+RUN apk add --no-cache docker-compose bash curl
+
+WORKDIR /app
+
+# Copy all project files
+COPY . .
+
+# Copy the entrypoint script
+COPY entrypoint-fly.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Environment variables for Docker-in-Docker
+ENV DOCKER_DRIVER=overlay2
+
+ENTRYPOINT ["/entrypoint.sh"]

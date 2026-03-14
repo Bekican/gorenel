@@ -1,0 +1,22 @@
+app = "gorenel-app"
+primary_region = "otp" # Or your preferred region
+
+[build]
+  dockerfile = "Dockerfile.fly"
+
+[[mounts]]
+  source = "gorenel_data"
+  destination = "/var/lib/docker"
+
+[http_service]
+  internal_port = 4000 # Dashboard port
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  size = "shared-cpu-4x"
+  memory = "4gb" # Increased RAM for full stack
+  cpu_kind = "shared"
+  cpus = 4
