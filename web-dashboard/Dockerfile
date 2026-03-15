@@ -17,6 +17,7 @@ RUN npm install
 
 # Kaynak kodunu kopyalayıp build alıyoruz
 COPY . .
+RUN echo "cache-bust: 1773584500"
 RUN npm run build
 
 

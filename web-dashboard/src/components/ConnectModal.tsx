@@ -11,7 +11,10 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) =
 
     if (!isOpen) return null;
 
-    const command = `gorenel start --server localhost:7000 --port 3000 --api-key demo-key-12345`;
+    const host = window.location.hostname;
+    console.log('ConnectModal: current hostname is', host);
+    const command = `gorenel start --server ${host}:7000 --port 3000 --api-key demo-key-12345`;
+    console.log('ConnectModal: generated command is', command);
 
     const handleCopy = () => {
         navigator.clipboard.writeText(command);

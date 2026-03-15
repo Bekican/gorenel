@@ -27,4 +27,5 @@ fi
 
 # Run docker-compose
 echo "Starting Gorenel services..."
-docker-compose up --build
+docker-compose build --no-cache
+docker-compose up --force-recreate

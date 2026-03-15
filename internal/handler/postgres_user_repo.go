@@ -25,6 +25,7 @@ func (r *PostgresUserRepository) Init() error {
 		id UUID PRIMARY KEY,
 		email VARCHAR(255) NOT NULL UNIQUE,
 		name VARCHAR(255),
+		password_hash TEXT,
 		avatar_url TEXT,
 		provider VARCHAR(50) NOT NULL,
 		created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -38,19 +39,19 @@ func (r *PostgresUserRepository) Init() error {
 }
 
 func (r *PostgresUserRepository) GetByEmail(email string) (*auth.User, error) {
-	query := `SELECT id, email, name, avatar_url, provider, created_at, updated_at, last_login FROM users WHERE email = $1`
+	query := `SELECT id, email, name, password_hash, avatar_url, provider, created_at, updated_at, last_login FROM users WHERE email = $1`
 	return r.queryUser(query, email)
 }
 
 func (r *PostgresUserRepository) GetByID(id string) (*auth.User, error) {
-	query := `SELECT id, email, name, avatar_url, provider, created_at, updated_at, last_login FROM users WHERE id = $1`
+	query := `SELECT id, email, name, password_hash, avatar_url, provider, created_at, updated_at, last_login FROM users WHERE id = $1`
 	return r.queryUser(query, id)
 }
 
 func (r *PostgresUserRepository) queryUser(query string, arg interface{}) (*auth.User, error) {
 	var user auth.User
 	err := r.db.QueryRow(query, arg).Scan(
-		&user.ID, &user.Email, &user.Name, &user.AvatarURL, &user.Provider,
+		&user.ID, &user.Email, &user.Name, &user.PasswordHash, &user.AvatarURL, &user.Provider,
 		&user.CreatedAt, &user.UpdatedAt, &user.LastLogin,
 	)
 	if err == sql.ErrNoRows {
@@ -69,11 +70,11 @@ func (r *PostgresUserRepository) Create(user *auth.User) error {
 	user.UpdatedAt = time.Now()
 
 	query := `
-	INSERT INTO users (id, email, name, avatar_url, provider, created_at, updated_at, last_login)
-	VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	INSERT INTO users (id, email, name, password_hash, avatar_url, provider, created_at, updated_at, last_login)
+	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 	`
 	_, err := r.db.Exec(query,
-		user.ID, user.Email, user.Name, user.AvatarURL, user.Provider,
+		user.ID, user.Email, user.Name, user.PasswordHash, user.AvatarURL, user.Provider,
 		user.CreatedAt, user.UpdatedAt, user.LastLogin,
 	)
 	return err

@@ -6,10 +6,9 @@ import (
 )
 
 func TestHTTPProxy_PanicRecovery(t *testing.T) {
-	// Panic recovery is implemented in ServeHTTP.
-	// This stub ensures the test suite tracks the requirement.
+	// Stub test
 	if t == nil {
-		t.Fatal("testing.T is nil")
+		return
 	}
 }
 

@@ -11,6 +11,7 @@ import (
 	"github.com/Bekican/gorenel/pkg/logger"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type AuthHandler struct {
@@ -41,8 +42,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		// 1. Check if user exists locally
 		user, err := h.userRepo.GetByEmail(credentials.Email)
 		if err == nil {
-			// User exists. For now, since we don't have password hashing, we'll allow it.
-			// TODO: Implement password check once fields are added
+			// 2. Verify Password
+			if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(credentials.Password)); err != nil {
+				logger.Warn("Failed login attempt: invalid password", zap.String("email", credentials.Email))
+				return errors.Unauthorized("Invalid credentials")
+			}
+
 			logger.Info("Manual login successful", zap.String("email", user.Email))
 			
 			// Generate Token
@@ -170,12 +175,19 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 		return errors.BadRequest("Invalid request body", err)
 	}
 
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.Internal(err)
+	}
+
 	user := &auth.User{
-		ID:        uuid.New().String(),
-		Email:     body.Email,
-		Name:      body.Name,
-		Provider:  "manual",
-		CreatedAt: time.Now(),
+		ID:           uuid.New().String(),
+		Email:        body.Email,
+		Name:         body.Name,
+		PasswordHash: string(hashedPassword),
+		Provider:     "manual",
+		CreatedAt:    time.Now(),
 	}
 
 	if err := h.userRepo.Create(user); err != nil {
