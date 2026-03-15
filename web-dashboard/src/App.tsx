@@ -25,6 +25,7 @@ const TrafficInspector = React.lazy(() => import('./components/TrafficInspector'
 const ModificationRules = React.lazy(() => import('./components/ModificationRules').then(module => ({ default: module.ModificationRules })));
 const ThreatRadar = React.lazy(() => import('./components/ThreatRadar').then(module => ({ default: module.ThreatRadar })));
 import { LoginPage } from './components/LoginPage';
+import { RegisterPage } from './components/RegisterPage';
 import { ConnectModal } from './components/ConnectModal';
 import { ShareView } from './components/ShareView';
 
@@ -32,6 +33,7 @@ type NavTab = 'overview' | 'tunnels' | 'ai_gateway' | 'traffic' | 'settings';
 
 function App() {
   const [user, setUser] = useState<any>(null);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
   const [isConnectOpen, setIsConnectOpen] = useState(false);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
@@ -112,7 +114,22 @@ function App() {
     return <ShareView shareId={shareId} />;
   }
 
-  if (!user) return <LoginPage onLoginSuccess={(u) => { setUser(u); localStorage.setItem('gorenel_user', JSON.stringify(u)); }} />;
+  if (!user) {
+    if (authMode === 'register') {
+      return (
+        <RegisterPage 
+          onSwitchToLogin={() => setAuthMode('login')} 
+          onRegisterSuccess={(u) => { setUser(u); localStorage.setItem('gorenel_user', JSON.stringify(u)); }} 
+        />
+      );
+    }
+    return (
+      <LoginPage 
+        onSwitchToRegister={() => setAuthMode('register')} 
+        onLoginSuccess={(u) => { setUser(u); localStorage.setItem('gorenel_user', JSON.stringify(u)); }} 
+      />
+    );
+  }
   if (loading) return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Lock, Mail, Loader2, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, Loader2, AlertCircle, ArrowRight, Github } from 'lucide-react';
 import { api } from '../api/client';
+import { AuthLayout } from './AuthLayout';
 
 interface LoginPageProps {
     onLoginSuccess: (user: any) => void;
+    onSwitchToRegister: () => void;
 }
 
-export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
+export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onSwitchToRegister }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -33,117 +35,96 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center p-6 relative overflow-hidden">
-            {/* Background Glows */}
-            <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary/20 blur-[120px] rounded-full animate-pulse" />
-            <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[400px] bg-violet-500/10 blur-[100px] rounded-full" />
+        <AuthLayout title="ESTABLISH SESSION" subtitle="Secure Tunneling Interface">
+            <div className="space-y-8 animate-in fade-in duration-500">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {error && (
+                        <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-4 py-3 rounded-2xl flex items-center gap-3 animate-in shake-in">
+                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                            <p className="text-[11px] font-bold uppercase tracking-wider">{error}</p>
+                        </div>
+                    )}
 
-            <div className="max-w-md w-full relative z-10 space-y-12">
-                {/* Logo Section */}
-                <div className="text-center space-y-4">
-                    <div className="inline-flex overflow-hidden w-24 h-24 bg-white/5 rounded-[2rem] border border-white/10 shadow-[0_0_50px_rgba(16,185,129,0.15)] mb-4">
-                        <img src="/logo.png" alt="Gorenel" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="space-y-1">
-                        <h1 className="text-5xl font-black tracking-tighter text-white">
-                            GORENEL<span className="text-primary text-6xl leading-[0]">.</span>
-                        </h1>
-                        <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20">Secure Tunneling Interface</p>
-                    </div>
-                </div>
-
-                {/* Glassmorphic Form Container */}
-                <div className="glass rounded-[3rem] p-10 space-y-8 relative group overflow-hidden border-white/5">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-50" />
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {error && (
-                            <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 px-5 py-4 rounded-2xl flex items-center gap-3 animate-bounce">
-                                <AlertCircle className="w-5 h-5 flex-shrink-0" />
-                                <p className="text-xs font-black uppercase tracking-widest">{error}</p>
-                            </div>
-                        )}
-
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Endpoint Identity</label>
-                            <div className="relative group/input">
-                                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within/input:text-primary transition-colors" />
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] ml-2">Endpoint Identity</label>
+                            <div className="relative group">
+                                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
                                 <input
                                     type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-black border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-white font-medium placeholder:text-white/10 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all selection:bg-primary/30"
+                                    className="w-full bg-black/40 border border-white/5 rounded-2xl py-4 pl-12 pr-6 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all placeholder:text-white/5"
                                     placeholder="operator@gorenel.site"
                                 />
                             </div>
                         </div>
 
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] ml-2">Access Key</label>
-                            <div className="relative group/input">
-                                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-white/10 group-focus-within/input:text-primary transition-colors" />
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] ml-2">Access Key</label>
+                            <div className="relative group">
+                                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
                                 <input
                                     type="password"
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-black border border-white/5 rounded-2xl py-5 pl-14 pr-6 text-white font-medium placeholder:text-white/10 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all selection:bg-primary/30"
+                                    className="w-full bg-black/40 border border-white/5 rounded-2xl py-4 pl-12 pr-6 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/50 transition-all placeholder:text-white/5"
                                     placeholder="••••••••"
                                 />
                             </div>
                         </div>
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="btn-primary-premium w-full py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
-                        >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                    <span className="font-black uppercase tracking-widest text-xs">Synchronizing...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <span className="font-black uppercase tracking-widest text-xs">Establish Session</span>
-                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    {/* Footer Info */}
-                    {import.meta.env.VITE_SHOW_DEMO === 'true' && (
-                        <div className="pt-8 border-t border-white/5 space-y-4">
-                            <div className="flex items-center justify-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                <p className="text-[10px] font-black text-white/10 uppercase tracking-widest text-center">
-                                    Operator credentials: <span className="text-white/30 font-mono lower-case">demo@gorenel.site</span>
-                                </p>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Sub-footer */}
-                <div className="flex flex-col items-center gap-4">
-                    <div className="flex items-center gap-4 text-white/10">
-                        <div className="flex items-center gap-1.5">
-                            <ShieldCheck className="w-3 h-3" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Encrypted</span>
-                        </div>
-                        <div className="w-1 h-1 bg-white/5 rounded-full" />
-                        <div className="flex items-center gap-1.5">
-                            <ShieldCheck className="w-3 h-3 text-primary" />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Ultra Low Latency</span>
-                        </div>
                     </div>
-                    <p className="text-center font-black text-[10px] uppercase tracking-[0.5em] text-white/5">
-                        Gorenel Gateway v1.0.0
-                    </p>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="btn-primary-premium w-full py-4 rounded-xl flex items-center justify-center gap-3 active:scale-[0.98]"
+                    >
+                        {loading ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                            <>
+                                <span className="font-bold uppercase tracking-widest text-xs">Connect to Gateway</span>
+                                <ArrowRight className="w-4 h-4" />
+                            </>
+                        )}
+                    </button>
+                </form>
+
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-white/5"></div>
+                    </div>
+                    <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-[0.3em]">
+                        <span className="bg-[#101217] px-4 text-white/20">Authorized Protocols</span>
+                    </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <button className="flex items-center justify-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all group">
+                        <svg className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.9 3.24-2.04 4.38-1.26 1.26-3.26 2.4-6.48 2.4-5.06 0-9.14-4.12-9.14-9.18s4.08-9.18 9.14-9.18c2.82 0 4.92 1.1 6.36 2.4l2.4-2.4C18.54 1.08 15.72 0 12.48 0 5.61 0 0 5.61 0 12.48s5.61 12.48 12.48 12.48c3.75 0 6.6-1.23 8.79-3.54 2.19-2.31 2.88-5.52 2.88-8.19 0-.63-.06-1.26-.15-1.89H12.48z" />
+                        </svg>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-white transition-colors">Google</span>
+                    </button>
+                    <button className="flex items-center justify-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all group">
+                        <Github className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-white transition-colors">Github</span>
+                    </button>
+                </div>
+
+                <p className="text-center text-[11px] text-white/30 font-medium">
+                    New operator?{' '}
+                    <button
+                        onClick={onSwitchToRegister}
+                        className="text-emerald-500 hover:text-emerald-400 font-bold underline-offset-4 hover:underline transition-all"
+                    >
+                        Request Gateway Access
+                    </button>
+                </p>
             </div>
-        </div>
+        </AuthLayout>
     );
 };

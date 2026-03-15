@@ -206,6 +206,11 @@ export const api = {
     return data;
   },
 
+  register: async (userData: any) => {
+    const { data } = await apiClient.post('/api/register', userData);
+    return data;
+  },
+
   getMe: async () => {
     const { data } = await apiClient.get('/api/me');
     return data;
