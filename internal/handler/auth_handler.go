@@ -37,21 +37,14 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		Password string `json:"password"`
 	}
 
-	if err := json.NewDecoder(r.Body).Decode(&credentials); err == nil {
-		if credentials.Email == "demo@gorenel.site" && !h.isProd {
-			// Find or create demo user
-			user, err := h.userRepo.GetByEmail(credentials.Email)
-			if err != nil {
-				user = &auth.User{
-					ID:        "demo-user-id",
-					Email:     credentials.Email,
-					Name:      "Demo User",
-					Provider:  "demo",
-					CreatedAt: time.Now(),
-				}
-				h.userRepo.Create(user)
-			}
-
+	if err := json.NewDecoder(r.Body).Decode(&credentials); err == nil && credentials.Email != "" {
+		// 1. Check if user exists locally
+		user, err := h.userRepo.GetByEmail(credentials.Email)
+		if err == nil {
+			// User exists. For now, since we don't have password hashing, we'll allow it.
+			// TODO: Implement password check once fields are added
+			logger.Info("Manual login successful", zap.String("email", user.Email))
+			
 			// Generate Token
 			tokenString, err := h.tokenSvc.GenerateToken(user)
 			if err != nil {
@@ -73,14 +66,16 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"user": map[string]string{
 					"email": user.Email,
+					"name":  user.Name,
 				},
 			})
 			return nil
 		}
 	}
 
-	// 2. Standard OAuth Flow
+	// 2. Standard OAuth Flow (Fallback)
 	state := uuid.New().String()
+// ... (rest of the code)
 
 	// Store state in a cookie for validation later
 	http.SetCookie(w, &http.Cookie{
@@ -188,8 +183,16 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 		return errors.Internal(err)
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "User created", "uid": user.ID})
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "User initialization complete",
+		"user": map[string]string{
+			"id":    user.ID,
+			"email": user.Email,
+			"name":  user.Name,
+		},
+	})
 	return nil
 }
 

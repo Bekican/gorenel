@@ -119,18 +119,14 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 		// Set specific origin for CORS with credentials
 		origin := r.Header.Get("Origin")
 
-		// DEBUG: Log every non-empty origin
-		if origin != "" {
-			m.logger.Info("CORS check start", zap.String("origin", origin), zap.String("path", r.URL.Path))
-		}
-
 		// Security: Production secure CORS whitelist
 		isAllowed := false
 		if origin != "" {
-			// Perimissive during debug
-			lower := strings.ToLower(origin)
-			if strings.Contains(lower, "localhost") || strings.Contains(lower, "127.0.0.1") || 
-			   strings.Contains(lower, "fly.dev") || strings.Contains(lower, "gorenel") {
+			if origin == "http://localhost" || strings.HasPrefix(origin, "http://localhost:") || origin == "http://127.0.0.1" || strings.HasPrefix(origin, "http://127.0.0.1:") {
+				isAllowed = true
+			} else if strings.HasSuffix(origin, ".fly.dev") {
+				isAllowed = true
+			} else if m.baseDomain != "" && (origin == "https://"+m.baseDomain || strings.HasSuffix(origin, "."+m.baseDomain)) {
 				isAllowed = true
 			}
 		}
@@ -139,7 +135,7 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		} else if origin != "" {
 			// Log rejected origin for debugging
-			m.logger.Warn("CORS request rejected", 
+			m.logger.Warn("CORS request rejected: origin not in whitelist", 
 				zap.String("origin", origin),
 				zap.String("method", r.Method),
 				zap.String("path", r.URL.Path))
@@ -149,8 +145,6 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 				w.WriteHeader(http.StatusForbidden)
 				return
 			}
-			// In dev, we can be more lenient but still log it
-			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
