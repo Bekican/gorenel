@@ -184,6 +184,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if err := h.userRepo.Create(user); err != nil {
+		logger.Error("User registration failed in repository", zap.Error(err), zap.String("email", user.Email))
 		return errors.Internal(err)
 	}
 

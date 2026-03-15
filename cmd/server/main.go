@@ -180,7 +180,7 @@ func main() {
 	}()
 
 	// Monitoring server
-	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient, cfg.RedisAddr, cfg.BaseDomain, cfg.ProxyPort, cfg.Env)
+	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient, cfg.RedisAddr, cfg.BaseDomain, cfg.ProxyPort, cfg.Env, zapLogger)
 	go func() {
 		if err := monitor.Start(cfg.MonitorPort); err != nil {
 			zapLogger.Fatal("Monitoring server hatası", zap.Error(err))
