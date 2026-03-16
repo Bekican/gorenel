@@ -5,7 +5,7 @@ primary_region = "fra"
   dockerfile = "Dockerfile.fly"
 
 [[mounts]]
-  source = "gorenel_data"
+  source = "gorenel_storage"
   destination = "/var/lib/docker"
 
 [http_service]
@@ -17,6 +17,6 @@ primary_region = "fra"
 
 [[vm]]
   size = "shared-cpu-4x"
-  memory = "4gb" # Increased RAM for full stack
+  memory = "8gb" # Further increased for DinD stability
   cpu_kind = "shared"
   cpus = 4

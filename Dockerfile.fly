@@ -14,5 +14,6 @@ RUN chmod +x /entrypoint.sh
 
 # Environment variables for Docker-in-Docker
 ENV DOCKER_DRIVER=overlay2
+ENV DOCKER_TLS_CERTDIR=""
 
 ENTRYPOINT ["/entrypoint.sh"]

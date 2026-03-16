@@ -122,6 +122,8 @@ services:
 networks:
   gorenel-network:
     driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1420
 
 volumes:
   redis-data:

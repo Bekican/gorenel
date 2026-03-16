@@ -1,13 +1,23 @@
 #!/bin/bash
 set -e
 
-# Start Docker daemon in the background with explicit DNS
-dockerd-entrypoint.sh --dns 8.8.8.8 --dns 8.8.4.4 &
+# Start Docker daemon
+echo "Starting Docker daemon (direct)..."
+dockerd --dns 8.8.8.8 --dns 8.8.4.4 --mtu 1420 &
 
 # Wait for Docker to be ready
 echo "Waiting for Docker daemon to start..."
+MAX_RETRIES=120
+COUNT=0
 until docker info >/dev/null 2>&1; do
-  echo "Still waiting for Docker..."
+  COUNT=$((COUNT + 1))
+  if [ $((COUNT % 10)) -eq 0 ]; then
+    echo "Still waiting for Docker ($COUNT/$MAX_RETRIES)..."
+  fi
+  if [ $COUNT -gt $MAX_RETRIES ]; then
+    echo "ERROR: Docker daemon failed to start after $MAX_RETRIES seconds."
+    exit 1
+  fi
   sleep 1
 done
 
@@ -26,6 +36,10 @@ if ! command -v docker-compose &> /dev/null; then
 fi
 
 # Run docker-compose
+echo "Building services sequentially to prevent OOM..."
+docker-compose build gorenel-server
+docker-compose build ml-engine
+docker-compose build gorenel-dashboard
+
 echo "Starting Gorenel services..."
-docker-compose build --no-cache
-docker-compose up --force-recreate
+docker-compose up --remove-orphans
