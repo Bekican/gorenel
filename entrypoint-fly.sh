@@ -35,6 +35,10 @@ if ! command -v docker-compose &> /dev/null; then
     fi
 fi
 
+# Start socat IPv6 to IPv4 proxy
+echo "Starting socat proxy to bridge Fly.io IPv6 to Docker IPv4..."
+socat TCP6-LISTEN:4001,fork,reuseaddr TCP4:127.0.0.1:4000 &
+
 # Run docker-compose
 echo "Building services sequentially to prevent OOM..."
 docker-compose build gorenel-server
