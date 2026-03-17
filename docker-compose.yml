@@ -12,10 +12,10 @@ services:
     environment:
       - GO_ENV=production
       - JWT_SECRET=${JWT_SECRET:-SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD}
-      - DB_URL=postgres://postgres:postgres@postgres:5432/gorenel?sslmode=disable
-      - REDIS_ADDR=redis:6379
-      - ML_URL=http://ml-engine:5000
-      - CLICKHOUSE_ADDR=clickhouse:9000
+      - DB_URL=postgres://postgres:postgres@gorenel-postgres:5432/gorenel?sslmode=disable
+      - REDIS_ADDR=gorenel-redis:6379
+      - ML_URL=http://gorenel-ml-engine:5000
+      - CLICKHOUSE_ADDR=gorenel-clickhouse:9000
       - CLICKHOUSE_DB=gorenel
       - BASE_DOMAIN=${BASE_DOMAIN:-.gorenel.site}
       - ACME_EMAIL=${ACME_EMAIL:-admin@gorenel.site}

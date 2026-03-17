@@ -35,7 +35,23 @@ func (r *PostgresUserRepository) Init() error {
 	CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 	`
 	_, err := r.db.Exec(query)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Schema Evolutions: Automatically add missing columns if upgrading an existing database
+	evolutions := []string{
+		`ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;`,
+	}
+	for _, sql := range evolutions {
+		_, err = r.db.Exec(sql)
+		if err != nil {
+			// Sadece loglayabiliriz ama genelde postgres IF NOT EXISTS'i desteklediği için güvenlidir.
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *PostgresUserRepository) GetByEmail(email string) (*auth.User, error) {
