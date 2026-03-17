@@ -86,6 +86,21 @@ func (m *MonitoringServer) Start(port string) error {
 
 		authMw := middleware.RequireAuth(m.tokenSvc)
 		mux.HandleFunc("/api/me", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.authHandler.Me))))
+
+		// Key Management
+		mux.HandleFunc("/api/keys", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(func(w http.ResponseWriter, r *http.Request) error {
+			switch r.Method {
+			case http.MethodGet:
+				return m.authHandler.ListAPIKeys(w, r)
+			case http.MethodPost:
+				return m.authHandler.CreateAPIKey(w, r)
+			case http.MethodDelete:
+				return m.authHandler.DeleteAPIKey(w, r)
+			default:
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+				return nil
+			}
+		}))))
 	}
 
 	// Register Inspector Endpoints

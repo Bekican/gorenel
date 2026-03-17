@@ -24,15 +24,18 @@ const ModelComparison = React.lazy(() => import('./components/ModelComparison').
 const TrafficInspector = React.lazy(() => import('./components/TrafficInspector').then(module => ({ default: module.TrafficInspector })));
 const ModificationRules = React.lazy(() => import('./components/ModificationRules').then(module => ({ default: module.ModificationRules })));
 const ThreatRadar = React.lazy(() => import('./components/ThreatRadar').then(module => ({ default: module.ThreatRadar })));
+const ApiKeyManager = React.lazy(() => import('./components/ApiKeyManager').then(module => ({ default: module.ApiKeyManager })));
 import { LoginPage } from './components/LoginPage';
 import { RegisterPage } from './components/RegisterPage';
+import { LandingPage } from './components/LandingPage';
 import { ConnectModal } from './components/ConnectModal';
 import { ShareView } from './components/ShareView';
 
-type NavTab = 'overview' | 'tunnels' | 'ai_gateway' | 'traffic' | 'settings';
+type NavTab = 'overview' | 'tunnels' | 'ai_gateway' | 'traffic' | 'settings' | 'api_keys';
 
 function App() {
   const [user, setUser] = useState<any>(null);
+  const [isAuthStarted, setIsAuthStarted] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
   const [isConnectOpen, setIsConnectOpen] = useState(false);
@@ -115,6 +118,10 @@ function App() {
   }
 
   if (!user) {
+    if (!isAuthStarted) {
+      return <LandingPage onLogin={() => setIsAuthStarted(true)} />;
+    }
+
     if (authMode === 'register') {
       return (
         <RegisterPage 
@@ -192,6 +199,7 @@ function App() {
                   <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Developers</span>
                 </div>
                 <NavItem id="traffic" icon={Microscope} label="Inspector" />
+                <NavItem id="api_keys" icon={ShieldCheck} label="API Keys" />
                 <NavItem id="settings" icon={Settings} label="Rules" />
               </div>
             </nav>
@@ -226,6 +234,7 @@ function App() {
                 {activeTab === 'tunnels' && "Active Tunnels"}
                 {activeTab === 'ai_gateway' && "AI Gateway"}
                 {activeTab === 'traffic' && "Traffic Inspector"}
+                {activeTab === 'api_keys' && "API Key Management"}
                 {activeTab === 'settings' && "Global Rules"}
               </h2>
               <p className="text-lg text-white/50 font-normal max-w-2xl">
@@ -233,6 +242,7 @@ function App() {
                 {activeTab === 'tunnels' && "Manage your secure tunnels and endpoints."}
                 {activeTab === 'ai_gateway' && "Unified API for LLM routing, caching and rate limiting."}
                 {activeTab === 'traffic' && "Inspect and replay HTTP requests in real-time."}
+                {activeTab === 'api_keys' && "Manage your API keys for secure access and integrations."}
                 {activeTab === 'settings' && "Configure modification rules for incoming traffic."}
               </p>
             </div>
@@ -329,6 +339,12 @@ function App() {
               </div>
             )}
 
+            {activeTab === 'api_keys' && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <ApiKeyManager />
+              </div>
+            )}
+
             {activeTab === 'settings' && (
               <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <ModificationRules rules={rules} onRulesChange={fetchData} />
@@ -338,7 +354,7 @@ function App() {
         </div>
       </main >
 
-      <ConnectModal isOpen={isConnectOpen} onClose={() => setIsConnectOpen(false)} />
+      <ConnectModal isOpen={isConnectOpen} onClose={() => setIsConnectOpen(false)} apiKey={user?.api_key} />
     </div >
   );
 }

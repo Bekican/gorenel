@@ -15,6 +15,7 @@ const (
 	TypeUnauthorized ErrorType = "UNAUTHORIZED"
 	TypeInternal     ErrorType = "INTERNAL_ERROR"
 	TypeConflict     ErrorType = "CONFLICT"
+	TypeForbidden    ErrorType = "FORBIDDEN"
 )
 
 type AppError struct {
@@ -89,4 +90,8 @@ func ValidationError(message string, fields map[string]string) *AppError {
 
 func Unauthorized(message string) *AppError {
 	return New(TypeUnauthorized, http.StatusUnauthorized, message, nil)
+}
+
+func Forbidden(message string) *AppError {
+	return New(TypeForbidden, http.StatusForbidden, message, nil)
 }

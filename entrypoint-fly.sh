@@ -35,9 +35,13 @@ if ! command -v docker-compose &> /dev/null; then
     fi
 fi
 
-# Start socat IPv6 to IPv4 proxy
-echo "Starting socat proxy to bridge Fly.io IPv6 to Docker IPv4..."
-socat TCP6-LISTEN:4001,fork,reuseaddr TCP4:127.0.0.1:4000 &
+# Start socat IPv6 to IPv4 proxy with a resilient restart loop
+echo "Starting resilient socat proxy to bridge Fly.io IPv6 to Docker IPv4..."
+while true; do
+  socat TCP6-LISTEN:4001,fork,reuseaddr TCP4:127.0.0.1:4000
+  echo "socat crashed with exit code $?. Restarting in 1s..."
+  sleep 1
+done &
 
 # Run docker-compose
 echo "Building services sequentially to prevent OOM..."

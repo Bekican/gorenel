@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/Bekican/gorenel/internal/analytics"
+	"github.com/Bekican/gorenel/internal/authmgr"
 	"github.com/Bekican/gorenel/internal/config"
 	"github.com/Bekican/gorenel/internal/handler"
 	"github.com/Bekican/gorenel/internal/limiter"
@@ -110,7 +111,7 @@ func main() {
 
 	// Core components
 	tm := server.NewTunnelManager()
-	authManager := server.NewAuthManager(apiKeyRepo)
+	authManager := authmgr.NewAuthManager(apiKeyRepo)
 
 	// Database / Persistence (Redis)
 	redisClient := redis.NewClient(&redis.Options{
@@ -159,7 +160,7 @@ func main() {
 	jwtSvc := auth.NewJWTService(cfg.JWTSecret)
 
 	oauthProvider := initOAuthProvider(zapLogger, cfg)
-	authHandler := handler.NewAuthHandler(oauthProvider, jwtSvc, userRepo, cfg.Env == "production")
+	authHandler := handler.NewAuthHandler(oauthProvider, jwtSvc, userRepo, authManager, cfg.Env == "production")
 
 	// ML client uses the same shared logger
 
@@ -249,7 +250,7 @@ func main() {
 	zapLogger.Info("Gorenel Server kapatıldı")
 }
 
-func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *server.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy, logger *zap.Logger, cfg *config.Config) {
+func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy, logger *zap.Logger, cfg *config.Config) {
 	defer conn.Close()
 
 	// 1. REGISTER mesajını oku

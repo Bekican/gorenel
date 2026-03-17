@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	_ "github.com/lib/pq"
+	"github.com/Bekican/gorenel/internal/authmgr"
+	"github.com/Bekican/gorenel/pkg/auth"
 )
 
 type PostgresAPIKeyRepository struct {
@@ -33,9 +35,9 @@ func (r *PostgresAPIKeyRepository) Init() error {
 	return err
 }
 
-func (r *PostgresAPIKeyRepository) GetByHash(hash string) (*APIKey, error) {
+func (r *PostgresAPIKeyRepository) GetByHash(hash string) (*auth.APIKey, error) {
 	query := `SELECT key_value, user_id, created_at, expires_at, usage_count, rate_limit FROM api_keys WHERE key_hash = $1`
-	var k APIKey
+	var k auth.APIKey
 	var key_value string
 	err := r.db.QueryRow(query, hash).Scan(
 		&key_value, &k.UserID, &k.CreatedAt, &k.ExpiresAt, &k.UsageCount, &k.RateLimit,
@@ -50,12 +52,33 @@ func (r *PostgresAPIKeyRepository) GetByHash(hash string) (*APIKey, error) {
 	return &k, nil
 }
 
-func (r *PostgresAPIKeyRepository) Create(apiKey *APIKey) error {
+func (r *PostgresAPIKeyRepository) GetByUserID(userID string) ([]*auth.APIKey, error) {
+	query := `SELECT key_value, user_id, created_at, expires_at, usage_count, rate_limit FROM api_keys WHERE user_id = $1`
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keys []*auth.APIKey
+	for rows.Next() {
+		var k auth.APIKey
+		var key_value string
+		if err := rows.Scan(&key_value, &k.UserID, &k.CreatedAt, &k.ExpiresAt, &k.UsageCount, &k.RateLimit); err != nil {
+			return nil, err
+		}
+		k.Key = key_value
+		keys = append(keys, &k)
+	}
+	return keys, nil
+}
+
+func (r *PostgresAPIKeyRepository) Create(apiKey *auth.APIKey) error {
 	query := `
 	INSERT INTO api_keys (key_hash, key_value, user_id, created_at, expires_at, usage_count, rate_limit)
 	VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
-	keyHash := hashKey(apiKey.Key)
+	keyHash := authmgr.HashKey(apiKey.Key)
 	_, err := r.db.Exec(query,
 		keyHash, apiKey.Key, apiKey.UserID, apiKey.CreatedAt, apiKey.ExpiresAt, apiKey.UsageCount, apiKey.RateLimit,
 	)
@@ -68,7 +91,7 @@ func (r *PostgresAPIKeyRepository) IncrementUsage(hash string) error {
 	return err
 }
 
-func (r *PostgresAPIKeyRepository) ListAll() ([]*APIKey, error) {
+func (r *PostgresAPIKeyRepository) ListAll() ([]*auth.APIKey, error) {
 	query := `SELECT key_value, user_id, created_at, expires_at, usage_count, rate_limit FROM api_keys`
 	rows, err := r.db.Query(query)
 	if err != nil {
@@ -76,9 +99,9 @@ func (r *PostgresAPIKeyRepository) ListAll() ([]*APIKey, error) {
 	}
 	defer rows.Close()
 
-	var keys []*APIKey
+	var keys []*auth.APIKey
 	for rows.Next() {
-		var k APIKey
+		var k auth.APIKey
 		var key_value string
 		if err := rows.Scan(&key_value, &k.UserID, &k.CreatedAt, &k.ExpiresAt, &k.UsageCount, &k.RateLimit); err != nil {
 			return nil, err

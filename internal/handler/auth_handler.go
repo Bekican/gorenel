@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Bekican/gorenel/internal/middleware"
+	"github.com/Bekican/gorenel/internal/authmgr"
 	"github.com/Bekican/gorenel/pkg/auth"
 	"github.com/Bekican/gorenel/pkg/errors"
 	"github.com/Bekican/gorenel/pkg/logger"
@@ -18,14 +19,16 @@ type AuthHandler struct {
 	oauth    auth.OAuthProvider
 	tokenSvc *auth.JWTService
 	userRepo auth.UserRepository
+	authMgr  *authmgr.AuthManager
 	isProd   bool
 }
 
-func NewAuthHandler(oauth auth.OAuthProvider, tokenSvc *auth.JWTService, repo auth.UserRepository, isProd bool) *AuthHandler {
+func NewAuthHandler(oauth auth.OAuthProvider, tokenSvc *auth.JWTService, repo auth.UserRepository, authMgr *authmgr.AuthManager, isProd bool) *AuthHandler {
 	return &AuthHandler{
 		oauth:    oauth,
 		tokenSvc: tokenSvc,
 		userRepo: repo,
+		authMgr:  authMgr,
 		isProd:   isProd,
 	}
 }
@@ -195,6 +198,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 		return errors.Internal(err)
 	}
 
+	// Create an initial API key for the user
+	apiKey := authmgr.GenerateAPIKey("gk")
+	h.authMgr.AddKey(apiKey, user.ID, 100)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -214,12 +221,76 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) error {
 		return errors.Unauthorized("Unauthorized")
 	}
 
+	// Fetch user's API keys
+	var userApiKey string
+	keys := h.authMgr.ListKeys()
+	for _, k := range keys {
+		if k.UserID == claims.UserID { // We need to check if claims has UserID
+			userApiKey = k.Key
+			break
+		}
+	}
+
 	user := map[string]string{
-		"email": claims.Email,
+		"email":   claims.Email,
+		"api_key": userApiKey,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(map[string]interface{}{
 		"user": user,
 	})
+}
+
+func (h *AuthHandler) ListAPIKeys(w http.ResponseWriter, r *http.Request) error {
+	claims := middleware.GetUserFromContext(r.Context())
+	if claims == nil {
+		return errors.Unauthorized("Unauthorized")
+	}
+
+	allKeys := h.authMgr.ListKeys()
+	userKeys := make([]*auth.APIKey, 0)
+	for _, k := range allKeys {
+		if k.UserID == claims.UserID {
+			userKeys = append(userKeys, k)
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(userKeys)
+}
+
+func (h *AuthHandler) CreateAPIKey(w http.ResponseWriter, r *http.Request) error {
+	claims := middleware.GetUserFromContext(r.Context())
+	if claims == nil {
+		return errors.Unauthorized("Unauthorized")
+	}
+
+	apiKey := authmgr.GenerateAPIKey("gk")
+	h.authMgr.AddKey(apiKey, claims.UserID, 100)
+
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(map[string]string{"key": apiKey})
+}
+
+func (h *AuthHandler) DeleteAPIKey(w http.ResponseWriter, r *http.Request) error {
+	claims := middleware.GetUserFromContext(r.Context())
+	if claims == nil {
+		return errors.Unauthorized("Unauthorized")
+	}
+
+	key := r.URL.Query().Get("key")
+	if key == "" {
+		return errors.BadRequest("Missing key", nil)
+	}
+
+	// Double check ownership
+	info, exists := h.authMgr.GetKeyInfo(key)
+	if !exists || info.UserID != claims.UserID {
+		return errors.Forbidden("Access denied")
+	}
+
+	h.authMgr.RevokeKey(key)
+	w.WriteHeader(http.StatusNoContent)
+	return nil
 }

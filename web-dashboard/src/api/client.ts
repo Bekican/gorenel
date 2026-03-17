@@ -231,6 +231,20 @@ export const api = {
     return data;
   },
 
+  listAPIKeys: async () => {
+    const { data } = await apiClient.get<any[]>('/api/keys');
+    return data;
+  },
+
+  createAPIKey: async () => {
+    const { data } = await apiClient.post<{ key: string }>('/api/keys');
+    return data;
+  },
+
+  deleteAPIKey: async (key: string) => {
+    await apiClient.delete('/api/keys', { params: { key } });
+  },
+
   logout: async () => {
     // We can clear cookies here or handle server-side
     document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";

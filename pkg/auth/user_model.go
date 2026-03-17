@@ -24,6 +24,25 @@ type UserRepository interface {
 	UpdateLoginTime(id string) error
 }
 
+// api key yapısi
+type APIKey struct {
+	Key        string     `json:"key" db:"key_value"`
+	UserID     string     `json:"user_id" db:"user_id"`
+	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
+	ExpiresAt  *time.Time `json:"expires_at,omitempty" db:"expires_at"`
+	UsageCount int64      `json:"usage_count" db:"usage_count"`
+	RateLimit  int        `json:"rate_limit" db:"rate_limit"`
+}
+
+type APIKeyRepository interface {
+	GetByHash(hash string) (*APIKey, error)
+	GetByUserID(userID string) ([]*APIKey, error)
+	Create(apiKey *APIKey) error
+	IncrementUsage(hash string) error
+	ListAll() ([]*APIKey, error)
+	Delete(hash string) error
+}
+
 /*
 -- SQL Migration Example (PostgreSQL) --
 

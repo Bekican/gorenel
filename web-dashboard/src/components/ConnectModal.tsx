@@ -4,16 +4,18 @@ import { X, Download, Copy, Check, Terminal, Command } from 'lucide-react';
 interface ConnectModalProps {
     isOpen: boolean;
     onClose: () => void;
+    apiKey?: string;
 }
 
-export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose }) => {
+export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, apiKey }) => {
     const [copied, setCopied] = useState(false);
 
     if (!isOpen) return null;
 
     const host = window.location.hostname;
     console.log('ConnectModal: current hostname is', host);
-    const command = `gorenel start --server ${host}:7000 --port 3000 --api-key demo-key-12345`;
+    const apiToken = apiKey || 'demo-key-12345';
+    const command = `gorenel start --server ${host}:7000 --port 3000 --api-key ${apiToken}`;
     console.log('ConnectModal: generated command is', command);
 
     const handleCopy = () => {
