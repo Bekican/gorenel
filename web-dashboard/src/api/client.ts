@@ -206,6 +206,11 @@ export const api = {
     return data;
   },
 
+  socialLogin: async (provider: string) => {
+    const { data } = await apiClient.get(`/api/login?provider=${provider}`);
+    return data;
+  },
+
   register: async (userData: any) => {
     const { data } = await apiClient.post('/api/register', userData);
     return data;

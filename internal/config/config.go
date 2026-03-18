@@ -33,6 +33,10 @@ type Config struct {
 	GoogleClientSecret string `mapstructure:"GOOGLE_CLIENT_SECRET"`
 	GoogleRedirectURL  string `mapstructure:"GOOGLE_REDIRECT_URL"`
 
+	GithubClientID     string `mapstructure:"GITHUB_CLIENT_ID"`
+	GithubClientSecret string `mapstructure:"GITHUB_CLIENT_SECRET"`
+	GithubRedirectURL  string `mapstructure:"GITHUB_REDIRECT_URL"`
+
 	// Iyzico (Payments)
 	IyzicoAPIKey    string `mapstructure:"IYZICO_API_KEY"`
 	IyzicoSecretKey string `mapstructure:"IYZICO_SECRET_KEY"`
@@ -74,6 +78,9 @@ func Load() (*Config, error) {
 	viper.BindEnv("GOOGLE_CLIENT_ID")
 	viper.BindEnv("GOOGLE_CLIENT_SECRET")
 	viper.BindEnv("GOOGLE_REDIRECT_URL")
+	viper.BindEnv("GITHUB_CLIENT_ID")
+	viper.BindEnv("GITHUB_CLIENT_SECRET")
+	viper.BindEnv("GITHUB_REDIRECT_URL")
 	viper.BindEnv("CLICKHOUSE_ADDR")
 	viper.BindEnv("CLICKHOUSE_USER")
 	viper.BindEnv("BASE_DOMAIN")

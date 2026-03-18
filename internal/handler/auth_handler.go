@@ -16,20 +16,20 @@ import (
 )
 
 type AuthHandler struct {
-	oauth    auth.OAuthProvider
-	tokenSvc *auth.JWTService
-	userRepo auth.UserRepository
-	authMgr  *authmgr.AuthManager
-	isProd   bool
+	oauthProviders map[string]auth.OAuthProvider
+	tokenSvc       *auth.JWTService
+	userRepo       auth.UserRepository
+	authMgr        *authmgr.AuthManager
+	isProd         bool
 }
 
-func NewAuthHandler(oauth auth.OAuthProvider, tokenSvc *auth.JWTService, repo auth.UserRepository, authMgr *authmgr.AuthManager, isProd bool) *AuthHandler {
+func NewAuthHandler(providers map[string]auth.OAuthProvider, tokenSvc *auth.JWTService, repo auth.UserRepository, authMgr *authmgr.AuthManager, isProd bool) *AuthHandler {
 	return &AuthHandler{
-		oauth:    oauth,
-		tokenSvc: tokenSvc,
-		userRepo: repo,
-		authMgr:  authMgr,
-		isProd:   isProd,
+		oauthProviders: providers,
+		tokenSvc:       tokenSvc,
+		userRepo:       repo,
+		authMgr:        authMgr,
+		isProd:         isProd,
 	}
 }
 
@@ -81,9 +81,29 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		}
 	}
 
-	// 2. Standard OAuth Flow (Fallback)
+	// 2. Standard OAuth Flow (Fallback or Explicit)
+	provider := r.URL.Query().Get("provider")
+	if provider == "" {
+		provider = "google" // Default fallback
+	}
+
+	oauth, exists := h.oauthProviders[provider]
+	if !exists {
+		logger.Error("OAuth provider not supported", zap.String("provider", provider))
+		return errors.BadRequest("Unsupported OAuth provider", nil)
+	}
+
 	state := uuid.New().String()
-// ... (rest of the code)
+	// Store provider in state or cookie so callback knows which one to use
+	http.SetCookie(w, &http.Cookie{
+		Name:     "oauth_provider",
+		Value:    provider,
+		Expires:  time.Now().Add(10 * time.Minute),
+		HttpOnly: true,
+		Secure:   h.isProd,
+		Path:     "/",
+		SameSite: http.SameSiteLaxMode,
+	})
 
 	// Store state in a cookie for validation later
 	http.SetCookie(w, &http.Cookie{
@@ -96,13 +116,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		SameSite: http.SameSiteLaxMode,
 	})
 
-	if h.oauth == nil {
-		logger.Error("OAuth provider not initialized")
-		http.Error(w, "OAuth provider not initialized", http.StatusInternalServerError)
-		return nil
-	}
-
-	url := h.oauth.GetAuthURL(state)
+	url := oauth.GetAuthURL(state)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
@@ -119,11 +133,23 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		return errors.Unauthorized("Invalid OAuth state")
 	}
 
-	// 2. Get User Profile from Provider
-	code := r.FormValue("code")
-	profile, err := h.oauth.GetUserProfile(code)
+	// 2. Get Provider from Cookie
+	providerCookie, err := r.Cookie("oauth_provider")
 	if err != nil {
-		logger.Error("OAuth failed", zap.Error(err))
+		return errors.Unauthorized("OAuth provider context missing")
+	}
+	provider := providerCookie.Value
+
+	oauth, exists := h.oauthProviders[provider]
+	if !exists {
+		return errors.Unauthorized("Invalid OAuth provider")
+	}
+
+	// 3. Get User Profile from Provider
+	code := r.FormValue("code")
+	profile, err := oauth.GetUserProfile(code)
+	if err != nil {
+		logger.Error("OAuth failed", zap.Error(err), zap.String("provider", provider))
 		return errors.Unauthorized("Authentication failed")
 	}
 

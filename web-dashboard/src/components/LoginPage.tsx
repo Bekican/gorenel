@@ -36,6 +36,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onSwitchTo
         }
     };
 
+    const handleSocialLogin = async (provider: string) => {
+        setLoading(true);
+        try {
+            const data = await api.socialLogin(provider);
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            }
+        } catch (err: any) {
+            setError('Social login failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const toggleLanguage = () => {
         const newLang = i18n.language === 'en' ? 'tr' : 'en';
         i18n.changeLanguage(newLang);
@@ -128,13 +142,21 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onSwitchTo
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <button className="flex items-center justify-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all group">
+                    <button 
+                        onClick={() => handleSocialLogin('google')}
+                        disabled={loading}
+                        className="flex items-center justify-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all group disabled:opacity-50"
+                    >
                         <svg className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.9 3.24-2.04 4.38-1.26 1.26-3.26 2.4-6.48 2.4-5.06 0-9.14-4.12-9.14-9.18s4.08-9.18 9.14-9.18c2.82 0 4.92 1.1 6.36 2.4l2.4-2.4C18.54 1.08 15.72 0 12.48 0 5.61 0 0 5.61 0 12.48s5.61 12.48 12.48 12.48c3.75 0 6.6-1.23 8.79-3.54 2.19-2.31 2.88-5.52 2.88-8.19 0-.63-.06-1.26-.15-1.89H12.48z" />
                         </svg>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-white transition-colors">Google</span>
                     </button>
-                    <button className="flex items-center justify-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all group">
+                    <button 
+                        onClick={() => handleSocialLogin('github')}
+                        disabled={loading}
+                        className="flex items-center justify-center gap-2 p-3 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-all group disabled:opacity-50"
+                    >
                         <Github className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
                         <span className="text-[10px] font-bold uppercase tracking-widest text-white/40 group-hover:text-white transition-colors">Github</span>
                     </button>

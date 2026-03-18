@@ -42,18 +42,32 @@ func (m *MockOAuth) GetUserProfile(code string) (*auth.UserProfile, error) {
 	}, nil
 }
 
-func initOAuthProvider(logger *zap.Logger, cfg *config.Config) auth.OAuthProvider {
+func initOAuthProviders(logger *zap.Logger, cfg *config.Config) map[string]auth.OAuthProvider {
+	providers := make(map[string]auth.OAuthProvider)
+
 	if cfg.Env == "production" {
-		if cfg.GoogleClientID == "" || cfg.GoogleClientSecret == "" || cfg.GoogleRedirectURL == "" {
-			logger.Fatal("GO_ENV=production but GOOGLE_CLIENT_ID/SECRET/URL is missing. Cannot use MockOAuth in production.")
+		// Google
+		if cfg.GoogleClientID != "" && cfg.GoogleClientSecret != "" && cfg.GoogleRedirectURL != "" {
+			logger.Info("Google OAuth provider initialized", zap.String("client_id", cfg.GoogleClientID[:5]+"..."))
+			providers["google"] = auth.NewGoogleOAuth(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
 		}
 
-		logger.Info("Google OAuth provider initialized", zap.String("client_id", cfg.GoogleClientID[:5]+"..."))
-		return auth.NewGoogleOAuth(cfg.GoogleClientID, cfg.GoogleClientSecret, cfg.GoogleRedirectURL)
+		// GitHub
+		if cfg.GithubClientID != "" && cfg.GithubClientSecret != "" && cfg.GithubRedirectURL != "" {
+			logger.Info("GitHub OAuth provider initialized", zap.String("client_id", cfg.GithubClientID[:5]+"..."))
+			providers["github"] = auth.NewGitHubOAuth(cfg.GithubClientID, cfg.GithubClientSecret, cfg.GithubRedirectURL)
+		}
+
+		if len(providers) == 0 {
+			logger.Warn("GO_ENV=production but no OAuth providers (Google/GitHub) are configured.")
+		}
+		return providers
 	}
 
 	logger.Info("Mock OAuth provider initialized (dev mode)")
-	return &MockOAuth{}
+	providers["google"] = &MockOAuth{}
+	providers["github"] = &MockOAuth{}
+	return providers
 }
 
 func main() {
@@ -159,8 +173,8 @@ func main() {
 	// Auth components
 	jwtSvc := auth.NewJWTService(cfg.JWTSecret)
 
-	oauthProvider := initOAuthProvider(zapLogger, cfg)
-	authHandler := handler.NewAuthHandler(oauthProvider, jwtSvc, userRepo, authManager, cfg.Env == "production")
+	oauthProviders := initOAuthProviders(zapLogger, cfg)
+	authHandler := handler.NewAuthHandler(oauthProviders, jwtSvc, userRepo, authManager, cfg.Env == "production")
 
 	// ML client uses the same shared logger
 
