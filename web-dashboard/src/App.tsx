@@ -10,7 +10,9 @@ import {
   ChevronRight,
   ShieldCheck,
   Cpu,
-  Languages
+  Languages,
+  Menu,
+  X
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type ModelStatsResponse, type CapturedRequest, type ModificationRule } from './api/client';
@@ -50,6 +52,7 @@ function App() {
   const [history, setHistory] = useState<CapturedRequest[]>([]);
   const [rules, setRules] = useState<ModificationRule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -153,7 +156,10 @@ function App() {
 
   const NavItem = ({ id, icon: Icon, label }: { id: NavTab, icon: any, label: string }) => (
     <button
-      onClick={() => setActiveTab(id)}
+      onClick={() => {
+        setActiveTab(id);
+        setIsMobileMenuOpen(false);
+      }}
       className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300 group ${activeTab === id
         ? 'bg-emerald-500/10 text-emerald-400'
         : 'text-white/40 hover:text-white hover:bg-white/5'
@@ -224,29 +230,94 @@ function App() {
           </div>
         </div>
       </aside>
+      
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Mobile Sidebar (Slide-over) */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0A0C10] border-r border-white/5 p-6 transition-transform duration-300 md:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+              <img src="/logo.png" alt="Gorenel Logo" className="w-full h-full object-cover" />
+            </div>
+            <span className="font-bold text-lg tracking-tight">GORENEL</span>
+          </div>
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="p-2 hover:bg-white/5 rounded-lg text-white/40 hover:text-white transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <nav className="flex-1 space-y-6">
+          <div className="space-y-1">
+            <div className="px-4 mb-2">
+              <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Platform</span>
+            </div>
+            <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
+            <NavItem id="tunnels" icon={Globe} label="Tunnels" />
+            <NavItem id="ai_gateway" icon={Cpu} label="AI Gateway" />
+          </div>
+
+          <div className="space-y-1">
+            <div className="px-4 mb-2">
+              <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Developers</span>
+            </div>
+            <NavItem id="traffic" icon={Microscope} label="Inspector" />
+            <NavItem id="api_keys" icon={ShieldCheck} label="API Keys" />
+            <NavItem id="settings" icon={Settings} label="Rules" />
+          </div>
+        </nav>
+
+        <div className="mt-auto pt-6 border-t border-white/5 space-y-4 fixed bottom-6 left-6 right-6">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
+          >
+            <LogOut className="w-4 h-4" />
+            {t('common.sign_out')}
+          </button>
+        </div>
+      </aside>
 
       {/* Main Content */}
       <main className="flex-1 relative z-10 min-w-0">
         <div className="p-6 md:p-8 lg:p-12 max-w-[1600px] mx-auto space-y-10">
 
           <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4">
-            <div className="animate-in slide-in-from-bottom-2 duration-500">
-              <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
-                {activeTab === 'overview' && t('dashboard.command_center')}
-                {activeTab === 'tunnels' && t('dashboard.active_tunnels')}
-                {activeTab === 'ai_gateway' && t('dashboard.ai_gateway')}
-                {activeTab === 'traffic' && t('dashboard.traffic_inspector')}
-                {activeTab === 'api_keys' && t('dashboard.api_keys')}
-                {activeTab === 'settings' && t('dashboard.global_rules')}
-              </h2>
-              <p className="text-lg text-white/50 font-normal max-w-2xl">
-                {activeTab === 'overview' && t('dashboard.overview_desc')}
-                {activeTab === 'tunnels' && t('dashboard.tunnels_desc')}
-                {activeTab === 'ai_gateway' && t('dashboard.ai_desc')}
-                {activeTab === 'traffic' && t('dashboard.traffic_desc')}
-                {activeTab === 'api_keys' && t('dashboard.keys_desc')}
-                {activeTab === 'settings' && t('dashboard.rules_desc')}
-              </p>
+            <div className="flex items-center justify-between">
+              <div className="animate-in slide-in-from-bottom-2 duration-500">
+                <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-white mb-2">
+                  {activeTab === 'overview' && t('dashboard.command_center')}
+                  {activeTab === 'tunnels' && t('dashboard.active_tunnels')}
+                  {activeTab === 'ai_gateway' && t('dashboard.ai_gateway')}
+                  {activeTab === 'traffic' && t('dashboard.traffic_inspector')}
+                  {activeTab === 'api_keys' && t('dashboard.api_keys')}
+                  {activeTab === 'settings' && t('dashboard.global_rules')}
+                </h2>
+                <p className="text-sm md:text-lg text-white/50 font-normal max-w-2xl hidden xs:block">
+                  {activeTab === 'overview' && t('dashboard.overview_desc')}
+                  {activeTab === 'tunnels' && t('dashboard.tunnels_desc')}
+                  {activeTab === 'ai_gateway' && t('dashboard.ai_desc')}
+                  {activeTab === 'traffic' && t('dashboard.traffic_desc')}
+                  {activeTab === 'api_keys' && t('dashboard.keys_desc')}
+                  {activeTab === 'settings' && t('dashboard.rules_desc')}
+                </p>
+              </div>
+
+              <button 
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="md:hidden p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-emerald-400"
+              >
+                <Menu size={20} />
+              </button>
             </div>
 
             <div className="flex items-center gap-4">
