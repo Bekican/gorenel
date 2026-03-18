@@ -1,13 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, BarChart3, ArrowRight, Command, Globe, Zap, CheckCircle2, Play } from 'lucide-react';
+import { Shield, BarChart3, ArrowRight, Command, Globe, Zap, CheckCircle2, Play, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface LandingPageProps {
     onLogin: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
+    const { t, i18n } = useTranslation();
     const [typedText, setTypedText] = useState('');
     const fullText = "gorenel start --port 3000";
+
+    const toggleLanguage = () => {
+        const newLang = i18n.language === 'en' ? 'tr' : 'en';
+        i18n.changeLanguage(newLang);
+    };
 
     useEffect(() => {
         let i = 0;
@@ -37,13 +44,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                 </div>
 
                 <div className="flex items-center gap-6">
-                    <a href="#" className="hidden md:block text-sm text-white/60 hover:text-white transition-colors">Documentation</a>
-                    <a href="#" className="hidden md:block text-sm text-white/60 hover:text-white transition-colors">Pricing</a>
+                    <button
+                        onClick={toggleLanguage}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold hover:bg-white/10 transition-all"
+                    >
+                        <Languages size={14} className="text-emerald-400" />
+                        {i18n.language.toUpperCase()}
+                    </button>
+                    <a href="#" className="hidden md:block text-sm text-white/60 hover:text-white transition-colors">{t('common.documentation', 'Docs')}</a>
                     <button
                         onClick={onLogin}
                         className="px-5 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-neutral-200 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                     >
-                        Dashboard {`->`}
+                        {t('common.login')} {`->`}
                     </button>
                 </div>
             </nav>
@@ -62,12 +75,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                     </div>
 
                     <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.1]">
-                        One gateway for <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 animate-gradient-x">everything.</span>
+                        {t('landing.title')} <br />
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 animate-gradient-x">
+                            {i18n.language === 'tr' ? 'her şey için.' : 'everything.'}
+                        </span>
                     </h1>
 
                     <p className="text-lg text-white/50 max-w-xl leading-relaxed">
-                        Securely expose your localhost to the world. Load balancing, traffic inspection, and AI gateway features included. No config required.
+                        {t('landing.description')}
                     </p>
 
                     <div className="flex items-center gap-4 pt-4">
@@ -75,7 +90,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                             onClick={onLogin}
                             className="group px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all shadow-[0_0_40px_-10px_rgba(16,185,129,0.4)] flex items-center gap-2"
                         >
-                            Get Started
+                            {t('landing.cta')}
                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </button>
                         <button className="px-8 py-3.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium rounded-xl transition-all flex items-center gap-2">

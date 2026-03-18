@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Download, Copy, Check, Terminal, Command } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface ConnectModalProps {
     isOpen: boolean;
@@ -8,6 +9,7 @@ interface ConnectModalProps {
 }
 
 export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, apiKey }) => {
+    const { t } = useTranslation();
     const [copied, setCopied] = useState(false);
 
     if (!isOpen) return null;
@@ -42,8 +44,8 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
                         <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mx-auto mb-4 ring-1 ring-primary/50 shadow-[0_0_30px_-10px_rgba(16,185,129,0.3)]">
                             <Terminal className="w-8 h-8 text-primary" />
                         </div>
-                        <h2 className="text-2xl font-bold text-white tracking-tight">Cihazını Bağla</h2>
-                        <p className="text-white/50 text-sm">Gorenel CLI ile yerel uygulamana tünel aç.</p>
+                        <h2 className="text-2xl font-bold text-white tracking-tight">{t('connect_modal.title')}</h2>
+                        <p className="text-white/50 text-sm">{t('connect_modal.subtitle')}</p>
                     </div>
 
                     {/* Step 1: Download */}
@@ -54,7 +56,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
                             className="group relative flex items-center justify-center gap-3 w-full py-4 bg-primary hover:bg-emerald-400 text-black font-bold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-primary/20"
                         >
                             <Download className="w-5 h-5" />
-                            <span>Windows (.exe) İndir</span>
+                            <span>{t('connect_modal.download_btn')}</span>
                         </a>
                         <p className="text-xs text-white/30">v1.0.0 • 64-bit • Standalone Binary</p>
                     </div>
@@ -63,7 +65,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
                     <div className="space-y-3 pt-4 border-t border-white/5">
                         <div className="flex items-center justify-center gap-2 text-sm font-medium text-white/70">
                             <Command className="w-4 h-4 text-primary" />
-                            <span>Bağlantı Komutu</span>
+                            <span>{t('connect_modal.command_label')}</span>
                         </div>
                         <div
                             onClick={handleCopy}
@@ -76,7 +78,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
                                 {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4 text-white/70 group-hover:text-primary" />}
                             </div>
                         </div>
-                        <p className="text-xs text-white/30">Komutu terminale yapıştır ve çalıştır.</p>
+                        <p className="text-xs text-white/30">{t('connect_modal.command_footer')}</p>
                     </div>
                 </div>
             </div>

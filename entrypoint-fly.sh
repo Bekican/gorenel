@@ -43,11 +43,15 @@ while true; do
   sleep 1
 done &
 
-# Run docker-compose
-echo "Building services sequentially to prevent OOM..."
-docker-compose build gorenel-server
-docker-compose build ml-engine
-docker-compose build gorenel-dashboard
+# Check if we have pre-built images or if we need to build
+if [[ "$(docker images -q gorenel-server 2> /dev/null)" == "" ]]; then
+  echo "Images not found. Building services sequentially to prevent OOM..."
+  docker-compose build gorenel-server
+  docker-compose build ml-engine
+  docker-compose build gorenel-dashboard
+else
+  echo "Images found. Skipping build step for fast boot."
+fi
 
 echo "Starting Gorenel services..."
 docker-compose up --remove-orphans

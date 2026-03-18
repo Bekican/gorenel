@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { User, Mail, Lock, Loader2, AlertCircle, ArrowRight, Github } from 'lucide-react';
+import { User, Mail, Lock, Loader2, AlertCircle, ArrowRight, Github, Languages } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { AuthLayout } from './AuthLayout';
 import { api } from '../api/client';
 
@@ -9,6 +10,7 @@ interface RegisterPageProps {
 }
 
 export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onRegisterSuccess }) => {
+  const { t, i18n } = useTranslation();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,8 +38,25 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
     }
   };
 
+  const toggleLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'tr' : 'en';
+    i18n.changeLanguage(newLang);
+  };
+
   return (
-    <AuthLayout title="CREATE ACCOUNT" subtitle="Secure Tunneling Interface">
+    <AuthLayout 
+      title={t('common.register_title')} 
+      subtitle={t('landing.subtitle')}
+    >
+      <div className="absolute top-4 right-4 z-50">
+        <button
+          onClick={toggleLanguage}
+          className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold hover:bg-white/10 transition-all uppercase"
+        >
+          <Languages size={12} className="text-emerald-400" />
+          {i18n.language.toUpperCase()}
+        </button>
+      </div>
       <div className="space-y-8 animate-in fade-in duration-500">
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (
@@ -49,7 +68,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] ml-2">Display Name</label>
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] ml-2">
+                {t('auth.name')}
+              </label>
               <div className="relative group">
                 <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
                 <input
@@ -64,7 +85,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] ml-2">Email Identity</label>
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] ml-2">
+                {t('auth.email')}
+              </label>
               <div className="relative group">
                 <Mail className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
                 <input
@@ -79,7 +102,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] ml-2">Access Key</label>
+              <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] ml-2">
+                {t('auth.password')}
+              </label>
               <div className="relative group">
                 <Lock className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-emerald-500 transition-colors" />
                 <input
@@ -103,7 +128,9 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
               <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                <span className="font-bold uppercase tracking-widest text-xs">Initialize Account</span>
+                <span className="font-bold uppercase tracking-widest text-xs">
+                  {t('landing.cta')}
+                </span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Key, Plus, Copy, Trash2, Shield, Clock, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 
 interface APIKey {
@@ -10,6 +11,7 @@ interface APIKey {
 }
 
 export const ApiKeyManager: React.FC = () => {
+    const { t } = useTranslation();
     const [keys, setKeys] = useState<APIKey[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export const ApiKeyManager: React.FC = () => {
             setKeys(data);
             setError(null);
         } catch (err) {
-            setError('Failed to load API keys');
+            setError(t('common.error_fetch', 'Failed to load API keys'));
             console.error(err);
         } finally {
             setLoading(false);
@@ -44,7 +46,7 @@ export const ApiKeyManager: React.FC = () => {
     };
 
     const handleDeleteKey = async (key: string) => {
-        if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.')) return;
+        if (!confirm(t('api_keys_manager.revoke_confirm'))) return;
         try {
             await api.deleteAPIKey(key);
             fetchKeys();
@@ -58,31 +60,31 @@ export const ApiKeyManager: React.FC = () => {
         alert('Copied to clipboard!');
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-400">Loading security keys...</div>;
+    if (loading) return <div className="p-8 text-center text-gray-400">{t('api_keys_manager.loading')}</div>;
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <Shield className="text-blue-500" /> API Keys
+                        <Shield className="text-blue-500" /> {t('api_keys_manager.title')}
                     </h2>
-                    <p className="text-gray-400">Manage your secure tunnel access credentials</p>
+                    <p className="text-gray-400">{t('api_keys_manager.subtitle')}</p>
                 </div>
                 <button
                     onClick={handleCreateKey}
                     className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all"
                 >
-                    <Plus size={18} /> Generate New Key
+                    <Plus size={18} /> {t('api_keys_manager.generate')}
                 </button>
             </div>
 
             {showNewKey && (
                 <div className="bg-green-900/20 border border-green-500/50 p-4 rounded-xl flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4">
                     <div className="flex-1">
-                        <p className="text-green-400 text-sm font-semibold mb-1">New Key Generated Successfully!</p>
+                        <p className="text-green-400 text-sm font-semibold mb-1">{t('api_keys_manager.success')}</p>
                         <p className="text-white font-mono bg-black/40 p-2 rounded border border-white/10 break-all">{showNewKey}</p>
-                        <p className="text-gray-400 text-xs mt-2">Make sure to copy it now. For security reasons, we won't show it again.</p>
+                        <p className="text-gray-400 text-xs mt-2">{t('api_keys_manager.security_notice')}</p>
                     </div>
                     <div className="flex gap-2">
                         <button onClick={() => copyToClipboard(showNewKey)} className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-500">
@@ -149,7 +151,7 @@ export const ApiKeyManager: React.FC = () => {
                 {keys.length === 0 && !loading && (
                     <div className="text-center py-12 bg-zinc-900/50 border border-dashed border-white/10 rounded-2xl">
                         <Shield className="mx-auto text-zinc-700 mb-4" size={48} />
-                        <p className="text-gray-500">No API keys found. Create one to start tunneling.</p>
+                        <p className="text-gray-500">{t('api_keys_manager.empty')}</p>
                     </div>
                 )}
             </div>

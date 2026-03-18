@@ -9,8 +9,10 @@ import {
   Activity,
   ChevronRight,
   ShieldCheck,
-  Cpu
+  Cpu,
+  Languages
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { api, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type ModelStatsResponse, type CapturedRequest, type ModificationRule } from './api/client';
 import './index.css';
 
@@ -34,6 +36,7 @@ import { ShareView } from './components/ShareView';
 type NavTab = 'overview' | 'tunnels' | 'ai_gateway' | 'traffic' | 'settings' | 'api_keys';
 
 function App() {
+  const { t, i18n } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [isAuthStarted, setIsAuthStarted] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
@@ -91,7 +94,7 @@ function App() {
       setRules(rulesData || []);
       setLoading(false);
     } catch (err) {
-      console.error('Connection refused. Is the Gorenel server running on port 9091?');
+      console.error('Core Analytics Sync Failed: Backend unreachable or returning 502.');
       setLoading(false);
     }
   };
@@ -157,7 +160,7 @@ function App() {
         }`}
     >
       <Icon className={`w-4 h-4 ${activeTab === id ? 'text-emerald-400' : 'group-hover:scale-110 transition-transform'}`} />
-      <span className="font-medium text-sm">{label}</span>
+      <span className="font-medium text-sm">{t(`common.${id}`, label)}</span>
       {activeTab === id && <ChevronRight className="w-3 h-3 ml-auto opacity-50" />}
     </button>
   );
@@ -215,7 +218,7 @@ function App() {
                 className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
               >
                 <LogOut className="w-4 h-4" />
-                Sign Out
+                {t('common.sign_out')}
               </button>
             </div>
           </div>
@@ -226,33 +229,45 @@ function App() {
       <main className="flex-1 relative z-10 min-w-0">
         <div className="p-6 md:p-8 lg:p-12 max-w-[1600px] mx-auto space-y-10">
 
-          {/* Transparent Header */}
           <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4">
             <div className="animate-in slide-in-from-bottom-2 duration-500">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
-                {activeTab === 'overview' && "Command Center"}
-                {activeTab === 'tunnels' && "Active Tunnels"}
-                {activeTab === 'ai_gateway' && "AI Gateway"}
-                {activeTab === 'traffic' && "Traffic Inspector"}
-                {activeTab === 'api_keys' && "API Key Management"}
-                {activeTab === 'settings' && "Global Rules"}
+                {activeTab === 'overview' && t('dashboard.command_center')}
+                {activeTab === 'tunnels' && t('dashboard.active_tunnels')}
+                {activeTab === 'ai_gateway' && t('dashboard.ai_gateway')}
+                {activeTab === 'traffic' && t('dashboard.traffic_inspector')}
+                {activeTab === 'api_keys' && t('dashboard.api_keys')}
+                {activeTab === 'settings' && t('dashboard.global_rules')}
               </h2>
               <p className="text-lg text-white/50 font-normal max-w-2xl">
-                {activeTab === 'overview' && "Real-time system overview and performance metrics."}
-                {activeTab === 'tunnels' && "Manage your secure tunnels and endpoints."}
-                {activeTab === 'ai_gateway' && "Unified API for LLM routing, caching and rate limiting."}
-                {activeTab === 'traffic' && "Inspect and replay HTTP requests in real-time."}
-                {activeTab === 'api_keys' && "Manage your API keys for secure access and integrations."}
-                {activeTab === 'settings' && "Configure modification rules for incoming traffic."}
+                {activeTab === 'overview' && t('dashboard.overview_desc')}
+                {activeTab === 'tunnels' && t('dashboard.tunnels_desc')}
+                {activeTab === 'ai_gateway' && t('dashboard.ai_desc')}
+                {activeTab === 'traffic' && t('dashboard.traffic_desc')}
+                {activeTab === 'api_keys' && t('dashboard.keys_desc')}
+                {activeTab === 'settings' && t('dashboard.rules_desc')}
               </p>
             </div>
 
-            <button
-              onClick={() => setIsConnectOpen(true)}
-              className="btn-primary-premium self-start md:self-center"
-            >
-              <span className="text-lg mr-1">+</span> Connect Localhost
-            </button>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => {
+                  const newLang = i18n.language === 'en' ? 'tr' : 'en';
+                  i18n.changeLanguage(newLang);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/10 transition-all uppercase"
+              >
+                <Languages size={14} className="text-emerald-400" />
+                {i18n.language.toUpperCase()}
+              </button>
+              
+              <button
+                onClick={() => setIsConnectOpen(true)}
+                className="btn-primary-premium"
+              >
+                <span className="text-lg mr-1">+</span> {t('common.connect')}
+              </button>
+            </div>
           </header>
 
           <Suspense fallback={<div className="h-96 flex items-center justify-center"><Activity className="w-8 h-8 text-emerald-500 animate-spin" /></div>}>
