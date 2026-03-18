@@ -44,7 +44,7 @@ while true; do
 done &
 
 # Check if we have pre-built images or if we need to build
-if [[ "$(docker images -q gorenel-server 2> /dev/null)" == "" ]]; then
+if ! docker images --format '{{.Repository}}' | grep -q "gorenel-server"; then
   echo "Images not found. Building services sequentially to prevent OOM..."
   docker-compose build gorenel-server
   docker-compose build ml-engine
