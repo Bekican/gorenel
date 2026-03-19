@@ -43,15 +43,11 @@ while true; do
   sleep 1
 done &
 
-# Check if we have pre-built images or if we need to build
-if ! docker images --format '{{.Repository}}' | grep -q "gorenel-server"; then
-  echo "Images not found. Building services sequentially to prevent OOM..."
-  docker-compose build gorenel-server
-  docker-compose build ml-engine
-  docker-compose build gorenel-dashboard
-else
-  echo "Images found. Skipping build step for fast boot."
-fi
+# Build services to ensure latest code is used
+echo "Building services sequentially to ensure latest code is pick up..."
+docker-compose build gorenel-server
+docker-compose build ml-engine
+docker-compose build gorenel-dashboard
 
 echo "Starting Gorenel services..."
 docker-compose up --remove-orphans

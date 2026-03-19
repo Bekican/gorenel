@@ -33,7 +33,7 @@ coverage.xml
 
 # Node/React
 **/node_modules/
-**/dist/
+# **/dist/
 **/build/
 .npm
 npm-debug.log*
