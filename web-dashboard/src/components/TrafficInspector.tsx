@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Play, Clock, Globe, Shield, Terminal, Filter, ArrowRight, Sparkles, Bot, Cpu, Share2 } from 'lucide-react';
+import { Search, Play, Clock, Globe, Shield, Terminal, Filter, ArrowRight, Sparkles, Bot, Cpu, Share2, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import { type CapturedRequest, api } from '../api/client';
 
@@ -85,10 +85,28 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                     <tbody className="divide-y divide-white/[0.03]">
                         {filteredHistory.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-8 py-20 text-center">
-                                    <div className="space-y-2">
-                                        <Terminal className="w-10 h-10 text-white/5 mx-auto" />
-                                        <p className="text-white/20 font-black uppercase text-[10px] tracking-widest">No matching logs found</p>
+                                <td colSpan={5} className="px-8 py-32 text-center relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-primary/[0.01] pointer-events-none" />
+                                    <div className="relative z-10 max-w-md mx-auto space-y-6">
+                                        <div className="w-20 h-20 bg-primary/5 border border-primary/20 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl animate-pulse">
+                                           <Activity className="w-10 h-10 text-primary" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <h4 className="text-2xl font-black text-white tracking-tight">Listening for Packets</h4>
+                                            <p className="text-sm text-white/30 font-medium leading-relaxed">
+                                                Gorenel is currently sniffing for frames on your active tunnels. Once you make a request to a public .site URL, it will appear here in real-time.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center justify-center gap-4 pt-4">
+                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl text-[10px] font-black uppercase text-white/40 tracking-widest">
+                                                <div className="w-1 h-1 rounded-full bg-primary animate-ping" />
+                                                Live Sniffer
+                                            </div>
+                                            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl text-[10px] font-black uppercase text-white/40 tracking-widest">
+                                                <div className="w-1 h-1 rounded-full bg-blue-500 animate-ping" />
+                                                Binary Logic
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>

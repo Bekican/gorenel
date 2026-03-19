@@ -25,7 +25,13 @@ const resources = {
         "pricing": "Pricing",
         "dashboard": "Dashboard",
         "connect": "Connect Localhost",
-        "sign_out": "Sign Out"
+        "sign_out": "Sign Out",
+        "overview_sub": "Dashboard & Stats",
+        "tunnels_sub": "Local to Cloud",
+        "ai_gateway_sub": "LLM Proxy & Metrics",
+        "traffic_sub": "Live Packet Sniffer",
+        "api_keys_sub": "Access Control",
+        "settings_sub": "Traffic Rules"
       },
       "dashboard": {
         "command_center": "Command Center",
@@ -41,7 +47,14 @@ const resources = {
         "keys_desc": "Manage your API keys for secure access and integrations.",
         "rules_desc": "Configure modification rules for incoming traffic.",
         "system_secure": "System Secure",
-        "no_threats": "Anomaly detection is active. No threats detected in the last 24 hours."
+        "no_threats": "Anomaly detection is active. No threats detected in the last 24 hours.",
+        "quick_start": "Quick Start Guide",
+        "step_1": "1. Connect Localhost",
+        "step_1_desc": "Use CLI to expose your local port.",
+        "step_2": "2. Inspect Traffic",
+        "step_2_desc": "See requests in the Traffic Inspector.",
+        "step_3": "3. Set AI Rules",
+        "step_3_desc": "Apply transformations or proxy LLMs."
       },
       "connect_modal": {
         "title": "Connect Your Device",
@@ -98,7 +111,13 @@ const resources = {
         "pricing": "Fiyatlandırma",
         "dashboard": "Panel",
         "connect": "Localhost Bağla",
-        "sign_out": "Çıkış Yap"
+        "sign_out": "Çıkış Yap",
+        "overview_sub": "Panel ve İstatistikler",
+        "tunnels_sub": "Yerelden Buluta",
+        "ai_gateway_sub": "LLM Vekil Sunucu",
+        "traffic_sub": "Canlı Paket İzleyici",
+        "api_keys_sub": "Erişim Kontrolü",
+        "settings_sub": "Trafik Kuralları"
       },
       "dashboard": {
         "command_center": "Komuta Merkezi",
@@ -114,7 +133,14 @@ const resources = {
         "keys_desc": "Güvenli erişim ve entegrasyonlar için API anahtarlarınızı yönetin.",
         "rules_desc": "Gelen trafik için değişiklik kurallarını yapılandırın.",
         "system_secure": "Sistem Güvenli",
-        "no_threats": "Anomali tespiti aktif. Son 24 saat içinde tehdit algılanmadı."
+        "no_threats": "Anomali tespiti aktif. Son 24 saat içinde tehdit algılanmadı.",
+        "quick_start": "Hızlı Başlangıç Rehberi",
+        "step_1": "1. Localhost Bağla",
+        "step_1_desc": "CLI kullanarak yerel portunu dünyaya aç.",
+        "step_2": "2. Trafiği İzle",
+        "step_2_desc": "Gelen istekleri Trafik İzleyici'de gör.",
+        "step_3": "3. AI Kuralları Koy",
+        "step_3_desc": "Dönüşümler uygula veya LLM'leri vekil et."
       },
       "connect_modal": {
         "title": "Cihazını Bağla",
