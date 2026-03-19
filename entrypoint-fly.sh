@@ -43,11 +43,21 @@ while true; do
   sleep 1
 done &
 
-# Build services to ensure latest code is used
-echo "Building services sequentially to ensure latest code is pick up..."
-docker-compose build gorenel-server
-docker-compose build ml-engine
-docker-compose build gorenel-dashboard
+# Build services to ensure latest code is used in parallel
+echo "Building services in parallel..."
+docker-compose build gorenel-server gorenel-dashboard &
+BACKEND_BUILD_PID=$!
+
+# ML engine can be built in background as it takes longest
+docker-compose build ml-engine &
+
+# Wait only for critical services
+echo "Waiting for critical services (Server & Dashboard) to build..."
+wait $BACKEND_BUILD_PID
 
 echo "Starting Gorenel services..."
-docker-compose up --remove-orphans
+docker-compose up -d --remove-orphans
+
+# The script should not exit, so we tail logs or just wait
+echo "Gorenel is up! Tailing logs..."
+docker-compose logs -f
