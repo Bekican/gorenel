@@ -59,7 +59,7 @@ const resources = {
       "connect_modal": {
         "title": "Connect Your Device",
         "subtitle": "Securely expose your local app with Gorenel CLI.",
-        "download_btn": "Download Windows (.exe)",
+        "download_btn": "Download CLI (.zip)",
         "command_label": "Connection Command",
         "command_footer": "Copy and paste this command into your terminal."
       },
@@ -145,7 +145,7 @@ const resources = {
       "connect_modal": {
         "title": "Cihazını Bağla",
         "subtitle": "Gorenel CLI ile yerel uygulamana tünel aç.",
-        "download_btn": "Windows (.exe) İndir",
+        "download_btn": "CLI İndir (.zip)",
         "command_label": "Bağlantı Komutu",
         "command_footer": "Komutu terminale yapıştır ve çalıştır."
       },
