@@ -61,8 +61,8 @@ const resources = {
       "connect_modal": {
         "title": "Connect Your Device",
         "subtitle": "Securely expose your local app with Gorenel CLI.",
-        "download_btn": "Download CLI from GitHub",
-        "download_url": "https://github.com/Bekican/gorenel/releases/download/v1.0.1/gorenel-client-windows-amd64.exe",
+        "download_btn": "Download CLI",
+        "download_url": "/downloads/gorenel-windows-amd64.exe",
         "command_label": "Connection Command",
         "command_footer": "Copy and paste this command into your terminal."
       },
@@ -211,8 +211,8 @@ const resources = {
       "connect_modal": {
         "title": "Cihazını Bağla",
         "subtitle": "Gorenel CLI ile yerel uygulamana tünel aç.",
-        "download_btn": "CLI'yı GitHub'dan İndir",
-        "download_url": "https://github.com/Bekican/gorenel/releases/download/v1.0.1/gorenel-client-windows-amd64.exe",
+        "download_btn": "CLI'yı İndir",
+        "download_url": "/downloads/gorenel-windows-amd64.exe",
         "command_label": "Bağlantı Komutu",
         "command_footer": "Komutu terminale yapıştır ve çalıştır."
       },
