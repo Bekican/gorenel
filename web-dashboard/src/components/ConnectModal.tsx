@@ -59,7 +59,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
                             <Download className="w-5 h-5" />
                             <span>{t('connect_modal.download_btn')}</span>
                         </a>
-                        <p className="text-xs text-white/30">v1.0.0 • 64-bit • Standalone Binary</p>
+                        <p className="text-xs text-white/30">v1.0.1 • 64-bit • Standalone Binary</p>
                     </div>
 
                     {/* Step 2: Command */}

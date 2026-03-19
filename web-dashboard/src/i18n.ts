@@ -181,9 +181,9 @@ const resources = {
         "ai_gateway_sub": "LLM Vekil Sunucu",
         "traffic_sub": "Canlı Paket İzleyici",
         "api_keys_sub": "Erişim Kontrolü",
-        "settings_sub": "Trafik Kuralları",
-        "provider_status": "Sağlayıcı Durumu",
-        "operational": "Çalışıyor"
+        "settings_sub": "Traffic Rules",
+        "provider_status": "Provider Status",
+        "operational": "Operational"
       },
       "dashboard": {
         "command_center": "Komuta Merkezi",
@@ -197,16 +197,16 @@ const resources = {
         "ai_desc": "LLM yönlendirme, önbelleğe alma ve hız sınırlama için birleşik API.",
         "traffic_desc": "HTTP isteklerini gerçek zamanlı olarak izleyin ve tekrar oynatın.",
         "keys_desc": "Güvenli erişim ve entegrasyonlar için API anahtarlarınızı yönetin.",
-        "rules_desc": "Gelen trafik için değişiklik kurallarını yapılandırın.",
-        "system_secure": "Sistem Güvenli",
-        "no_threats": "Anomali tespiti aktif. Son 24 saat içinde tehdit algılanmadı.",
+        "rules_desc": "Gelen trafik için Traffic Rules yapılandırın.",
+        "system_secure": "System Secure",
+        "no_threats": "Anomaly Detection aktif. Son 24 saat içinde tehdit algılanmadı.",
         "quick_start": "Hızlı Başlangıç Rehberi",
         "step_1": "1. Localhost Bağla",
         "step_1_desc": "CLI kullanarak yerel portunu dünyaya aç.",
         "step_2": "2. Trafiği İzle",
-        "step_2_desc": "Gelen istekleri Trafik İzleyici'de gör.",
+        "step_2_desc": "Gelen istekleri Traffic Inspector'da gör.",
         "step_3": "3. AI Kuralları Koy",
-        "step_3_desc": "Dönüşümler uygula veya LLM'leri vekil et."
+        "step_3_desc": "Dönüşümler uygula veya LLM'leri proxy et."
       },
       "connect_modal": {
         "title": "Cihazını Bağla",
@@ -229,8 +229,8 @@ const resources = {
         "onboarding_desc": "Bu anahtarları CLI üzerinden giriş yapmak için kullanın. Terminalinizde 'gorenel login <anahtar>' komutunu çalıştırarak güvenli bir oturum başlatabilirsiniz."
       },
       "ai_gateway": {
-        "onboarding_title": "AI Protokol Zekası",
-        "onboarding_desc": "Gorenel motoru, LLM yüklerini (payload) nöral oto-kodlayıcılar ve izolasyon ormanları kullanarak gerçek zamanlı olarak analiz eder ve anomalileri tespit eder."
+        "onboarding_title": "AI Protocol Intelligence",
+        "onboarding_desc": "Gorenel motoru, LLM yüklerini (payload) Neural Autoencoders ve Isolation Forest kullanarak gerçek zamanlı olarak analiz eder ve anomalileri tespit eder."
       },
       "tunnels": {
         "empty_title": "Yayına hazır mısın?",
@@ -275,31 +275,31 @@ const resources = {
         "have_account": "Zaten hesabınız var mı?"
       },
       "traffic_inspector": {
-        "title": "Paket Akışı",
-        "subtitle": "Tünel trafiğinin gerçek zamanlı incelenmesi",
-        "capturing": "Canlı İzleniyor",
-        "search_placeholder": "Yol, metod veya durum koduna göre ara...",
-        "listening_title": "Paketler Bekleniyor",
-        "listening_desc": "Gorenel şu anda aktif tünellerinizdeki kareleri (frames) dinliyor. Herhangi bir .site URL'sine istek yaptığınızda, burada gerçek zamanlı olarak görünecektir.",
-        "live_sniffer": "Canlı İzleyici",
-        "binary_logic": "İkili Mantık",
+        "title": "Packet Streams",
+        "subtitle": "Real-time inspection of tunnel traffic",
+        "capturing": "Capturing Live",
+        "search_placeholder": "Search by path, method, or status...",
+        "listening_title": "Listening for Packets",
+        "listening_desc": "Gorenel şu anda aktif tünellerinizdeki frame'leri dinliyor. Herhangi bir .site URL'sine istek yaptığınızda, burada gerçek zamanlı olarak görünecektir.",
+        "live_sniffer": "Live Sniffer",
+        "binary_logic": "Binary Logic",
         "method": "Metod",
         "status": "Durum",
-        "path": "Bulut Yolu",
+        "path": "Cloud Path",
         "time": "Zaman",
         "actions": "İşlemler",
-        "ai_inspector": "AI Zeka Müfettişi",
-        "ai_desc": "Protokol duyarlı LLM yük analizi",
+        "ai_inspector": "AI Intelligence Inspector",
+        "ai_desc": "Protokol duyarlı LLM payload analizi",
         "model": "Model",
         "tokens": "Toplam Token",
-        "prompt": "Girdi İstemi (Prompt)",
-        "completion": "Model Yanıtı",
-        "req_frame": "İstek Çerçevesi",
-        "resp_stack": "Yanıt Yığını",
-        "payload": "Veri Yükü",
-        "body": "Gövde Çıkışı",
-        "share": "İzi Paylaş",
-        "collapse": "Detayları Kapat"
+        "prompt": "Input Prompt",
+        "completion": "Model Completion",
+        "req_frame": "Request Frame",
+        "resp_stack": "Response Stack",
+        "payload": "Payload",
+        "body": "Body Output",
+        "share": "Share Trace",
+        "collapse": "Collapse Inspector"
       }
     }
   }
