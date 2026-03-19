@@ -445,13 +445,13 @@ function App() {
                   </div>
                 </div>
                 <div className="p-8 rounded-3xl bg-[#0A0C10]/40 border border-white/5 backdrop-blur-md">
-                  <h3 className="font-bold text-lg mb-6">Provider Status</h3>
+                  <h3 className="font-bold text-lg mb-6">{t('common.provider_status', 'Provider Status')}</h3>
                   <div className="space-y-4">
                     {['OpenAI', 'Anthropic', 'Local-Llama'].map(p => (
                       <div key={p} className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.02]">
                         <span className="font-medium">{p}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Operational</span>
+                          <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">{t('common.operational')}</span>
                           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
                         </div>
                       </div>

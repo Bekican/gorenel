@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, Play, Clock, Globe, Shield, Terminal, Filter, ArrowRight, Sparkles, Bot, Cpu, Share2, Activity } from 'lucide-react';
 import { format } from 'date-fns';
 import { type CapturedRequest, api } from '../api/client';
@@ -8,6 +9,7 @@ interface TrafficInspectorProps {
 }
 
 export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) => {
+    const { t } = useTranslation();
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [replaying, setReplaying] = useState<string | null>(null);
@@ -39,22 +41,22 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
     };
 
     return (
-        <div className="card p-0 flex flex-col h-[calc(100vh-250px)]">
-            <div className="p-8 border-b border-white/5 space-y-6">
+        <div className="card p-0 flex flex-col h-[calc(100vh-220px)] min-h-[500px] overflow-hidden">
+            <div className="p-8 border-b border-white/5 space-y-6 shrink-0 bg-[#0A0C10]/50 backdrop-blur-xl">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-white/5 rounded-2xl border border-white/10">
                             <Filter className="w-5 h-5 text-white/60" />
                         </div>
                         <div>
-                            <h3 className="text-xl font-black">Packet Streams</h3>
-                            <p className="text-sm text-white/40 font-medium">Real-time inspection of tunnel traffic</p>
+                            <h3 className="text-xl font-black">{t('traffic_inspector.title')}</h3>
+                            <p className="text-sm text-white/40 font-medium">{t('traffic_inspector.subtitle')}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-[10px] font-black uppercase tracking-widest border border-primary/20">
                             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(16,185,129,1)]" />
-                            Capturing Live
+                            {t('traffic_inspector.capturing')}
                         </span>
                     </div>
                 </div>
@@ -63,23 +65,23 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20 group-focus-within:text-primary transition-colors" />
                     <input
                         type="text"
-                        placeholder="Search by path, method, or status..."
+                        placeholder={t('traffic_inspector.search_placeholder')}
                         className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/5 rounded-2xl text-sm font-medium focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all outline-none text-white selection:bg-primary/30"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
             </div>
-
-            <div className="flex-1 overflow-auto">
-                <table className="w-full text-left border-collapse">
+            
+            <div className="flex-1 overflow-y-auto custom-scrollbar relative">
+                <table className="w-full text-left border-separate border-spacing-0">
                     <thead className="sticky top-0 bg-[#0c0c0c]/80 backdrop-blur-md z-10 border-b border-white/5">
                         <tr className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">
-                            <th className="px-8 py-4">Method</th>
-                            <th className="px-8 py-4">Status</th>
-                            <th className="px-8 py-4">Cloud Path</th>
-                            <th className="px-8 py-4">Time</th>
-                            <th className="px-8 py-4 text-right">Actions</th>
+                            <th className="px-8 py-4">{t('traffic_inspector.method')}</th>
+                            <th className="px-8 py-4">{t('traffic_inspector.status')}</th>
+                            <th className="px-8 py-4">{t('traffic_inspector.path')}</th>
+                            <th className="px-8 py-4">{t('traffic_inspector.time')}</th>
+                            <th className="px-8 py-4 text-right">{t('traffic_inspector.actions')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.03]">
@@ -92,19 +94,19 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                            <Activity className="w-10 h-10 text-primary" />
                                         </div>
                                         <div className="space-y-2">
-                                            <h4 className="text-2xl font-black text-white tracking-tight">Listening for Packets</h4>
+                                            <h4 className="text-2xl font-black text-white tracking-tight">{t('traffic_inspector.listening_title')}</h4>
                                             <p className="text-sm text-white/30 font-medium leading-relaxed">
-                                                Gorenel is currently sniffing for frames on your active tunnels. Once you make a request to a public .site URL, it will appear here in real-time.
+                                                {t('traffic_inspector.listening_desc')}
                                             </p>
                                         </div>
                                         <div className="flex items-center justify-center gap-4 pt-4">
                                             <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl text-[10px] font-black uppercase text-white/40 tracking-widest">
                                                 <div className="w-1 h-1 rounded-full bg-primary animate-ping" />
-                                                Live Sniffer
+                                                {t('traffic_inspector.live_sniffer')}
                                             </div>
                                             <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/5 rounded-xl text-[10px] font-black uppercase text-white/40 tracking-widest">
                                                 <div className="w-1 h-1 rounded-full bg-blue-500 animate-ping" />
-                                                Binary Logic
+                                                {t('traffic_inspector.binary_logic')}
                                             </div>
                                         </div>
                                     </div>
@@ -170,18 +172,18 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                         <Bot className="w-5 h-5 text-violet-400" />
                                                                     </div>
                                                                     <div>
-                                                                        <h4 className="text-lg font-black text-violet-100">AI Intelligence Inspector</h4>
-                                                                        <p className="text-xs text-violet-400/60 font-medium">Protocol-aware LLM payload analysis</p>
+                                                                        <h4 className="text-lg font-black text-violet-100">{t('traffic_inspector.ai_inspector')}</h4>
+                                                                        <p className="text-xs text-violet-400/60 font-medium">{t('traffic_inspector.ai_desc')}</p>
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex items-center gap-4">
                                                                     <div className="text-right">
-                                                                        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest">Model</div>
+                                                                        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest">{t('traffic_inspector.model')}</div>
                                                                         <div className="text-sm font-mono font-black text-white/60">{req.ai_metadata.model}</div>
                                                                     </div>
                                                                     <div className="h-8 w-px bg-white/5" />
                                                                     <div className="text-right">
-                                                                        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest">Total Tokens</div>
+                                                                        <div className="text-[10px] font-black text-white/20 uppercase tracking-widest">{t('traffic_inspector.tokens')}</div>
                                                                         <div className="text-sm font-mono font-black text-violet-400">{req.ai_metadata.tokens.total}</div>
                                                                     </div>
                                                                 </div>
@@ -190,7 +192,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                                 <div className="space-y-3">
                                                                     <label className="text-[10px] font-black text-white/20 uppercase tracking-widest flex items-center gap-2">
-                                                                        <Cpu className="w-3 h-3" /> Input Prompt ({req.ai_metadata.tokens.prompt} tokens)
+                                                                        <Cpu className="w-3 h-3" /> {t('traffic_inspector.prompt')} ({req.ai_metadata.tokens.prompt} tokens)
                                                                     </label>
                                                                     <div className="p-4 bg-black/40 border border-white/5 rounded-2xl text-xs text-white/70 font-medium leading-relaxed max-h-60 overflow-auto whitespace-pre-wrap">
                                                                         {req.ai_metadata.prompt}
@@ -198,7 +200,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                 </div>
                                                                 <div className="space-y-3">
                                                                     <label className="text-[10px] font-black text-white/20 uppercase tracking-widest flex items-center gap-2">
-                                                                        <Terminal className="w-3 h-3 text-emerald-500" /> Model Completion ({req.ai_metadata.tokens.completion} tokens)
+                                                                        <Terminal className="w-3 h-3 text-emerald-500" /> {t('traffic_inspector.completion')} ({req.ai_metadata.tokens.completion} tokens)
                                                                     </label>
                                                                     <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl text-xs text-emerald-100/70 font-medium leading-relaxed max-h-60 overflow-auto whitespace-pre-wrap italic">
                                                                         {req.ai_metadata.completion || "Streaming completion in progress or inaccessible..."}
@@ -215,7 +217,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                     <div className="p-2 bg-blue-500/10 rounded-lg">
                                                                         <ArrowRight className="w-4 h-4 text-blue-400" />
                                                                     </div>
-                                                                    <span className="font-black text-xs uppercase tracking-widest text-white/40">Request Frame</span>
+                                                                    <span className="font-black text-xs uppercase tracking-widest text-white/40">{t('traffic_inspector.req_frame')}</span>
                                                                 </div>
                                                                 <button
                                                                     onClick={(e) => {
@@ -247,7 +249,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                 </div>
                                                                 {req.req_body && (
                                                                     <div className="mt-4 p-4 rounded-2xl bg-black/40 border border-white/5 font-mono text-[10px] text-white/60 overflow-hidden">
-                                                                        <div className="mb-2 text-white/20 font-black uppercase tracking-widest">Payload</div>
+                                                                        <div className="mb-2 text-white/20 font-black uppercase tracking-widest">{t('traffic_inspector.payload')}</div>
                                                                         <pre className="overflow-auto max-h-48 scrollbar-hide">
                                                                             {(() => {
                                                                                 try {
@@ -273,7 +275,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                     <div className="p-2 bg-emerald-500/10 rounded-lg">
                                                                         <Shield className="w-4 h-4 text-emerald-400" />
                                                                     </div>
-                                                                    <span className="font-black text-xs uppercase tracking-widest text-white/40">Response Stack</span>
+                                                                    <span className="font-black text-xs uppercase tracking-widest text-white/40">{t('traffic_inspector.resp_stack')}</span>
                                                                 </div>
                                                             </div>
                                                             <div className="space-y-4">
@@ -287,7 +289,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                 </div>
                                                                 {req.resp_body && (
                                                                     <div className="mt-4 p-4 rounded-2xl bg-black/40 border border-white/5 font-mono text-[10px] text-white/60 overflow-hidden">
-                                                                        <div className="mb-2 text-white/20 font-black uppercase tracking-widest">Body Output</div>
+                                                                        <div className="mb-2 text-white/20 font-black uppercase tracking-widest">{t('traffic_inspector.body')}</div>
                                                                         <pre className="overflow-auto max-h-48 scrollbar-hide">
                                                                             {(() => {
                                                                                 try {
@@ -339,13 +341,13 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                 }}
                                                             >
                                                                 <Share2 className="w-4 h-4" />
-                                                                Share Trace
+                                                                {t('traffic_inspector.share')}
                                                             </button>
                                                             <button
                                                                 className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 rounded-2xl text-xs font-black uppercase tracking-widest transition-all"
                                                                 onClick={() => setSelectedId(null)}
                                                             >
-                                                                Collapse Inspector
+                                                                {t('traffic_inspector.collapse')}
                                                             </button>
                                                         </div>
                                                     </div>

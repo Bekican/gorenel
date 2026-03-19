@@ -1,4 +1,5 @@
 import { Zap, Activity, ShieldCheck, AlertCircle, BarChart3, BrainCircuit } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { ModelStatsResponse } from '../api/client';
 
 interface Props {
@@ -16,6 +17,7 @@ const modelColors: Record<string, string> = {
 };
 
 export const ModelComparison: React.FC<Props> = ({ stats }) => {
+    const { t } = useTranslation();
     return (
         <div className="card h-full p-8 flex flex-col space-y-8">
             <div className="flex items-center justify-between">
@@ -24,8 +26,8 @@ export const ModelComparison: React.FC<Props> = ({ stats }) => {
                         <BrainCircuit className="w-5 h-5 text-white/60" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black">Anomaly Engine</h3>
-                        <p className="text-sm text-white/40 font-medium">Dual-stack heuristic validation</p>
+                        <h3 className="text-xl font-black">{t('ai_gateway.onboarding_title')}</h3>
+                        <p className="text-sm text-white/40 font-medium">{t('ai_gateway.onboarding_desc')}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Copy, ExternalLink, Server, Plus, Zap, ArrowDown, ArrowUp, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -23,6 +23,7 @@ interface TunnelsListProps {
 }
 
 export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, onOpenConnect }) => {
+  const { t } = useTranslation();
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
@@ -57,7 +58,7 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, onOpenConnect
           onClick={onOpenConnect}
           className="btn-primary-premium text-sm py-2.5"
         >
-          <Plus className="w-4 h-4" /> New Tunnel
+          <Plus className="w-4 h-4" /> {t('tunnels.cta', 'New Tunnel')}
         </button>
       </div>
 
@@ -73,17 +74,17 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, onOpenConnect
                 <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl ring-1 ring-primary/20">
                   <Zap className="w-10 h-10 text-primary animate-pulse" />
                 </div>
-                <h4 className="text-3xl font-black text-white tracking-tight">Ready to launch?</h4>
+                <h4 className="text-3xl font-black text-white tracking-tight">{t('tunnels.empty_title')}</h4>
                 <p className="text-white/40 font-medium text-lg leading-relaxed">
-                  Your local services are just one command away from the global edge. Follow these 3 steps to go live.
+                  {t('tunnels.empty_subtitle')}
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                 {[
-                  { step: 1, title: 'Get the CLI', desc: 'Download the lightweight binary for your OS.' },
-                  { step: 2, title: 'Copy Login', desc: 'Grab your unique connection command.' },
-                  { step: 3, title: 'Go Online', desc: 'Paste into terminal and watch the magic happen.' }
+                  { step: 1, title: t('tunnels.step1_title'), desc: t('tunnels.step1_desc') },
+                  { step: 2, title: t('tunnels.step2_title'), desc: t('tunnels.step2_desc') },
+                  { step: 3, title: t('tunnels.step3_title'), desc: t('tunnels.step3_desc') }
                 ].map((s) => (
                   <div key={s.step} className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-2">
                     <span className="text-xs font-black text-primary uppercase tracking-widest">Step 0{s.step}</span>
@@ -98,7 +99,7 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, onOpenConnect
                   onClick={onOpenConnect}
                   className="btn-primary-premium px-10 py-4 text-lg"
                 >
-                  Start First Tunnel <ArrowRight className="ml-2 w-5 h-5" />
+                  {t('tunnels.cta')} <ArrowRight className="ml-2 w-5 h-5" />
                 </button>
               </div>
             </div>

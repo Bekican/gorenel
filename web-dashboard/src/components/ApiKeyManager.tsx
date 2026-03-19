@@ -79,6 +79,26 @@ export const ApiKeyManager: React.FC = () => {
                 </button>
             </div>
 
+            {/* Onboarding Info Card */}
+            <div className="p-1 rounded-[2.5rem] bg-gradient-to-r from-blue-500/20 to-indigo-500/20">
+                <div className="bg-[#0A0C10] rounded-[2.4rem] p-6 md:p-8 relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
+                        <Shield className="w-32 h-32 text-blue-500" />
+                    </div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+                        <div className="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
+                            <Key className="w-8 h-8 text-blue-400" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-black mb-2">{t('api_keys_manager.onboarding_title')}</h3>
+                            <p className="text-white/50 text-sm font-medium leading-relaxed max-w-2xl">
+                                {t('api_keys_manager.onboarding_desc')}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {showNewKey && (
                 <div className="bg-green-900/20 border border-green-500/50 p-4 rounded-xl flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-4">
                     <div className="flex-1">

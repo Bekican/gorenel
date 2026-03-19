@@ -31,7 +31,9 @@ const resources = {
         "ai_gateway_sub": "LLM Proxy & Metrics",
         "traffic_sub": "Live Packet Sniffer",
         "api_keys_sub": "Access Control",
-        "settings_sub": "Traffic Rules"
+        "settings_sub": "Traffic Rules",
+        "provider_status": "Provider Status",
+        "operational": "Operational"
       },
       "dashboard": {
         "command_center": "Command Center",
@@ -72,7 +74,24 @@ const resources = {
         "security_notice": "Make sure to copy it now. For security reasons, we won't show it again.",
         "revoke_confirm": "Are you sure you want to revoke this API key? This action cannot be undone.",
         "empty": "No API keys found. Create one to start tunneling.",
-        "loading": "Loading security keys..."
+        "loading": "Loading security keys...",
+        "onboarding_title": "How to use API Keys?",
+        "onboarding_desc": "Use these keys to authenticate your CLI. Run 'gorenel login <key>' in your terminal to establish a secure session."
+      },
+      "ai_gateway": {
+        "onboarding_title": "AI Protocol Intelligence",
+        "onboarding_desc": "Gorenel's engine automatically detects anomalies and validates LLM payloads using neural autoencoders and isolation forests in real-time."
+      },
+      "tunnels": {
+        "empty_title": "Ready to launch?",
+        "empty_subtitle": "Your local services are just one command away from the global edge. Follow these 3 steps to go live.",
+        "step1_title": "Get the CLI",
+        "step1_desc": "Download the lightweight binary for your OS.",
+        "step2_title": "Copy Login",
+        "step2_desc": "Grab your unique connection command.",
+        "step3_title": "Go Online",
+        "step3_desc": "Paste into terminal and watch the magic happen.",
+        "cta": "Start First Tunnel"
       },
       "modification_rules": {
         "title": "Traffic Rules",
@@ -102,12 +121,35 @@ const resources = {
         "description": "Expose your localhost securely with built-in AI routing and monitoring."
       },
       "auth": {
-        "welcome": "Welcome back",
-        "name": "Display Name",
-        "email": "Email Address",
-        "password": "Access Key",
         "no_account": "Don't have an account?",
         "have_account": "Already have an account?"
+      },
+      "traffic_inspector": {
+        "title": "Packet Streams",
+        "subtitle": "Real-time inspection of tunnel traffic",
+        "capturing": "Capturing Live",
+        "search_placeholder": "Search by path, method, or status...",
+        "listening_title": "Listening for Packets",
+        "listening_desc": "Gorenel is currently sniffing for frames on your active tunnels. Once you make a request to a public .site URL, it will appear here in real-time.",
+        "live_sniffer": "Live Sniffer",
+        "binary_logic": "Binary Logic",
+        "method": "Method",
+        "status": "Status",
+        "path": "Cloud Path",
+        "time": "Time",
+        "actions": "Actions",
+        "ai_inspector": "AI Intelligence Inspector",
+        "ai_desc": "Protocol-aware LLM payload analysis",
+        "model": "Model",
+        "tokens": "Total Tokens",
+        "prompt": "Input Prompt",
+        "completion": "Model Completion",
+        "req_frame": "Request Frame",
+        "resp_stack": "Response Stack",
+        "payload": "Payload",
+        "body": "Body Output",
+        "share": "Share Trace",
+        "collapse": "Collapse Inspector"
       }
     }
   },
@@ -139,7 +181,9 @@ const resources = {
         "ai_gateway_sub": "LLM Vekil Sunucu",
         "traffic_sub": "Canlı Paket İzleyici",
         "api_keys_sub": "Erişim Kontrolü",
-        "settings_sub": "Trafik Kuralları"
+        "settings_sub": "Trafik Kuralları",
+        "provider_status": "Sağlayıcı Durumu",
+        "operational": "Çalışıyor"
       },
       "dashboard": {
         "command_center": "Komuta Merkezi",
@@ -180,7 +224,24 @@ const resources = {
         "security_notice": "Şimdi kopyaladığınızdan emin olun. Güvenlik nedeniyle tekrar göstermeyeceğiz.",
         "revoke_confirm": "Bu API anahtarını iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
         "empty": "API anahtarı bulunamadı. Tünellemeye başlamak için bir tane oluşturun.",
-        "loading": "Güvenlik anahtarları yükleniyor..."
+        "loading": "Güvenlik anahtarları yükleniyor...",
+        "onboarding_title": "API Anahtarları Nasıl Kullanılır?",
+        "onboarding_desc": "Bu anahtarları CLI üzerinden giriş yapmak için kullanın. Terminalinizde 'gorenel login <anahtar>' komutunu çalıştırarak güvenli bir oturum başlatabilirsiniz."
+      },
+      "ai_gateway": {
+        "onboarding_title": "AI Protokol Zekası",
+        "onboarding_desc": "Gorenel motoru, LLM yüklerini (payload) nöral oto-kodlayıcılar ve izolasyon ormanları kullanarak gerçek zamanlı olarak analiz eder ve anomalileri tespit eder."
+      },
+      "tunnels": {
+        "empty_title": "Yayına hazır mısın?",
+        "empty_subtitle": "Yerel servislerin dünyadan sadece bir komut uzakta. Canlıya geçmek için bu 3 adımı izle.",
+        "step1_title": "CLI'yı İndir",
+        "step1_desc": "İşletim sistemin için hafif CLI aracını indir.",
+        "step2_title": "Giriş Komutunu Kopyala",
+        "step2_desc": "Sana özel bağlantı komutunu panelden al.",
+        "step3_title": "Çevrimiçi Ol",
+        "step3_desc": "Terminale yapıştır ve sihrin gerçekleşmesini izle.",
+        "cta": "İlk Tüneli Başlat"
       },
       "modification_rules": {
         "title": "Trafik Kuralları",
@@ -210,12 +271,35 @@ const resources = {
         "description": "Localhost'unuzu yerleşik AI yönlendirme ve izleme ile güvenli bir şekilde dünyaya açın."
       },
       "auth": {
-        "welcome": "Tekrar hoşgeldiniz",
-        "name": "Görünen Ad",
-        "email": "E-posta Adresi",
-        "password": "Erişim Anahtarı",
         "no_account": "Hesabınız yok mu?",
         "have_account": "Zaten hesabınız var mı?"
+      },
+      "traffic_inspector": {
+        "title": "Paket Akışı",
+        "subtitle": "Tünel trafiğinin gerçek zamanlı incelenmesi",
+        "capturing": "Canlı İzleniyor",
+        "search_placeholder": "Yol, metod veya durum koduna göre ara...",
+        "listening_title": "Paketler Bekleniyor",
+        "listening_desc": "Gorenel şu anda aktif tünellerinizdeki kareleri (frames) dinliyor. Herhangi bir .site URL'sine istek yaptığınızda, burada gerçek zamanlı olarak görünecektir.",
+        "live_sniffer": "Canlı İzleyici",
+        "binary_logic": "İkili Mantık",
+        "method": "Metod",
+        "status": "Durum",
+        "path": "Bulut Yolu",
+        "time": "Zaman",
+        "actions": "İşlemler",
+        "ai_inspector": "AI Zeka Müfettişi",
+        "ai_desc": "Protokol duyarlı LLM yük analizi",
+        "model": "Model",
+        "tokens": "Toplam Token",
+        "prompt": "Girdi İstemi (Prompt)",
+        "completion": "Model Yanıtı",
+        "req_frame": "İstek Çerçevesi",
+        "resp_stack": "Yanıt Yığını",
+        "payload": "Veri Yükü",
+        "body": "Gövde Çıkışı",
+        "share": "İzi Paylaş",
+        "collapse": "Detayları Kapat"
       }
     }
   }
