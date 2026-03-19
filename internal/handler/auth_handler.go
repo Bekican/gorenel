@@ -102,6 +102,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		HttpOnly: true,
 		Secure:   h.isProd,
 		Path:     "/",
+		Domain:   ".gorenel.site", // Allow sharing between www and apex
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -113,6 +114,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		HttpOnly: true,
 		Secure:   h.isProd,
 		Path:     "/",
+		Domain:   ".gorenel.site", // Allow sharing between www and apex
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -184,6 +186,7 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		HttpOnly: true,
 		Secure:   h.isProd,
 		Path:     "/",
+		Domain:   ".gorenel.site", // Allow sharing between www and apex
 		SameSite: http.SameSiteLaxMode,
 	})
 
