@@ -51,8 +51,9 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
                     {/* Step 1: Download */}
                     <div className="space-y-3">
                         <a
-                            href="/gorenel-cli.zip"
-                            download
+                            href={t('connect_modal.download_url')}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="group relative flex items-center justify-center gap-3 w-full py-4 bg-primary hover:bg-emerald-400 text-black font-bold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-primary/20"
                         >
                             <Download className="w-5 h-5" />

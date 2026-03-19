@@ -59,7 +59,8 @@ const resources = {
       "connect_modal": {
         "title": "Connect Your Device",
         "subtitle": "Securely expose your local app with Gorenel CLI.",
-        "download_btn": "Download CLI (.zip)",
+        "download_btn": "Download CLI from GitHub",
+        "download_url": "https://github.com/Bekican/gorenel/releases/download/v1.0.1/gorenel-client-windows-amd64.exe",
         "command_label": "Connection Command",
         "command_footer": "Copy and paste this command into your terminal."
       },
@@ -72,6 +73,27 @@ const resources = {
         "revoke_confirm": "Are you sure you want to revoke this API key? This action cannot be undone.",
         "empty": "No API keys found. Create one to start tunneling.",
         "loading": "Loading security keys..."
+      },
+      "modification_rules": {
+        "title": "Traffic Rules",
+        "subtitle": "Manipulate your application traffic in real-time.",
+        "onboarding_title": "What does this page do?",
+        "onboarding_desc": "Instead of changing your code repeatedly, you can add rules here to inject delays (Chaos), return fake responses (Mock), or redirect requests to other addresses.",
+        "add_btn": "Add Rule",
+        "path_trigger": "Request Path",
+        "path_trigger_desc": "Which URLs should be affected? (e.g., /api/*)",
+        "rewrite_target": "Rewrite Target",
+        "chaos_delay": "Chaos Delay (ms)",
+        "status_override": "Status Override",
+        "mock_body": "Response Mocking (JSON)",
+        "mock_body_desc": "Return this body immediately and bypass your server.",
+        "header_injections": "Header Injections",
+        "deploy_btn": "Deploy Rule",
+        "abort_btn": "Abort",
+        "zero_rules": "Zero Rules Active",
+        "zero_rules_desc": "Traffic is flowing normally. Add rules to intercept and alter packets.",
+        "active_modifier": "Active Modifier",
+        "delete_btn": "Delete"
       },
       "landing": {
         "title": "Establish Session.",
@@ -145,7 +167,8 @@ const resources = {
       "connect_modal": {
         "title": "Cihazını Bağla",
         "subtitle": "Gorenel CLI ile yerel uygulamana tünel aç.",
-        "download_btn": "CLI İndir (.zip)",
+        "download_btn": "CLI'yı GitHub'dan İndir",
+        "download_url": "https://github.com/Bekican/gorenel/releases/download/v1.0.1/gorenel-client-windows-amd64.exe",
         "command_label": "Bağlantı Komutu",
         "command_footer": "Komutu terminale yapıştır ve çalıştır."
       },
@@ -158,6 +181,27 @@ const resources = {
         "revoke_confirm": "Bu API anahtarını iptal etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
         "empty": "API anahtarı bulunamadı. Tünellemeye başlamak için bir tane oluşturun.",
         "loading": "Güvenlik anahtarları yükleniyor..."
+      },
+      "modification_rules": {
+        "title": "Trafik Kuralları",
+        "subtitle": "Uygulamanızın trafiğini gerçek zamanlı manipüle edin.",
+        "onboarding_title": "Bu sayfa ne işe yarar?",
+        "onboarding_desc": "Kodunuzu her seferinde değiştirmek yerine, buradan kurallar ekleyerek API isteklerinize gecikme (Chaos) ekleyebilir, sahte cevaplar (Mock) dönebilir veya istekleri başka adreslere yönlendirebilirsiniz.",
+        "add_btn": "Kural Ekle",
+        "path_trigger": "İstek Yolu (Path)",
+        "path_trigger_desc": "Hangi URL'ler bu kuraldan etkilensin? (Örn: /api/*)",
+        "rewrite_target": "Yönlendirme Hedefi",
+        "chaos_delay": "Gecikme Süresi (ms)",
+        "status_override": "HTTP Durum Kodu",
+        "mock_body": "Sahte Cevap İçeriği (JSON)",
+        "mock_body_desc": "Sunucunuza gitmeden doğrudan bu cevabı döndürün.",
+        "header_injections": "Header Ekleme",
+        "deploy_btn": "Kuralı Yayına Al",
+        "abort_btn": "Vazgeç",
+        "zero_rules": "Aktif Kural Yok",
+        "zero_rules_desc": "Şu an tüm trafik orijinal haliyle akıyor. Manipülasyon için kural ekleyin.",
+        "active_modifier": "Aktif Kural",
+        "delete_btn": "Sil"
       },
       "landing": {
         "title": "Oturum Açın.",
