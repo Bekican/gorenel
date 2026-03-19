@@ -131,6 +131,16 @@ func (m *MonitoringServer) Start(port string) error {
 // corsMiddleware adds CORS headers to allow cross-origin requests
 func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// 1. WWW to Apex Redirect (Production Only)
+		if m.env == "production" && strings.HasPrefix(r.Host, "www.") {
+			url := "https://gorenel.site" + r.URL.Path
+			if r.URL.RawQuery != "" {
+				url += "?" + r.URL.RawQuery
+			}
+			http.Redirect(w, r, url, http.StatusMovedPermanently)
+			return
+		}
+
 		// Set specific origin for CORS with credentials
 		origin := r.Header.Get("Origin")
 
