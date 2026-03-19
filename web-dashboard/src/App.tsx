@@ -201,7 +201,7 @@ function App() {
               </div>
             </div>
 
-            <nav className="flex-1 space-y-6">
+            <nav className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
               <div className="space-y-1">
                 <div className="px-4 mb-2">
                   <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Platform</span>
@@ -221,7 +221,7 @@ function App() {
               </div>
             </nav>
 
-            <div className="mt-auto pt-6 border-t border-white/5 space-y-4">
+            <div className="mt-6 pt-6 border-t border-white/5 space-y-4 shrink-0">
               <div className="flex items-center gap-2 text-xs text-white/40 px-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 EU-Central-1 • v1.0.0
@@ -229,9 +229,11 @@ function App() {
 
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-bold bg-white/[0.02] border border-white/5 shadow-lg group"
               >
-                <LogOut className="w-4 h-4" />
+                <div className="p-2 rounded-lg bg-white/5 group-hover:bg-rose-500/10 group-hover:text-rose-400 transition-colors">
+                  <LogOut className="w-4 h-4" />
+                </div>
                 {t('common.sign_out')}
               </button>
             </div>
@@ -264,7 +266,7 @@ function App() {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-6">
+        <nav className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar my-6">
           <div className="space-y-1">
             <div className="px-4 mb-2">
               <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Platform</span>
@@ -284,12 +286,14 @@ function App() {
           </div>
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-white/5 space-y-4 fixed bottom-6 left-6 right-6">
+        <div className="mt-auto pt-6 border-t border-white/5 space-y-4 shrink-0">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-medium"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-bold bg-white/[0.02] border border-white/5 group"
           >
-            <LogOut className="w-4 h-4" />
+            <div className="p-2 rounded-lg bg-white/5 group-hover:bg-rose-500/10 group-hover:text-rose-400 transition-colors">
+              <LogOut className="w-4 h-4" />
+            </div>
             {t('common.sign_out')}
           </button>
         </div>
