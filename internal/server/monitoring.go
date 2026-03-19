@@ -139,7 +139,7 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 		if origin != "" {
 			if origin == "http://localhost" || strings.HasPrefix(origin, "http://localhost:") || origin == "http://127.0.0.1" || strings.HasPrefix(origin, "http://127.0.0.1:") {
 				isAllowed = true
-			} else if strings.HasSuffix(origin, ".fly.dev") {
+			} else if strings.HasSuffix(origin, ".fly.dev") || strings.HasSuffix(origin, ".gorenel.site") || origin == "https://gorenel.site" {
 				isAllowed = true
 			} else if m.baseDomain != "" && (origin == "https://"+m.baseDomain || strings.HasSuffix(origin, "."+m.baseDomain)) {
 				isAllowed = true
