@@ -43,8 +43,8 @@ services:
 
   gorenel-dashboard:
     build:
-      context: ./web-dashboard
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: web-dashboard/Dockerfile
     container_name: gorenel-dashboard
     restart: unless-stopped
     ports:
