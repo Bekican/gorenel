@@ -43,9 +43,12 @@ while true; do
   sleep 1
 done &
 
-# Start Gorenel services (Skip build, images are pre-built or use local files)
+# Start Gorenel services (Clean start to avoid stale images)
+echo "Cleaning old containers and images..."
+docker-compose down || true
+docker system prune -f
 echo "Starting Gorenel services..."
-docker-compose up -d --remove-orphans
+docker-compose up -d --build --remove-orphans
 
 # The script should not exit, so we tail logs or just wait
 echo "Gorenel is up! Tailing logs..."
