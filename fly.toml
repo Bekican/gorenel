@@ -22,6 +22,12 @@ primary_region = "fra"
   timeout = "5s"
   path = "/"
 
+[[services]]
+  internal_port = 7000
+  protocol = "tcp"
+  [[services.ports]]
+    port = 7000
+
 [[vm]]
   size = "shared-cpu-4x"
   memory = "8gb" # Further increased for DinD stability
