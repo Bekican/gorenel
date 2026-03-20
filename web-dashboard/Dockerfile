@@ -3,7 +3,9 @@ FROM golang:1.21-alpine AS cli-builder
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
+# Sadece gerekli paketleri ve client kodunu kopyala
+COPY cmd/client ./cmd/client
+COPY pkg ./pkg
 RUN GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -o gorenel-windows-amd64.exe cmd/client/main.go
 
 # Phase 2: Node Builder (Build Dashboard)
@@ -11,9 +13,8 @@ FROM node:18-alpine AS node-builder
 WORKDIR /app/web-dashboard
 COPY web-dashboard/package*.json ./
 RUN npm install
-COPY web-dashboard/ .
-# Arka plan API URL'sini prod için set et (Dilersen build-arg ile de geçebilirsin)
-# ENV VITE_API_URL=https://gorenel.site
+# Sadece gerekli dashboard dosyalarını kopyala
+COPY web-dashboard/ ./
 RUN npm run build
 
 # Phase 3: Runtime (Nginx)
@@ -25,6 +26,7 @@ COPY web-dashboard/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=node-builder /app/web-dashboard/dist /usr/share/nginx/html
 
 # CLI binary dosyasını public/downloads klasörüne kopyala
+# (Opsiyonel: Dashboard içinden de erişebilsin diye buraya da koyuyoruz)
 RUN mkdir -p /usr/share/nginx/html/downloads
 COPY --from=cli-builder /app/gorenel-windows-amd64.exe /usr/share/nginx/html/downloads/gorenel-windows-amd64.exe
 

@@ -123,6 +123,9 @@ func (m *MonitoringServer) Start(port string) error {
 	// ML Stats endpoint
 	mux.HandleFunc("/api/ml/stats", m.corsMiddleware(rl(m.mlStatsHandler)))
 
+	// CLI Download endpoint
+	mux.HandleFunc("/downloads/", m.corsMiddleware(m.handleDownload))
+
 	l, _ := zap.NewProduction()
 	l.Info("Monitoring server başlatılıyor", zap.String("port", port))
 	return http.ListenAndServe(port, mux)
@@ -515,3 +518,16 @@ func formatBytes(bytes int64) string {
 	}
 	return fmt.Sprintf("%.2f %ciB", float64(bytes)/float64(div), "KMGTPE"[exp])
 }
+
+// handleDownload serves the CLI binary
+func (m *MonitoringServer) handleDownload(w http.ResponseWriter, r *http.Request) {
+	filename := strings.TrimPrefix(r.URL.Path, "/downloads/")
+	if filename != "gorenel-windows-amd64.exe" {
+		m.logger.Warn("Download requested for non-existent file", zap.String("filename", filename))
+		http.NotFound(w, r)
+		return
+	}
+	w.Header().Set("Content-Disposition", "attachment; filename="+filename)
+	http.ServeFile(w, r, "./"+filename)
+}
+

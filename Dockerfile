@@ -11,10 +11,16 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 # Copy source code
-COPY . .
+COPY cmd/server ./cmd/server
+COPY cmd/client ./cmd/client
+COPY internal ./internal
+COPY pkg ./pkg
 
 # Build the application
 RUN CGO_ENABLED=0 GOOS=linux go build -o gorenel-server ./cmd/server/main.go
+
+# Build the windows client
+RUN CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build -o gorenel-windows-amd64.exe ./cmd/client/main.go
 
 # Run stage
 FROM alpine:latest
@@ -29,6 +35,7 @@ WORKDIR /home/appuser
 
 # Copy the binary from builder
 COPY --from=builder /app/gorenel-server .
+COPY --from=builder /app/gorenel-windows-amd64.exe .
 
 # Create logs directory owned by appuser
 RUN mkdir -p logs/batches logs/archives && chown -R appuser:appgroup .
