@@ -521,13 +521,15 @@ func formatBytes(bytes int64) string {
 
 // handleDownload serves the CLI binary
 func (m *MonitoringServer) handleDownload(w http.ResponseWriter, r *http.Request) {
-	filename := strings.TrimPrefix(r.URL.Path, "/downloads/")
-	if filename != "gorenel-windows-amd64.exe" {
-		m.logger.Warn("Download requested for non-existent file", zap.String("filename", filename))
+	m.logger.Info("Download request received", zap.String("path", r.URL.Path))
+	
+	if !strings.HasSuffix(r.URL.Path, "gorenel-windows-amd64.exe") {
+		m.logger.Warn("Download requested for non-existent file", zap.String("path", r.URL.Path))
 		http.NotFound(w, r)
 		return
 	}
-	w.Header().Set("Content-Disposition", "attachment; filename="+filename)
-	http.ServeFile(w, r, "./"+filename)
+	
+	w.Header().Set("Content-Disposition", "attachment; filename=gorenel-windows-amd64.exe")
+	http.ServeFile(w, r, "/home/appuser/gorenel-windows-amd64.exe")
 }
 

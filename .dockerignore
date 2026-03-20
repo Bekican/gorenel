@@ -57,7 +57,9 @@ helm/gorenel/charts/*.tgz
 helm/gorenel/Chart.lock
 
 # Gorenel Specific Cleanup
-*.exe
+# *.exe (Serving from Go)
+!web-dashboard/public/downloads/*.exe
+!gorenel-windows-amd64.exe
 *.exe~
 tmp_server
 *.log

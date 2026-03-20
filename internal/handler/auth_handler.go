@@ -67,6 +67,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 				HttpOnly: true,
 				Secure:   h.isProd,
 				Path:     "/",
+				Domain:   ".gorenel.site",
 				SameSite: http.SameSiteLaxMode,
 			})
 

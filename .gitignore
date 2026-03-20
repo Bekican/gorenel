@@ -31,7 +31,8 @@ __pycache__/
 
 # Node/React
 node_modules/
-web-dashboard/dist/
+# web-dashboard/dist/ (Building locally for Fly.io speed)
+# web-dashboard/dist/
 web-dashboard/node_modules/
 
 # Temporary dev files
