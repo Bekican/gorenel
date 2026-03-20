@@ -131,18 +131,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 	// 1. Validate State (Anti-CSRF)
 	cookie, err := r.Cookie("oauth_state")
-	if err != nil {
-		logger.Warn("OAuth state cookie missing", 
-			zap.Error(err), 
-			zap.String("remote_addr", r.RemoteAddr),
-			zap.String("host", r.Host))
-		return errors.Unauthorized("Invalid OAuth state")
-	}
-
-	if cookie.Value != r.FormValue("state") {
-		logger.Warn("OAuth state mismatch", 
-			zap.String("expected", cookie.Value), 
-			zap.String("received", r.FormValue("state")))
+	if err != nil || cookie.Value != r.FormValue("state") {
 		return errors.Unauthorized("Invalid OAuth state")
 	}
 
