@@ -38,13 +38,15 @@ fi
 # Start socat IPv6 to IPv4 proxy with a resilient restart loop
 echo "Starting resilient socat proxies to bridge Fly.io IPv6 to Docker IPv4..."
 while true; do
-  socat TCP6-LISTEN:4001,fork,reuseaddr TCP4:127.0.0.1:4000
+  # Bridge external IPv6:4001 to internal Dashboard IPv4:4000
+  socat TCP6-LISTEN:4001,fork,reuseaddr,bind=[::] TCP4:127.0.0.1:4000
   sleep 1
 done &
 
 # Control Port (7000) bridge
 while true; do
-  socat TCP6-LISTEN:7000,fork,reuseaddr TCP4:127.0.0.1:7000
+  # Bridge external IPv6:7000 to internal Control Port IPv4:7000
+  socat TCP6-LISTEN:7000,fork,reuseaddr,bind=[::] TCP4:127.0.0.1:7000
   sleep 1
 done &
 
@@ -58,3 +60,4 @@ docker-compose up -d --build --remove-orphans
 # The script should not exit, so we tail logs or just wait
 echo "Gorenel is up! Tailing logs..."
 docker-compose logs -f
+ mode:AGENT_MODE_EXECUTION

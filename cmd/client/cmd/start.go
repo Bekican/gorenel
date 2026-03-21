@@ -57,7 +57,7 @@ func init() {
 	rootCmd.AddCommand(startCmd)
 
 	// Flag'leri tanımla
-	startCmd.Flags().StringVarP(&serverAddr, "server", "s", "", "Server adresi (default: localhost:7000)")
+	startCmd.Flags().StringVarP(&serverAddr, "server", "s", "", "Server adresi (default: gorenel.site:7000)")
 	startCmd.Flags().IntVarP(&localPort, "port", "p", 3000, "Local port numarası")
 	startCmd.Flags().StringVar(&customSubdomain, "subdomain", "", "Özel subdomain (mevcut değilse)")
 	startCmd.Flags().StringVarP(&apiKey, "api-key", "k", "", "API key (authentication için)")
@@ -78,7 +78,7 @@ func runStart(cmd *cobra.Command, args []string) {
 	if serverAddr == "" {
 		serverAddr = viper.GetString("server")
 		if serverAddr == "" {
-			serverAddr = "localhost" + protocol.ControlPort
+			serverAddr = "gorenel.site:7000"
 		}
 	}
 
