@@ -9,6 +9,8 @@ tmp_server
 # Logs
 *.log
 logs/
+*_logs*.txt
+fly_logs*.txt
 server_stdout.log
 server_stderr.log
 
