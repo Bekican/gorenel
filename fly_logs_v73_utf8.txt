@@ -1,0 +1,482 @@
+﻿[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:34 socat[1108] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:34 socat[1108] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#6 ...
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#7 [gorenel-dashboard internal] load .dockerignore
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#7 transferring context: 2B 0.0s done
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#7 DONE 0.0s
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#8 [gorenel-server internal] load metadata for docker.io/library/alpine:latest
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#8 DONE 2.1s
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:34 socat[1109] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:34 socat[1109] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:34 socat[1110] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:34 socat[1110] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#9 [gorenel-dashboard 1/3] FROM docker.io/library/nginx:alpine@sha256:f46cb72c7df02710e693e863a983ac42f6a9579058a59a35f1ae36c9958e4ce0
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#9 DONE 0.0s
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 [gorenel-dashboard internal] load build context
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 transferring context: 2B 0.1s done
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 DONE 0.2s
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#11 [gorenel-server internal] load .dockerignore
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#11 transferring context: 968B done
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#11 DONE 0.2s
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#12 [gorenel-server 1/7] FROM docker.io/library/alpine:latest@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#12 DONE 0.0s
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#13 [gorenel-dashboard 3/3] COPY web-dashboard/dist /usr/share/nginx/html
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#13 ERROR: failed to calculate checksum of ref eaadcdb2-8468-488a-99a5-609ba1dadcc0::xec1rhgvjx79xva5reoht1z56: "/web-dashboard/dist": not found
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#14 [gorenel-dashboard 2/3] COPY web-dashboard/nginx.conf /etc/nginx/conf.d/default.conf
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#14 ERROR: failed to calculate checksum of ref eaadcdb2-8468-488a-99a5-609ba1dadcc0::xec1rhgvjx79xva5reoht1z56: "/web-dashboard/nginx.conf": not found
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#6 [ml-engine internal] load metadata for docker.io/library/python:3.11-slim
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#6 DONE 2.5s
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#15 [gorenel-server internal] load build context
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:34 socat[1111] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:34 socat[1111] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1112] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1112] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1113] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1113] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:35.376000619Z" level=error msg=/moby.buildkit.v1.Control/Solve error="rpc error: code = Unknown desc = failed to compute cache key: failed to calculate checksum of ref eaadcdb2-8468-488a-99a5-609ba1dadcc0::xec1rhgvjx79xva5reoht1z56: \"/web-dashboard/dist\": not found" spanID=b9e2e3d209ce5fc0 traceID=91357e4302d6bcce825a8bd9b87c3e1c
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1114] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1114] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#15 ...
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#16 [ml-engine internal] load .dockerignore
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#16 transferring context: 2B done
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#16 DONE 0.3s
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#15 [gorenel-server internal] load build context
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1115] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1115] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#15 transferring context: 917.92kB 0.6s done
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#15 CANCELED
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#17 [ml-engine 1/9] FROM docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#17 resolve docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634 0.2s done
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#17 DONE 0.2s
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#18 [ml-engine internal] load build context
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1116] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1116] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#18 CANCELED
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1117] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:35 socat[1117] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]------
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m] > [gorenel-dashboard 2/3] COPY web-dashboard/nginx.conf /etc/nginx/conf.d/default.conf:
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]------
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]------
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m] > [gorenel-dashboard 3/3] COPY web-dashboard/dist /usr/share/nginx/html:
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]------
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]Dockerfile:7
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]--------------------
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]   5 |
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]   6 |     # YERELDE DERLENM─░┼Ş 'dist' klas├Âr├╝n├╝ kopyala (npm run build yap─▒lm─▒┼ş olmal─▒)
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]   7 | >>> COPY web-dashboard/dist /usr/share/nginx/html
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]   8 |
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]   9 |     EXPOSE 80
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]--------------------
+[2m2026-03-21T11:48:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]target gorenel-dashboard: failed to solve: failed to compute cache key: failed to calculate checksum of ref eaadcdb2-8468-488a-99a5-609ba1dadcc0::xec1rhgvjx79xva5reoht1z56: "/web-dashboard/dist": not found
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:36 socat[1118] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:36 socat[1118] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.021968117Z" level=error msg=/moby.buildkit.v1.Control/Solve error="rpc error: code = Canceled desc = context canceled" spanID=16d5a34f3c1f2545 traceID=91357e4302d6bcce825a8bd9b87c3e1c
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m Main child exited normally with code: 1
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.175681140Z" level=error msg=/moby.buildkit.v1.Control/Solve error="rpc error: code = Canceled desc = context canceled" spanID=06ac0d392b81897f traceID=91357e4302d6bcce825a8bd9b87c3e1c
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:36 socat[1123] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:36 socat[1123] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m Starting clean up.
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:36 socat[1124] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:36 socat[1124] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:36 socat[978] W exiting on signal 15
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:36 socat[977] W exiting on signal 15
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.337971118Z" level=info msg="Processing signal 'terminated'"
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.415560425Z" level=error msg="Failed to get event" error="rpc error: code = Unavailable desc = error reading from server: EOF" module=libcontainerd namespace=plugins.moby
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.415597005Z" level=info msg="Waiting for containerd to be ready to restart event processing" module=libcontainerd namespace=plugins.moby
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.415757805Z" level=error msg="Failed to get event" error="rpc error: code = Unavailable desc = error reading from server: EOF" module=libcontainerd namespace=moby
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.415869725Z" level=info msg="Waiting for containerd to be ready to restart event processing" module=libcontainerd namespace=moby
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.497290514Z" level=warning msg="Error while testing if containerd API is ready" error="Canceled: grpc: the client connection is closing"
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m Umounting /dev/vdc from /var/lib/docker
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][31mERROR[0m error umounting /var/lib/docker: EBUSY: Device or resource busy, retrying in a bit
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.576015591Z" level=info msg="stopping event stream following graceful shutdown" error="context canceled" module=libcontainerd namespace=moby
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.576069191Z" level=warning msg="Error while testing if containerd API is ready" error="Canceled: context canceled while waiting for connections to become ready"
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.576081171Z" level=info msg="stopping healthcheck following graceful shutdown" module=libcontainerd
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:36.576093291Z" level=info msg="stopping event stream following graceful shutdown" error="context canceled" module=libcontainerd namespace=plugins.moby
+[2m2026-03-21T11:48:36Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][33m WARN[0m hallpass exited, pid: 681, status: exit status: 0
+[2m2026-03-21T11:48:37Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][31mERROR[0m error umounting /var/lib/docker: EBUSY: Device or resource busy, retrying in a bit
+[2m2026-03-21T11:48:37Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:37.615563607Z" level=info msg="Daemon shutdown complete"
+[2m2026-03-21T11:48:38Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:38 INFO SSH listening listen_address=[fdaa:51:3c43:a7b:6de:fbb4:8253:2]:22
+[2m2026-03-21T11:48:38Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][   38.261830] reboot: Restarting system
+[2m2026-03-21T11:48:43Z[0m proxy[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting machine
+[2merror.message=[0m"failed to change machine state: machine still active, refusing to start" [2m2026-03-21T11:48:43Z[0m proxy[3d8d545df53908] [32mfra[0m [[31merror[0m]
+[2m2026-03-21T11:48:43Z[0m proxy[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting machine
+[2merror.message=[0m"failed to change machine state: machine still active, refusing to start" [2m2026-03-21T11:48:43Z[0m proxy[3d8d545df53908] [32mfra[0m [[31merror[0m]
+[2m2026-03-21T11:48:43Z[0m proxy[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting machine
+[2merror.message=[0m"failed to change machine state: machine still active, refusing to start" [2m2026-03-21T11:48:43Z[0m proxy[3d8d545df53908] [32mfra[0m [[31merror[0m]
+[2m2026-03-21T11:48:44Z[0m proxy[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting machine
+[2merror.message=[0m"machines API returned an error: "rate limit exceeded"" [2m2026-03-21T11:48:44Z[0m proxy[3d8d545df53908] [32mfra[0m [[31merror[0m]
+[2m2026-03-21T11:48:44Z[0m proxy[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting machine
+[2merror.message=[0m"machines API returned an error: "rate limit exceeded"" [2m2026-03-21T11:48:44Z[0m proxy[3d8d545df53908] [32mfra[0m [[31merror[0m]
+[2m2026-03-21T11:48:44Z[0m proxy[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting machine
+[2merror.message=[0m"machines API returned an error: "rate limit exceeded"" [2m2026-03-21T11:48:44Z[0m proxy[3d8d545df53908] [32mfra[0m [[31merror[0m]
+[2m2026-03-21T11:48:44Z[0m proxy[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting machine
+[2merror.message=[0m"machines API returned an error: "machine still attempting to start"" [2m2026-03-21T11:48:44Z[0m proxy[3d8d545df53908] [32mfra[0m [[31merror[0m]
+[2m2026-03-21T11:48:46Z[0m proxy[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting machine
+[2m2026-03-21T11:48:46Z[0m proxy[3d8d545df53908] [32mfra[0m [[31merror[0m][PM01] machines API returned an error: "machine still attempting to start"
+[2m2026-03-21T11:48:46Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m Checking filesystem on /var/lib/docker
+[2m2026-03-21T11:48:46Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]/dev/vdc: clean, 219890/1966080 files, 3237134/7860224 blocks
+[2m2026-03-21T11:48:46Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m Mounting /dev/vdc at /var/lib/docker w/ uid: 0, gid: 0 and chmod 0755
+[2m2026-03-21T11:48:46Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m Resized /var/lib/docker to 32195477504 bytes
+[2m2026-03-21T11:48:46Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m Preparing to run: `/entrypoint.sh` as root
+[2m2026-03-21T11:48:46Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m [fly api proxy] listening at /.fly/api
+[2m2026-03-21T11:48:46Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting Docker daemon (direct)...
+[2m2026-03-21T11:48:46Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]Waiting for Docker daemon to start...
+[2m2026-03-21T11:48:46Z[0m proxy[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting machine
+[2m2026-03-21T11:48:46Z[0m proxy[3d8d545df53908] [32mfra[0m [[31merror[0m][PM01] machines API returned an error: "rate limit exceeded"
+[2m2026-03-21T11:48:46Z[0m runner[3d8d545df53908] [32mfra[0m [[34minfo[0m]Machine started in 2.641s
+[2m2026-03-21T11:48:47Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:48:47 INFO SSH listening listen_address=[fdaa:51:3c43:a7b:6de:fbb4:8253:2]:22
+[2m2026-03-21T11:48:58Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:58.435235305Z" level=info msg="Starting up"
+[2m2026-03-21T11:48:58Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:58.546330288Z" level=info msg="containerd not running, starting managed containerd"
+[2m2026-03-21T11:48:58Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:48:58.657007011Z" level=info msg="started new containerd process" address=/var/run/docker/containerd/containerd.sock module=libcontainerd pid=732
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.363563681Z" level=info msg="starting containerd" revision=dea7da592f5d1d2b7755e3a161be07f43fad8f75 version=v2.2.1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.477380085Z" level=warning msg="Configuration migrated from version 2, use `containerd config migrate` to avoid migration" t="13.65┬Ás"
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.477433115Z" level=info msg="loading plugin" id=io.containerd.content.v1.content type=io.containerd.content.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.480885537Z" level=info msg="loading plugin" id=io.containerd.image-verifier.v1.bindir type=io.containerd.image-verifier.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.481002607Z" level=info msg="loading plugin" id=io.containerd.internal.v1.opt type=io.containerd.internal.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.536722303Z" level=info msg="loading plugin" id=io.containerd.warning.v1.deprecations type=io.containerd.warning.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.536780453Z" level=info msg="loading plugin" id=io.containerd.mount-handler.v1.erofs type=io.containerd.mount-handler.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.536794523Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.blockfile type=io.containerd.snapshotter.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.537263164Z" level=info msg="skip loading plugin" error="no scratch file generator: skip plugin" id=io.containerd.snapshotter.v1.blockfile type=io.containerd.snapshotter.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.537282884Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.devmapper type=io.containerd.snapshotter.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.537293464Z" level=info msg="skip loading plugin" error="devmapper not configured: skip plugin" id=io.containerd.snapshotter.v1.devmapper type=io.containerd.snapshotter.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.537301344Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.erofs type=io.containerd.snapshotter.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.537966454Z" level=info msg="skip loading plugin" error="EROFS unsupported, please `modprobe erofs`: skip plugin" id=io.containerd.snapshotter.v1.erofs type=io.containerd.snapshotter.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.537994504Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.native type=io.containerd.snapshotter.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.538697714Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.overlayfs type=io.containerd.snapshotter.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.539152714Z" level=info msg="loading plugin" id=io.containerd.snapshotter.v1.zfs type=io.containerd.snapshotter.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.539237574Z" level=info msg="skip loading plugin" error="lstat /var/lib/docker/containerd/daemon/io.containerd.snapshotter.v1.zfs: no such file or directory: skip plugin" id=io.containerd.snapshotter.v1.zfs type=io.containerd.snapshotter.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.539250664Z" level=info msg="loading plugin" id=io.containerd.event.v1.exchange type=io.containerd.event.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.539289304Z" level=info msg="loading plugin" id=io.containerd.monitor.task.v1.cgroups type=io.containerd.monitor.task.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.616997962Z" level=info msg="loading plugin" id=io.containerd.metadata.v1.bolt type=io.containerd.metadata.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.617147132Z" level=info msg="metadata content store policy set" policy=shared
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.624252655Z" level=info msg="loading plugin" id=io.containerd.gc.v1.scheduler type=io.containerd.gc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.624337965Z" level=info msg="loading plugin" id=io.containerd.nri.v1.nri type=io.containerd.nri.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.624418935Z" level=info msg="built-in NRI default validator is disabled"
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.624455145Z" level=info msg="runtime interface created"
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.624477265Z" level=info msg="created NRI interface"
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.624506965Z" level=info msg="loading plugin" id=io.containerd.differ.v1.erofs type=io.containerd.differ.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.624795865Z" level=info msg="skip loading plugin" error="failed to check mkfs.erofs availability: failed to run mkfs.erofs --help: exec: \"mkfs.erofs\": executable file not found in $PATH: skip plugin" id=io.containerd.differ.v1.erofs type=io.containerd.differ.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.624826915Z" level=info msg="loading plugin" id=io.containerd.differ.v1.walking type=io.containerd.differ.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.624860865Z" level=info msg="loading plugin" id=io.containerd.lease.v1.manager type=io.containerd.lease.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.624880745Z" level=info msg="loading plugin" id=io.containerd.mount-manager.v1.bolt type=io.containerd.mount-manager.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.626699116Z" level=info msg="loading plugin" id=io.containerd.service.v1.containers-service type=io.containerd.service.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.626771966Z" level=info msg="loading plugin" id=io.containerd.service.v1.content-service type=io.containerd.service.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.626792166Z" level=info msg="loading plugin" id=io.containerd.service.v1.diff-service type=io.containerd.service.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.626815026Z" level=info msg="loading plugin" id=io.containerd.service.v1.images-service type=io.containerd.service.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.626838296Z" level=info msg="loading plugin" id=io.containerd.service.v1.introspection-service type=io.containerd.service.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.626899956Z" level=info msg="loading plugin" id=io.containerd.service.v1.namespaces-service type=io.containerd.service.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.626957786Z" level=info msg="loading plugin" id=io.containerd.service.v1.snapshots-service type=io.containerd.service.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.626988096Z" level=info msg="loading plugin" id=io.containerd.shim.v1.manager type=io.containerd.shim.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627069436Z" level=info msg="loading plugin" id=io.containerd.runtime.v2.task type=io.containerd.runtime.v2
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627456167Z" level=info msg="loading plugin" id=io.containerd.service.v1.tasks-service type=io.containerd.service.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627507477Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.containers type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627535497Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.content type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627559347Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.diff type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627581787Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.events type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627637707Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.images type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627690167Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.introspection type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627715287Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.leases type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627739287Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.mounts type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627761067Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.namespaces type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627792117Z" level=info msg="loading plugin" id=io.containerd.sandbox.store.v1.local type=io.containerd.sandbox.store.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627802337Z" level=info msg="loading plugin" id=io.containerd.transfer.v1.local type=io.containerd.transfer.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627849277Z" level=info msg="loading plugin" id=io.containerd.cri.v1.images type=io.containerd.cri.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.627962187Z" level=info msg="Get image filesystem path \"/var/lib/docker/containerd/daemon/io.containerd.snapshotter.v1.overlayfs\" for snapshotter \"overlayfs\""
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.628019607Z" level=info msg="Start snapshots syncer"
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.628174987Z" level=info msg="loading plugin" id=io.containerd.cri.v1.runtime type=io.containerd.cri.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.628789357Z" level=info msg="starting cri plugin" config="{\"containerd\":{\"defaultRuntimeName\":\"runc\",\"runtimes\":{\"runc\":{\"runtimeType\":\"io.containerd.runc.v2\",\"runtimePath\":\"\",\"PodAnnotations\":null,\"ContainerAnnotations\":null,\"options\":{\"BinaryName\":\"\",\"CriuImagePath\":\"\",\"CriuWorkPath\":\"\",\"IoGid\":0,\"IoUid\":0,\"NoNewKeyring\":false,\"Root\":\"\",\"ShimCgroup\":\"\",\"SystemdCgroup\":false},\"privileged_without_host_devices\":false,\"privileged_without_host_devices_all_devices_allowed\":false,\"cgroupWritable\":false,\"baseRuntimeSpec\":\"\",\"cniConfDir\":\"\",\"cniMaxConfNum\":0,\"snapshotter\":\"\",\"sandboxer\":\"podsandbox\",\"io_type\":\"\"}},\"ignoreBlockIONotEnabledErrors\":false,\"ignoreRdtNotEnabledErrors\":false},\"cni\":{\"binDir\":\"\",\"binDirs\":[\"/opt/cni/bin\"],\"confDir\":\"/etc/cni/net.d\",\"maxConfNum\":1,\"setupSerially\":false,\"confTemplate\":\"\",\"ipPref\":\"\",\"useInternalLoopback\":false},\"enableSelinux\":false,\"selinuxCategoryRange\":1024,\"maxContainerLogLineSize\":16384,\"disableApparmor\":false,\"restrictOOMScoreAdj\":false,\"disableProcMount\":false,\"unsetSeccompProfile\":\"\",\"tolerateMissingHugetlbController\":true,\"disableHugetlbController\":true,\"device_ownership_from_security_context\":false,\"ignoreImageDefinedVolumes\":false,\"netnsMountsUnderStateDir\":false,\"enableUnprivilegedPorts\":true,\"enableUnprivilegedICMP\":true,\"enableCDI\":true,\"cdiSpecDirs\":[\"/etc/cdi\",\"/var/run/cdi\"],\"drainExecSyncIOTimeout\":\"0s\",\"ignoreDeprecationWarnings\":null,\"containerdRootDir\":\"/var/lib/docker/containerd/daemon\",\"containerdEndpoint\":\"/var/run/docker/containerd/containerd.sock\",\"rootDir\":\"/var/lib/docker/containerd/daemon/io.containerd.grpc.v1.cri\",\"stateDir\":\"/var/run/docker/containerd/daemon/io.containerd.grpc.v1.cri\"}"
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.628887967Z" level=info msg="loading plugin" id=io.containerd.podsandbox.controller.v1.podsandbox type=io.containerd.podsandbox.controller.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.628963837Z" level=info msg="loading plugin" id=io.containerd.sandbox.controller.v1.shim type=io.containerd.sandbox.controller.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.629194087Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.sandbox-controllers type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.629230447Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.sandboxes type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.629242087Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.snapshots type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.629263967Z" level=info msg="loading plugin" id=io.containerd.streaming.v1.manager type=io.containerd.streaming.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.629283147Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.streaming type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.629293777Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.tasks type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.629320817Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.transfer type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.629339497Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.version type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.629353387Z" level=info msg="loading plugin" id=io.containerd.monitor.container.v1.restart type=io.containerd.monitor.container.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.694935349Z" level=info msg="loading plugin" id=io.containerd.tracing.processor.v1.otlp type=io.containerd.tracing.processor.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.695021799Z" level=info msg="skip loading plugin" error="skip plugin: tracing endpoint not configured" id=io.containerd.tracing.processor.v1.otlp type=io.containerd.tracing.processor.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.695034859Z" level=info msg="loading plugin" id=io.containerd.internal.v1.tracing type=io.containerd.internal.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.695045439Z" level=info msg="skip loading plugin" error="skip plugin: tracing endpoint not configured" id=io.containerd.internal.v1.tracing type=io.containerd.internal.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.695053779Z" level=info msg="loading plugin" id=io.containerd.ttrpc.v1.otelttrpc type=io.containerd.ttrpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.695068659Z" level=info msg="loading plugin" id=io.containerd.grpc.v1.healthcheck type=io.containerd.grpc.v1
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.698763751Z" level=info msg=serving... address=/var/run/docker/containerd/containerd-debug.sock
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.698918331Z" level=info msg=serving... address=/var/run/docker/containerd/containerd.sock.ttrpc
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.699074101Z" level=info msg=serving... address=/var/run/docker/containerd/containerd.sock
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.699160061Z" level=info msg="containerd successfully booted in 0.339333s"
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.781501750Z" level=info msg="OTEL tracing is not configured, using no-op tracer provider"
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.854744005Z" level=info msg="CDI directory does not exist, skipping" dir=/var/run/cdi
+[2m2026-03-21T11:49:05Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:05.854794645Z" level=info msg="CDI directory does not exist, skipping" dir=/etc/cdi
+[2m2026-03-21T11:49:07Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:07.232642982Z" level=info msg="Creating a containerd client" address=/var/run/docker/containerd/containerd.sock timeout=1m0s
+[2m2026-03-21T11:49:07Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:07.302681485Z" level=info msg="Loading containers: start."
+[2m2026-03-21T11:49:07Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:07.375480550Z" level=info msg="NRI is disabled"
+[2m2026-03-21T11:49:07Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:07.375553550Z" level=info msg="Setting the storage driver from the $DOCKER_DRIVER environment variable (overlay2)"
+[2m2026-03-21T11:49:07Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:07.375567630Z" level=info msg="[graphdriver] trying configured driver: overlay2"
+[2m2026-03-21T11:49:08Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:08.110992361Z" level=info msg="Restoring containers: start."
+[2m2026-03-21T11:49:08Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:08.757686399Z" level=info msg="Deleting nftables IPv4 rules" error="exec: \"nft\": executable file not found in $PATH" output=
+[2m2026-03-21T11:49:08Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:08.757766209Z" level=info msg="Deleting nftables IPv6 rules" error="exec: \"nft\": executable file not found in $PATH" output=
+[2m2026-03-21T11:49:10Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:10.426578155Z" level=info msg="Loading containers: done."
+[2m2026-03-21T11:49:10Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:10.582275959Z" level=warning msg="WARNING: Support for cgroup v1 is deprecated and planned to be removed by no later than May 2029 (https://github.com/moby/moby/issues/51111)"
+[2m2026-03-21T11:49:10Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:10.582332339Z" level=info msg="Docker daemon" commit=83bca51 containerd-snapshotter=false storage-driver=overlay2 version=29.3.0
+[2m2026-03-21T11:49:10Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:10.585065891Z" level=info msg="Initializing buildkit"
+[2m2026-03-21T11:49:11Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:11.309090296Z" level=info msg="Completed buildkit initialization"
+[2m2026-03-21T11:49:11Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:11.377228438Z" level=info msg="Daemon has completed initialization"
+[2m2026-03-21T11:49:11Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:11.377784179Z" level=info msg="API listen on /var/run/docker.sock"
+[2m2026-03-21T11:49:11Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]Docker daemon is ready!
+[2m2026-03-21T11:49:11Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting resilient socat proxies to bridge Fly.io IPv6 to Docker IPv4...
+[2m2026-03-21T11:49:11Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]Cleaning old containers and images...
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[989] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[989] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[993] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[993] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[994] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[994] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:12Z" level=warning msg="/app/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[996] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[996] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[997] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[997] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[1004] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[1004] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[1008] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:12Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:12 socat[1008] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1009] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1009] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1010] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1010] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1011] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1011] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1012] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1012] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1013] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1013] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]Deleted build cache objects:
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]hwxueihyzobnrscvbdmxe5fxm
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]d95v79putpfzn6y6ljw3rm2t2
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]9r0433qj0eddh1vzwft8t4ltf
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]o7v3c06oavc0f6bnzkpjfe675
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]rp8zox4yng8129lo0papjpcf2
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]on3vvylj1gknjvwyokq52r6cx
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]llu82bhkz367s9od06j3fuhek
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]Total reclaimed space: 2.336kB
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]Starting Gorenel services...
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1019] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1019] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1020] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:13 socat[1020] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1023] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1023] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:14Z" level=warning msg="/app/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1026] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1026] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1031] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1031] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1033] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1033] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1040] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1040] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1043] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:14Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:14 socat[1043] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1044] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1044] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1045] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1045] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m] Image app-gorenel-server Building
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m] Image app-gorenel-dashboard Building
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m] Image app-ml-engine Building
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1047] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1047] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1053] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1053] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1055] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1055] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1056] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1056] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1062] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1062] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1065] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:15Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:15 socat[1065] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#1 [internal] load local bake definitions
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1068] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1068] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1075] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1075] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#1 reading from stdin 1.32kB done
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#1 DONE 0.0s
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1077] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1077] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1080] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1080] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1088] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1088] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1091] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1091] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1092] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:16Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:16 socat[1092] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1093] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1093] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#2 [gorenel-server internal] load build definition from Dockerfile
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1094] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1094] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1096] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1096] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#2 ...
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#3 [gorenel-dashboard internal] load build definition from Dockerfile
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#3 transferring dockerfile: 332B 0.1s done
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#3 DONE 0.6s
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#2 [gorenel-server internal] load build definition from Dockerfile
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#2 transferring dockerfile: 651B 0.1s done
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1097] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1097] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#2 DONE 0.6s
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#4 [ml-engine internal] load build definition from Dockerfile
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#4 transferring dockerfile: 544B 0.2s done
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#4 DONE 0.6s
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#5 [gorenel-server internal] load metadata for docker.io/library/alpine:latest
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1098] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1098] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1099] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1099] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1100] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:17 socat[1100] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1101] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1101] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1102] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1102] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1103] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1103] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1104] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1104] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1105] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1105] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1106] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1106] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1107] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1107] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1108] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:18 socat[1108] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1109] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1109] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1110] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1110] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1111] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1111] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#5 DONE 1.8s
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#6 [ml-engine internal] load metadata for docker.io/library/python:3.11-slim
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1112] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1112] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1113] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1113] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#6 ...
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#7 [gorenel-server internal] load .dockerignore
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#7 transferring context: 968B 0.1s done
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#7 DONE 0.1s
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#8 [gorenel-dashboard internal] load metadata for docker.io/library/nginx:alpine
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#8 DONE 2.1s
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1114] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:19 socat[1114] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#9 [gorenel-server 1/7] FROM docker.io/library/alpine:latest@sha256:25109184c71bdad752c8312a8623239686a9a2071e8825f20acb8f2198c3f659
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#9 DONE 0.0s
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 [gorenel-dashboard internal] load .dockerignore
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 transferring context: 2B done
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 DONE 0.2s
+[2m2026-03-21T11:49:19Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#11 [gorenel-server internal] load build context
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1115] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1115] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#11 ...
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#12 [gorenel-dashboard 1/3] FROM docker.io/library/nginx:alpine@sha256:f46cb72c7df02710e693e863a983ac42f6a9579058a59a35f1ae36c9958e4ce0
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#12 DONE 0.1s
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#11 [gorenel-server internal] load build context
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1116] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1116] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#11 ...
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#6 [ml-engine internal] load metadata for docker.io/library/python:3.11-slim
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#6 DONE 2.6s
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1117] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1117] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#13 [ml-engine internal] load .dockerignore
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1118] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1118] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#13 transferring context: 2B 0.1s done
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#13 DONE 0.3s
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#14 [gorenel-dashboard internal] load build context
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#14 transferring context: 2B done
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#14 DONE 0.4s
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#15 [gorenel-dashboard 2/3] COPY web-dashboard/nginx.conf /etc/nginx/conf.d/default.conf
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#15 ERROR: failed to calculate checksum of ref eaadcdb2-8468-488a-99a5-609ba1dadcc0::xq7tv8ijxf03z86zvlgup1p09: "/web-dashboard/nginx.conf": not found
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#16 [gorenel-dashboard 3/3] COPY web-dashboard/dist /usr/share/nginx/html
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#16 ERROR: failed to calculate checksum of ref eaadcdb2-8468-488a-99a5-609ba1dadcc0::xq7tv8ijxf03z86zvlgup1p09: "/web-dashboard/dist": not found
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#11 [gorenel-server internal] load build context
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1119] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1119] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1120] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1120] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1121] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:20Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:20 socat[1121] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1122] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1122] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.136632521Z" level=error msg=/moby.buildkit.v1.Control/Solve error="rpc error: code = Unknown desc = failed to compute cache key: failed to calculate checksum of ref eaadcdb2-8468-488a-99a5-609ba1dadcc0::xq7tv8ijxf03z86zvlgup1p09: \"/web-dashboard/nginx.conf\": not found" spanID=95ecc21cfc10eeeb traceID=1f1eefdf114fec351a2bd813f24722f6
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#11 transferring context: 4.03MB 1.2s done
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#11 ERROR: rpc error: code = Unavailable desc = error reading from server: read unix /var/run/docker.sock->@: read: connection reset by peer
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#17 [ml-engine 1/9] FROM docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#17 resolve docker.io/library/python:3.11-slim@sha256:9358444059ed78e2975ada2c189f1c1a3144a5dab6f35bff8c981afb38946634 0.5s done
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#17 DONE 0.5s
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#18 [ml-engine internal] load build context
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#18 transferring context: 13.38kB 0.1s done
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1123] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1123] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]Dockerfile:4
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]--------------------
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]   2 |
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]   3 |     # Nginx konfig├╝rasyonunu kopyala
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]   4 | >>> COPY web-dashboard/nginx.conf /etc/nginx/conf.d/default.conf
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]   5 |
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]   6 |     # YERELDE DERLENM─░┼Ş 'dist' klas├Âr├╝n├╝ kopyala (npm run build yap─▒lm─▒┼ş olmal─▒)
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]--------------------
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]target gorenel-dashboard: failed to solve: failed to compute cache key: failed to calculate checksum of ref eaadcdb2-8468-488a-99a5-609ba1dadcc0::xq7tv8ijxf03z86zvlgup1p09: "/web-dashboard/nginx.conf": not found
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#18 CANCELED
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]------
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m] > [gorenel-server internal] load build context:
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]------
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]------
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m] > [gorenel-dashboard 2/3] COPY web-dashboard/nginx.conf /etc/nginx/conf.d/default.conf:
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]------
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]------
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m] > [gorenel-dashboard 3/3] COPY web-dashboard/dist /usr/share/nginx/html:
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]------
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1124] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1124] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.535856241Z" level=error msg=/moby.buildkit.v1.Control/Solve error="rpc error: code = Unavailable desc = rpc error: code = Unavailable desc = error reading from server: read unix /var/run/docker.sock->@: read: connection reset by peer" spanID=6f9aa5a886131ef7 traceID=1f1eefdf114fec351a2bd813f24722f6
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.537830202Z" level=error msg=/moby.buildkit.v1.Control/Solve error="rpc error: code = Canceled desc = context canceled" spanID=90f1f92ea60389bf traceID=1f1eefdf114fec351a2bd813f24722f6
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1125] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1125] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1126] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1126] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1127] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1127] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1128] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[1128] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m Main child exited normally with code: 1
+[2m2026-03-21T11:49:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m Starting clean up.
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[983] W exiting on signal 15
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:21 socat[981] W exiting on signal 15
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.935224032Z" level=info msg="Processing signal 'terminated'"
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.936173172Z" level=error msg="Failed to get event" error="rpc error: code = Unavailable desc = error reading from server: EOF" module=libcontainerd namespace=moby
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.936209912Z" level=info msg="Waiting for containerd to be ready to restart event processing" module=libcontainerd namespace=moby
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.936440182Z" level=error msg="Failed to get event" error="rpc error: code = Unavailable desc = error reading from server: EOF" module=libcontainerd namespace=plugins.moby
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.936452112Z" level=info msg="Waiting for containerd to be ready to restart event processing" module=libcontainerd namespace=plugins.moby
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.936456252Z" level=warning msg="Error while testing if containerd API is ready" error="Canceled: grpc: the client connection is closing"
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.937415483Z" level=info msg="stopping event stream following graceful shutdown" error="context canceled" module=libcontainerd namespace=moby
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][32m INFO[0m Umounting /dev/vdc from /var/lib/docker
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.937446323Z" level=info msg="stopping healthcheck following graceful shutdown" module=libcontainerd
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.937562203Z" level=warning msg="Error while testing if containerd API is ready" error="Canceled: context canceled while waiting for connections to become ready"
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:21.937576123Z" level=info msg="stopping event stream following graceful shutdown" error="context canceled" module=libcontainerd namespace=plugins.moby
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][31mERROR[0m error umounting /var/lib/docker: EBUSY: Device or resource busy, retrying in a bit
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][33m WARN[0m hallpass exited, pid: 685, status: exit status: 0
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 11:49:22 INFO SSH listening listen_address=[fdaa:51:3c43:a7b:6de:fbb4:8253:2]:22
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][31mERROR[0m error umounting /var/lib/docker: EBUSY: Device or resource busy, retrying in a bit
+[2m2026-03-21T11:49:22Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T11:49:22.938366940Z" level=info msg="Daemon shutdown complete"
+[2m2026-03-21T11:49:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m][   38.565189] reboot: Restarting system

@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "127.0.0.1:7000:7000" # Control Port (Bound to localhost to allow socat bridge)
+      - "127.0.0.1:7005:7000" # Control Port (Bound to local 7005 to allow socat bridge from 7000)
       - "8085:8085" # Proxy Port
       - "9091:9091" # Monitoring API
     environment:
@@ -116,4 +116,3 @@ networks:
 volumes:
   postgres_data:
   clickhouse_data:
- mode:AGENT_MODE_EXECUTION

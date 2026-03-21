@@ -43,10 +43,10 @@ while true; do
   sleep 1
 done &
 
-# Control Port (7000) bridge
+# Control Port (7000) bridge - Points to local 7005 (Docker host port)
 while true; do
-  # Bridge external IPv6:7000 to internal Control Port IPv4:7000
-  socat TCP6-LISTEN:7000,fork,reuseaddr,bind=[::] TCP4:127.0.0.1:7000
+  # Bridge external IPv6:7000 to internal Control Port IPv4:7005
+  socat TCP6-LISTEN:7000,fork,reuseaddr,bind=[::] TCP4:127.0.0.1:7005
   sleep 1
 done &
 
@@ -60,4 +60,3 @@ docker-compose up -d --build --remove-orphans
 # The script should not exit, so we tail logs or just wait
 echo "Gorenel is up! Tailing logs..."
 docker-compose logs -f
- mode:AGENT_MODE_EXECUTION
