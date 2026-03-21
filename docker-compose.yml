@@ -7,8 +7,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "127.0.0.1:7005:7000" # Control Port (Bound to local 7005 to allow socat bridge from 7000)
-      - "8085:8085" # Proxy Port
-      - "9091:9091" # Monitoring API
+      # 8085 (Proxy) and 9091 (Monitoring) are accessed via Docker network or internal routing
     environment:
       - GO_ENV=production
       - JWT_SECRET=${JWT_SECRET}

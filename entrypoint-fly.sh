@@ -63,10 +63,11 @@ while true; do
   sleep 1
 done &
 
-# Start Gorenel services (Clean start to avoid stale images)
-echo "Cleaning old containers and images..."
+# Start Gorenel services
+echo "Stopping any old containers..."
 docker-compose down --remove-orphans || true
-docker system prune -f
+# Light cleanup: only remove stopped containers and dangling images (NOT all images/volumes)
+docker system prune -f || true
 
 echo "Starting Gorenel services..."
 if ! docker-compose up -d --build --remove-orphans; then
@@ -77,15 +78,19 @@ if ! docker-compose up -d --build --remove-orphans; then
 fi
 
 # Wait for gorenel-server to be reachable internally
-echo "Waiting for Backend (9091) to be reachable..."
+echo "Waiting for Backend (9091) to be reachable from Dashboard..."
 for i in {1..30}; do
-  if docker exec gorenel-dashboard-1 curl -s http://gorenel-server:9091/health > /dev/null; then
-    echo "Backend is reachable from Dashboard!"
+  # Check if dashboard container can ping server container and get 200/404 from monitoring
+  if docker exec appuser-gorenel-dashboard-1 curl -s http://gorenel-server:9091/health > /dev/null; then
+    echo "SUCCESS: Backend is reachable from Dashboard!"
     break
   fi
-  echo "Backend not reachable yet ($i/30)..."
-  sleep 2
+  echo "Backend not reachable yet ($i/30)... Check logs for 'port already allocated' if this fails."
+  sleep 3
 done
+
+# Diagnostic: Check all containers status
+docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
 # The script should not exit, so we tail logs or just wait
 echo "Gorenel is up! Tailing logs..."

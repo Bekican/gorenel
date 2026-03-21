@@ -13,7 +13,6 @@ COPY gorenel-server .
 COPY .env .
 # Copy config or other required dirs if needed
 COPY configs/ ./configs/
-COPY internal/analytics/data/ ./internal/analytics/data/
 
 RUN chmod +x gorenel-server
 

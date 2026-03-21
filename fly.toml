@@ -16,7 +16,7 @@ primary_region = "fra"
   min_machines_running = 1
 
 [[http_service.checks]]
-  grace_period = "60s"
+  grace_period = "300s"
   interval = "30s"
   method = "GET"
   timeout = "5s"
