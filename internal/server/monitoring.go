@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"runtime"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"github.com/Bekican/gorenel/pkg/auth"
 	serverErrors "github.com/Bekican/gorenel/pkg/errors"
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
 )
 
@@ -32,20 +34,24 @@ func init() {
 	ServerStartTime = time.Now()
 }
 
+// TunnelClientHandler is the callback type for handling tunnel client connections.
+type TunnelClientHandler func(conn net.Conn)
+
 type MonitoringServer struct {
-	tunnelManager   *TunnelManager
-	analyticsEngine *AnalyticsEngine
-	authHandler     *handler.AuthHandler
-	advancedRL      *limiter.RateLimiter
-	inspector       *TrafficInspector
-	tokenSvc        *auth.JWTService
-	anomalyStore    *AnomalyStore
-	mlClient        *ml.Client
-	traceSharer     *TraceSharer
-	baseDomain      string
-	proxyPort       string
-	env             string
-	logger          *zap.Logger
+	tunnelManager      *TunnelManager
+	analyticsEngine    *AnalyticsEngine
+	authHandler        *handler.AuthHandler
+	advancedRL         *limiter.RateLimiter
+	inspector          *TrafficInspector
+	tokenSvc           *auth.JWTService
+	anomalyStore       *AnomalyStore
+	mlClient           *ml.Client
+	traceSharer        *TraceSharer
+	tunnelHandler      TunnelClientHandler
+	baseDomain         string
+	proxyPort          string
+	env                string
+	logger             *zap.Logger
 }
 
 func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, proxyPort, env string, logger *zap.Logger) *MonitoringServer {
@@ -125,6 +131,11 @@ func (m *MonitoringServer) Start(port string) error {
 
 	// CLI Download endpoint
 	mux.HandleFunc("/downloads/", m.corsMiddleware(m.handleDownload))
+
+	// WebSocket Tunnel endpoint (replaces raw TCP control port for Fly.io shared IP)
+	if m.tunnelHandler != nil {
+		mux.HandleFunc("/tunnel/connect", m.handleTunnelWebSocket)
+	}
 
 	l, _ := zap.NewProduction()
 	l.Info("Monitoring server başlatılıyor", zap.String("port", port))
