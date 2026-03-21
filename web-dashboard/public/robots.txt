@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gorenel.site/sitemap.xml mode:AGENT_MODE_EXECUTION

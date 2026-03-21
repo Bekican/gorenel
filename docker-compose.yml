@@ -11,21 +11,22 @@ services:
       - "9091:9091" # Monitoring API
     environment:
       - GO_ENV=production
-      - JWT_SECRET=${JWT_SECRET:-SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD}
-      - DB_URL=postgres://postgres:postgres@postgres:5432/gorenel?sslmode=disable
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_URL=postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/gorenel?sslmode=disable
       - REDIS_ADDR=redis:6379
       - ML_URL=http://ml-engine:5000
       - CLICKHOUSE_ADDR=clickhouse:9000
       - CLICKHOUSE_DB=gorenel
-      - BASE_DOMAIN=${BASE_DOMAIN:-.gorenel.site}
-      - ACME_EMAIL=${ACME_EMAIL:-admin@gorenel.site}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-dummy-prod-id}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-dummy-prod-secret}
-      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL:-https://gorenel.site/api/callback}
+      - BASE_DOMAIN=${BASE_DOMAIN}
+      - ACME_EMAIL=${ACME_EMAIL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
-      - GITHUB_REDIRECT_URL=${GITHUB_REDIRECT_URL:-https://gorenel.site/api/callback}
+      - GITHUB_REDIRECT_URL=${GITHUB_REDIRECT_URL}
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
     depends_on:
       redis:
         condition: service_healthy
@@ -91,7 +92,7 @@ services:
     restart: unless-stopped
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=gorenel
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
