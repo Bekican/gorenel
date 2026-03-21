@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/Bekican/gorenel/pkg/auth"
@@ -16,12 +17,16 @@ func RequireAuth(jwtSvc *auth.JWTService) func(http.HandlerFunc) http.HandlerFun
 		return func(w http.ResponseWriter, r *http.Request) {
 			cookie, err := r.Cookie("auth_token")
 			if err != nil {
+				// Log for debugging
+				fmt.Printf("[DEBUG] Auth failed: Missing auth_token cookie\n")
 				http.Error(w, "Unauthorized: Missing token", http.StatusUnauthorized)
 				return
 			}
 
 			claims, err := jwtSvc.ValidateToken(cookie.Value)
 			if err != nil {
+				// Log for debugging
+				fmt.Printf("[DEBUG] Auth failed: Invalid token: %v\n", err)
 				http.Error(w, "Unauthorized: Invalid token", http.StatusUnauthorized)
 				return
 			}

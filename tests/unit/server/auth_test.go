@@ -4,14 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Bekican/gorenel/internal/server"
+	"github.com/Bekican/gorenel/internal/authmgr"
 	"github.com/Bekican/gorenel/tests"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAuthManager_AddKey(t *testing.T) {
 	helper := tests.NewTestHelper(t)
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 
 	// Test adding a new API key
 	testKey := tests.GenerateTestAPIKey()
@@ -25,7 +25,7 @@ func TestAuthManager_AddKey(t *testing.T) {
 }
 
 func TestAuthManager_ValidateKey_NotFound(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 
 	// Test with non-existent key
 	_, err := authManager.ValidateKey("non-existent-key")
@@ -34,7 +34,7 @@ func TestAuthManager_ValidateKey_NotFound(t *testing.T) {
 }
 
 func TestAuthManager_ValidateKey_Expired(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	testKey := tests.GenerateTestAPIKey()
 
 	// Add key with expiration in the past
@@ -52,7 +52,7 @@ func TestAuthManager_ValidateKey_Expired(t *testing.T) {
 }
 
 func TestAuthManager_IncrementUsage(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	testKey := tests.GenerateTestAPIKey()
 	authManager.AddKey(testKey, "test-user", 100)
 
@@ -66,7 +66,7 @@ func TestAuthManager_IncrementUsage(t *testing.T) {
 }
 
 func TestAuthManager_RevokeKey(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	testKey := tests.GenerateTestAPIKey()
 	authManager.AddKey(testKey, "test-user", 100)
 
@@ -79,7 +79,7 @@ func TestAuthManager_RevokeKey(t *testing.T) {
 }
 
 func TestAuthManager_Concurrent(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	testKey := tests.GenerateTestAPIKey()
 	authManager.AddKey(testKey, "test-user", 100)
 
@@ -104,7 +104,7 @@ func TestAuthManager_Concurrent(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkAuthManager_ValidateKey(b *testing.B) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	testKey := tests.GenerateTestAPIKey()
 	authManager.AddKey(testKey, "test-user", 100)
 
@@ -115,7 +115,7 @@ func BenchmarkAuthManager_ValidateKey(b *testing.B) {
 }
 
 func BenchmarkAuthManager_IncrementUsage(b *testing.B) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	testKey := tests.GenerateTestAPIKey()
 	authManager.AddKey(testKey, "test-user", 100)
 

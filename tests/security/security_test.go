@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Bekican/gorenel/internal/authmgr"
+	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/server"
 	"github.com/Bekican/gorenel/tests"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +16,7 @@ import (
 // ===== API KEY VALIDATION =====
 
 func TestSecurity_InvalidAPIKeyRejection(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 
 	_, err := authManager.ValidateKey("completely-invalid-key")
 	assert.Error(t, err, "Invalid API key should be rejected")
@@ -22,14 +24,14 @@ func TestSecurity_InvalidAPIKeyRejection(t *testing.T) {
 }
 
 func TestSecurity_EmptyKeyRejection(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 
 	_, err := authManager.ValidateKey("")
 	assert.Error(t, err, "Empty API key should be rejected")
 }
 
 func TestSecurity_ExpiredKeyRejection(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	testKey := tests.GenerateTestAPIKey()
 	authManager.AddKey(testKey, "user-1", 100)
 
@@ -43,7 +45,7 @@ func TestSecurity_ExpiredKeyRejection(t *testing.T) {
 }
 
 func TestSecurity_RevokedKeyRejection(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	testKey := tests.GenerateTestAPIKey()
 	authManager.AddKey(testKey, "user-1", 100)
 
@@ -62,36 +64,36 @@ func TestSecurity_RevokedKeyRejection(t *testing.T) {
 // ===== RATE LIMIT BYPASS PROTECTION =====
 
 func TestSecurity_RateLimitCannotBypass(t *testing.T) {
-	rl := server.NewAdvancedRateLmiter()
+	rl := limiter.NewRateLimiter(nil, 100, time.Minute)
 
 	// Exhaust limit for user
 	for i := 0; i < 100; i++ {
-		rl.Allow("attacker")
+		rl.Allow("attacker", 1)
 	}
 
 	// Verify blocked
-	assert.False(t, rl.Allow("attacker"), "Should be blocked after 100 requests")
+	assert.False(t, rl.Allow("attacker", 1), "Should be blocked after 100 requests")
 
 	// Try variations — same user ID should still be blocked
-	assert.False(t, rl.Allow("attacker"), "Double attempt should be blocked")
-	assert.False(t, rl.Allow("attacker"), "Triple attempt should be blocked")
+	assert.False(t, rl.Allow("attacker", 1), "Double attempt should be blocked")
+	assert.False(t, rl.Allow("attacker", 1), "Triple attempt should be blocked")
 
 	// Different user should NOT be affected
-	assert.True(t, rl.Allow("legitimate-user"), "Different user should not be blocked")
+	assert.True(t, rl.Allow("legitimate-user", 1), "Different user should not be blocked")
 }
 
 func TestSecurity_RateLimitPerUserIsolation(t *testing.T) {
-	rl := server.NewAdvancedRateLmiter()
+	rl := limiter.NewRateLimiter(nil, 100, time.Minute)
 
 	// Exhaust one user
 	for i := 0; i < 100; i++ {
-		rl.Allow("attacker-1")
+		rl.Allow("attacker-1", 1)
 	}
 
 	// Other users should be completely independent
 	for i := 0; i < 5; i++ {
 		user := tests.GenerateTestAPIKey() // random user ID
-		assert.True(t, rl.Allow(user), "Unrelated user should not be rate limited")
+		assert.True(t, rl.Allow(user, 1), "Unrelated user should not be rate limited")
 	}
 }
 
@@ -198,7 +200,7 @@ func TestSecurity_SQLInjectionInInspectorPaths(t *testing.T) {
 // ===== API KEY BRUTE FORCE =====
 
 func TestSecurity_BruteForceKeyAttempts(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	realKey := tests.GenerateTestAPIKey()
 	authManager.AddKey(realKey, "real-user", 100)
 
@@ -242,7 +244,7 @@ func TestSecurity_LargePayloadInInspector(t *testing.T) {
 // ===== AUTH CONCURRENT SAFETY =====
 
 func TestSecurity_ConcurrentAuthValidation(t *testing.T) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	validKey := tests.GenerateTestAPIKey()
 	authManager.AddKey(validKey, "user-1", 100)
 
@@ -273,7 +275,7 @@ func TestSecurity_ConcurrentAuthValidation(t *testing.T) {
 // ===== BENCHMARK =====
 
 func BenchmarkSecurity_AuthValidation(b *testing.B) {
-	authManager := server.NewAuthManager(nil)
+	authManager := authmgr.NewAuthManager(nil)
 	validKey := tests.GenerateTestAPIKey()
 	authManager.AddKey(validKey, "bench-user", 100)
 
@@ -291,23 +293,23 @@ func BenchmarkSecurity_AuthValidation(b *testing.B) {
 }
 
 func BenchmarkSecurity_RateLimiterDecision(b *testing.B) {
-	rl := server.NewAdvancedRateLmiter()
+	rl := limiter.NewRateLimiter(nil, 100, time.Minute)
 
 	b.Run("AllowedUser", func(b *testing.B) {
 		rl.SetUserTier("premium", "premium")
 		for i := 0; i < b.N; i++ {
-			rl.Allow("premium")
+			rl.Allow("premium", 1)
 		}
 	})
 
 	b.Run("BlockedUser", func(b *testing.B) {
 		// Pre-exhaust
 		for i := 0; i < 100; i++ {
-			rl.Allow("blocked-user")
+			rl.Allow("blocked-user", 1)
 		}
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			rl.Allow("blocked-user")
+			rl.Allow("blocked-user", 1)
 		}
 	})
 }
