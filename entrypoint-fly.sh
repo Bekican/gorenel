@@ -2,8 +2,15 @@
 set -e
 
 # Start Docker daemon
+echo "Cleaning up potential stale Docker socket or port bindings..."
+rm -f /var/run/docker.sock
+# Kill any processes on common ports to avoid "port already allocated"
+for port in 4000 4001 7000 7005 8123 5000 6379 5432 9091 8085; do
+  fuser -k ${port}/tcp || true
+done
+
 echo "Starting Docker daemon (direct)..."
-dockerd --dns 8.8.8.8 --dns 8.8.4.4 --mtu 1420 &
+dockerd --dns 1.1.1.1 --dns 8.8.8.8 --mtu 1400 &
 
 # Wait for Docker to be ready
 echo "Waiting for Docker daemon to start..."
@@ -16,6 +23,12 @@ until docker info >/dev/null 2>&1; do
   fi
   if [ $COUNT -gt $MAX_RETRIES ]; then
     echo "ERROR: Docker daemon failed to start after $MAX_RETRIES seconds."
+    # Attempt recovery: kill and try again
+    pkill dockerd || true
+    sleep 2
+    dockerd --dns 1.1.1.1 --dns 8.8.8.8 --mtu 1400 &
+    sleep 5
+    if docker info >/dev/null 2>&1; then break; fi
     exit 1
   fi
   sleep 1
@@ -52,10 +65,27 @@ done &
 
 # Start Gorenel services (Clean start to avoid stale images)
 echo "Cleaning old containers and images..."
-docker-compose down || true
+docker-compose down --remove-orphans || true
 docker system prune -f
+
 echo "Starting Gorenel services..."
-docker-compose up -d --build --remove-orphans
+if ! docker-compose up -d --build --remove-orphans; then
+    echo "ERROR: Docker Compose failed to start services."
+    docker-compose ps
+    docker-compose logs --tail=50
+    exit 1
+fi
+
+# Wait for gorenel-server to be reachable internally
+echo "Waiting for Backend (9091) to be reachable..."
+for i in {1..30}; do
+  if docker exec gorenel-dashboard-1 curl -s http://gorenel-server:9091/health > /dev/null; then
+    echo "Backend is reachable from Dashboard!"
+    break
+  fi
+  echo "Backend not reachable yet ($i/30)..."
+  sleep 2
+done
 
 # The script should not exit, so we tail logs or just wait
 echo "Gorenel is up! Tailing logs..."

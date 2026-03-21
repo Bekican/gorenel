@@ -1,27 +1,28 @@
-FROM alpine:latest
+FROM public.ecr.aws/docker/library/alpine:latest
 
-# Install Docker and dependencies
-RUN apk --no-cache add ca-certificates tzdata curl bash docker docker-compose socat
+RUN apk --no-cache add ca-certificates tzdata curl bash
 
 # Security: Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /home/appuser
 
-# Copy the ENTIRE project into the machine
-# This is necessary because docker-compose --build runs INSIDE the machine
-COPY . .
+# Copy ONLY the server binary and necessary files
+# This is built inside the outer container's context
+COPY gorenel-server .
+COPY .env .
+# Copy config or other required dirs if needed
+COPY configs/ ./configs/
+COPY internal/analytics/data/ ./internal/analytics/data/
 
-# Ensure binaries are executable
-RUN chmod +x gorenel-server entrypoint-fly.sh
+RUN chmod +x gorenel-server
 
 # Create logs directory owned by appuser
 RUN mkdir -p logs/batches logs/archives && chown -R appuser:appgroup .
 
-# Expose ports
-EXPOSE 7000 4001 9091
+# API, Control, and Proxy ports
+EXPOSE 9091 7000 8085
 
-# entrypoint-fly.sh MUST run as root to start dockerd
-USER root
+USER appuser
 
-ENTRYPOINT ["./entrypoint-fly.sh"]
+ENTRYPOINT ["./gorenel-server"]

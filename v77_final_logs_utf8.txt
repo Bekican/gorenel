@@ -1,0 +1,111 @@
+﻿[2m2026-03-21T14:36:03Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 ...
+[2m2026-03-21T14:36:03Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#27 [ml-engine] resolving provenance for metadata file
+[2m2026-03-21T14:36:03Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#27 DONE 0.4s
+[2m2026-03-21T14:36:03Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 [gorenel-server internal] load build context
+[2m2026-03-21T14:36:08Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 transferring context: 46.15MB 6.4s
+[2m2026-03-21T14:36:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 ...
+[2m2026-03-21T14:36:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#28 [gorenel-dashboard internal] load build context
+[2m2026-03-21T14:36:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#28 ...
+[2m2026-03-21T14:36:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 [gorenel-server internal] load build context
+[2m2026-03-21T14:36:13Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 transferring context: 66.83MB 11.5s
+[2m2026-03-21T14:36:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 ...
+[2m2026-03-21T14:36:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#28 [gorenel-dashboard internal] load build context
+[2m2026-03-21T14:36:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#28 transferring context: 56.01MB 13.5s done
+[2m2026-03-21T14:36:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#28 DONE 13.5s
+[2m2026-03-21T14:36:17Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 [gorenel-server internal] load build context
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 14:36:18 socat[2682] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 14:36:18 socat[2682] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T14:36:18Z[0m health[3d8d545df53908] [32mfra[0m [[31merror[0m]Health check 'servicecheck-00-http-4001' on port 4001 has failed. Your app is not responding properly. Services exposed on ports [80, 443] will have intermittent failures until the health check passes.
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 ...
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 [gorenel-dashboard build-stage 1/6] FROM public.ecr.aws/docker/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 resolve public.ecr.aws/docker/library/node:20-alpine@sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa done
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 sha256:7ad115895a6aadccf7f98a05c33873c04df2933ba557c5bcdbedd3de612803da 1.26MB / 1.26MB 0.4s done
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 sha256:9d10d4687fae6e13c052431ea3221ccda835c3262df3564310345ffe173146d9 445B / 445B 0.4s done
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 sha256:b88333c42c23fbd91596ebd7fd10de239cedab9617de04142dde7315e3bc0afa 7.67kB / 7.67kB done
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 sha256:5bac2112f1a27db4775ce6ead86db9e0cbc087f0dbddfe3cbc11ecea122d5294 1.72kB / 1.72kB done
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 sha256:6757e50d3b6babac896b5ba3e7acb5219351e6a111bf4dd19974c7b0bd694c1f 6.52kB / 6.52kB done
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 sha256:ed2fdcee5269a06b0b8b77c69867176443364a72a9626e9aa2e66ab1ebda35a7 43.22MB / 43.22MB 0.4s done
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 extracting sha256:ed2fdcee5269a06b0b8b77c69867176443364a72a9626e9aa2e66ab1ebda35a7 1.3s done
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 extracting sha256:7ad115895a6aadccf7f98a05c33873c04df2933ba557c5bcdbedd3de612803da 0.0s done
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 extracting sha256:9d10d4687fae6e13c052431ea3221ccda835c3262df3564310345ffe173146d9 done
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#25 DONE 2.0s
+[2m2026-03-21T14:36:18Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 [gorenel-server internal] load build context
+[2m2026-03-21T14:36:21Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 transferring context: 173.08MB 19.9s
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 transferring context: 183.21MB 21.1s done
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#10 DONE 21.6s
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#29 [gorenel-dashboard build-stage 2/6] WORKDIR /app
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#29 ...
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#30 [gorenel-server 2/7] RUN apk --no-cache add ca-certificates tzdata curl bash docker docker-compose socat
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#30 CACHED
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#31 [gorenel-server 3/7] RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#31 CACHED
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#32 [gorenel-server 4/7] WORKDIR /home/appuser
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#32 CACHED
+[2m2026-03-21T14:36:23Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#33 [gorenel-server 5/7] COPY . .
+[2m2026-03-21T14:36:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#33 ...
+[2m2026-03-21T14:36:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#29 [gorenel-dashboard build-stage 2/6] WORKDIR /app
+[2m2026-03-21T14:36:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#29 DONE 15.9s
+[2m2026-03-21T14:36:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#33 [gorenel-server 5/7] COPY . .
+[2m2026-03-21T14:36:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#33 DONE 11.2s
+[2m2026-03-21T14:36:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#34 [gorenel-dashboard build-stage 3/6] COPY package*.json ./
+[2m2026-03-21T14:36:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#34 DONE 0.1s
+[2m2026-03-21T14:36:34Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#35 [gorenel-server 6/7] RUN chmod +x gorenel-server entrypoint-fly.sh
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:35.142833232Z" level=info msg="No non-localhost DNS nameservers are left in resolv.conf. Using default external servers"
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:35.144195853Z" level=info msg="No non-localhost DNS nameservers are left in resolv.conf. Using default external servers"
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:35.145742533Z" level=info msg="sbJoin: gwep4 ''->'dbb9182c814c', gwep6 ''->''"
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:35.147274134Z" level=warning msg="Failed to delete conntrack state for 172.17.0.3: invalid argument"
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:35.148139715Z" level=info msg="sbJoin: gwep4 ''->'a8d34ab77a10', gwep6 ''->''"
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:35.149920565Z" level=warning msg="Failed to delete conntrack state for 172.17.0.2: invalid argument"
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:35.588513945Z" level=warning msg="Failed to delete conntrack state for 172.17.0.2: invalid argument"
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#35 DONE 0.7s
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 [gorenel-dashboard build-stage 4/6] RUN npm install
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:35.815465151Z" level=info msg="No non-localhost DNS nameservers are left in resolv.conf. Using default external servers"
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:35.816869462Z" level=info msg="sbJoin: gwep4 ''->'ea6884c64ef3', gwep6 ''->''"
+[2m2026-03-21T14:36:35Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:35.818672573Z" level=warning msg="Failed to delete conntrack state for 172.17.0.4: invalid argument"
+[2m2026-03-21T14:36:44Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 ...
+[2m2026-03-21T14:36:44Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#37 [gorenel-server 7/7] RUN mkdir -p logs/batches logs/archives && chown -R appuser:appgroup .
+[2m2026-03-21T14:36:45Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:45.455894433Z" level=warning msg="Failed to delete conntrack state for 172.17.0.4: invalid argument"
+[2m2026-03-21T14:36:48Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 14:36:48 socat[2955] W connect(5, AF=2 127.0.0.1:4000, 16): Connection refused
+[2m2026-03-21T14:36:48Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]2026/03/21 14:36:48 socat[2955] E TCP4:127.0.0.1:4000: Connection refused
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#37 ...
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 [gorenel-dashboard build-stage 4/6] RUN npm install
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.03
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.03 added 319 packages, and audited 320 packages in 15s
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.03
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.03 74 packages are looking for funding
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.03   run `npm fund` for details
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27 npm notice
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27 npm notice New major version of npm available! 10.8.2 -> 11.12.0
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27 npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.0
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27 npm notice To update run: npm install -g npm@11.12.0
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27 npm notice
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27 5 vulnerabilities (1 moderate, 4 high)
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27 To address all issues, run:
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27   npm audit fix
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27
+[2m2026-03-21T14:36:50Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 15.27 Run `npm audit` for details.
+[2m2026-03-21T14:36:51Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:36:51.295576239Z" level=warning msg="Failed to delete conntrack state for 172.17.0.3: invalid argument"
+[2m2026-03-21T14:36:57Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 ...
+[2m2026-03-21T14:36:57Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#37 [gorenel-server 7/7] RUN mkdir -p logs/batches logs/archives && chown -R appuser:appgroup .
+[2m2026-03-21T14:36:57Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#37 DONE 21.6s
+[2m2026-03-21T14:36:57Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 [gorenel-dashboard build-stage 4/6] RUN npm install
+[2m2026-03-21T14:36:57Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#36 DONE 22.2s
+[2m2026-03-21T14:36:57Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#38 [gorenel-server] exporting to image
+[2m2026-03-21T14:36:57Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#38 exporting layers
+[2m2026-03-21T14:37:01Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#38 ...
+[2m2026-03-21T14:37:01Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#39 [gorenel-dashboard build-stage 5/6] COPY . ./
+[2m2026-03-21T14:37:01Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#39 DONE 4.0s
+[2m2026-03-21T14:37:01Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#40 [gorenel-dashboard build-stage 6/6] RUN npm run build
+[2m2026-03-21T14:37:03Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:37:03.616795188Z" level=info msg="No non-localhost DNS nameservers are left in resolv.conf. Using default external servers"
+[2m2026-03-21T14:37:03Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:37:03.621820100Z" level=info msg="sbJoin: gwep4 ''->'b8bfac13a4c8', gwep6 ''->''"
+[2m2026-03-21T14:37:03Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]time="2026-03-21T14:37:03.694760945Z" level=warning msg="Failed to delete conntrack state for 172.17.0.2: invalid argument"
+[2m2026-03-21T14:37:06Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#40 ...
+[2m2026-03-21T14:37:06Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#41 [gorenel-server] resolving provenance for metadata file
+[2m2026-03-21T14:37:06Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#41 DONE 0.1s
+[2m2026-03-21T14:37:06Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#40 [gorenel-dashboard build-stage 6/6] RUN npm run build
+[2m2026-03-21T14:37:06Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#40 5.690
+[2m2026-03-21T14:37:06Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#40 5.690 > web-dashboard@0.0.0 build
+[2m2026-03-21T14:37:06Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#40 5.690 > tsc -b && vite build
+[2m2026-03-21T14:37:06Z[0m app[3d8d545df53908] [32mfra[0m [[34minfo[0m]#40 5.690

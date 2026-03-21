@@ -57,16 +57,14 @@ services:
     build:
       context: ./services/ml
       dockerfile: Dockerfile
-    ports:
-      - "5000:5000"
+    # Internal only
     networks:
       - gorenel-net
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    image: public.ecr.aws/docker/library/redis:7-alpine
+    # Internal only
     networks:
       - gorenel-net
     healthcheck:
@@ -77,9 +75,8 @@ services:
     restart: unless-stopped
 
   postgres:
-    image: postgres:15-alpine
-    ports:
-      - "5432:5432"
+    image: public.ecr.aws/docker/library/postgres:15-alpine
+    # Internal only
     restart: unless-stopped
     environment:
       - POSTGRES_USER=postgres
@@ -97,9 +94,7 @@ services:
 
   clickhouse:
     image: clickhouse/clickhouse-server:23.8-alpine
-    ports:
-      - "9000:9000"
-      - "8123:8123"
+    # Internal only
     environment:
       - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
       - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
