@@ -56,12 +56,10 @@ while true; do
   sleep 1
 done &
 
-# Control Port (7000) bridge - Points to local 7005 (Docker host port)
-while true; do
-  # Bridge external IPv6:7000 to internal Control Port IPv4:7005
-  socat TCP6-LISTEN:7000,fork,reuseaddr,bind=[::] TCP4:127.0.0.1:7005
-  sleep 1
-done &
+# Control Port: Fly.io routes external:7000 -> internal_port:7005 (set in fly.toml)
+# Docker maps 7005 -> container:7000 (set in docker-compose.yml)
+# No socat needed for control port
+
 
 # Start Gorenel services
 echo "Stopping any old containers..."
