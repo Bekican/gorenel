@@ -2,7 +2,6 @@ package server
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"net"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/ml"
-	"github.com/caddyserver/certmagic"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -55,32 +53,14 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 func (p *HTTPProxy) Start(port string) error {
 	p.logger.Info("HTTP Proxy initiating", zap.String("port", port))
 
+	// Certmagic (Auto-SSL) is disabled in production Docker environment 
+	// because SSL is handled by Fly.io LBs and Nginx proxy.
+	/*
 	if p.env == "production" && p.baseDomain != "" && p.acmeEmail != "" {
 		certmagic.DefaultACME.Email = p.acmeEmail
-		// production'da let's encrypt kullanılmalı, staging testi için:
-		// certmagic.DefaultACME.CA = certmagic.LetsEncryptStagingCA
-
-		magic := certmagic.NewDefault()
-		// On-demand certificates for subdomains
-		magic.OnDemand = &certmagic.OnDemandConfig{
-			DecisionFunc: func(ctx context.Context, name string) error {
-				if strings.HasSuffix(name, p.baseDomain) || name == p.baseDomain {
-					return nil
-				}
-				return fmt.Errorf("domain not allowed")
-			},
-		}
-
-		p.logger.Info("HTTPS automation initiated via Certmagic", zap.String("base_domain", p.baseDomain))
-
-		// Serve both HTTP (redirect) and HTTPS in a separate goroutine
-		go func() {
-			err := certmagic.HTTPS([]string{p.baseDomain, "*" + p.baseDomain}, p)
-			if err != nil {
-				p.logger.Error("Certmagic HTTPS failure, automation may be limited", zap.Error(err))
-			}
-		}()
+		// ...
 	}
+	*/
 
 	server := &http.Server{
 		Addr:    port,
