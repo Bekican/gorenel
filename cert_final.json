@@ -1,0 +1,58 @@
+﻿{
+    "hostname": "*.gorenel.site",
+    "configured": false,
+    "acme_requested": true,
+    "status": "Awaiting configuration",
+    "dns_provider": "dns-parking",
+    "certificates": [],
+    "validation": {
+        "dns_configured": false,
+        "alpn_configured": false,
+        "http_configured": false,
+        "ownership_txt_configured": false
+    },
+    "dns_requirements": {
+        "a": [
+            "66.241.125.20"
+        ],
+        "aaaa": [
+            "2a09:8280:1::e3:355d:0"
+        ],
+        "cname": "l2n3zp1.gorenel-app.fly.dev",
+        "acme_challenge": {
+            "name": "_acme-challenge.gorenel.site",
+            "target": "gorenel.site.l2n3zp1.flydns.net"
+        },
+        "ownership": {
+            "name": "_fly-ownership.gorenel.site",
+            "app_value": "app-l2n3zp1",
+            "org_value": "org-1wq2y2"
+        }
+    },
+    "dns_records": {
+        "a": [
+            "66.241.125.20"
+        ],
+        "aaaa": [
+            "2a09:8280:1::e3:355d:0"
+        ],
+        "cname": [
+            "gorenel-app.fly.dev"
+        ],
+        "resolved_addresses": [
+            "66.241.125.20",
+            "2a09:8280:1::e3:355d:0"
+        ],
+        "soa": "ns1.dns-parking.com",
+        "acme_challenge_cname": "acme-l2n3zp1.flydns.net",
+        "ownership_txt": null
+    },
+    "validation_errors": [
+        {
+            "code": "DNS_VALIDATION_FAILED",
+            "message": "DNS validation for Let's Encrypt certificate failed",
+            "remediation": "Add the required CNAME record for DNS validation",
+            "timestamp": "2026-03-22T16:03:51.825Z"
+        }
+    ]
+}

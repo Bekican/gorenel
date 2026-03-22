@@ -49,11 +49,17 @@ func (c *WSConn) Write(p []byte) (int, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	err := c.ws.WriteMessage(websocket.BinaryMessage, p)
+	w, err := c.ws.NextWriter(websocket.BinaryMessage)
 	if err != nil {
 		return 0, err
 	}
-	return len(p), nil
+	defer w.Close()
+
+	n, err := w.Write(p)
+	if err != nil {
+		return n, err
+	}
+	return n, nil
 }
 
 func (c *WSConn) Close() error {
