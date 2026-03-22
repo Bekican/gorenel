@@ -124,23 +124,29 @@ function App() {
     return <ShareView shareId={shareId} />;
   }
 
-  if (!user) {
+  if (!user || !isAuthStarted) {
     if (!isAuthStarted) {
-      return <LandingPage onLogin={() => setIsAuthStarted(true)} />;
+      return (
+        <LandingPage 
+          onLogin={() => { setAuthMode('login'); setIsAuthStarted(true); }} 
+          isLoggedIn={!!user}
+          onGoToDashboard={() => setIsAuthStarted(true)}
+        />
+      );
     }
 
     if (authMode === 'register') {
       return (
         <RegisterPage 
           onSwitchToLogin={() => setAuthMode('login')} 
-          onRegisterSuccess={(u) => { setUser(u); localStorage.setItem('gorenel_user', JSON.stringify(u)); }} 
+          onRegisterSuccess={(u) => { setUser(u); localStorage.setItem('gorenel_user', JSON.stringify(u)); setIsAuthStarted(true); }} 
         />
       );
     }
     return (
       <LoginPage 
         onSwitchToRegister={() => setAuthMode('register')} 
-        onLoginSuccess={(u) => { setUser(u); localStorage.setItem('gorenel_user', JSON.stringify(u)); }} 
+        onLoginSuccess={(u) => { setUser(u); localStorage.setItem('gorenel_user', JSON.stringify(u)); setIsAuthStarted(true); }} 
       />
     );
   }

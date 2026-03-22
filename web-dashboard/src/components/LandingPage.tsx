@@ -4,9 +4,11 @@ import { useTranslation } from 'react-i18next';
 
 interface LandingPageProps {
     onLogin: () => void;
+    isLoggedIn?: boolean;
+    onGoToDashboard?: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, onGoToDashboard }) => {
     const { t, i18n } = useTranslation();
     const [typedText, setTypedText] = useState('');
     const fullText = "gorenel start --port 3000";
@@ -53,10 +55,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                     </button>
                     <a href="#" className="hidden md:block text-sm text-white/60 hover:text-white transition-colors">{t('common.documentation', 'Docs')}</a>
                     <button
-                        onClick={onLogin}
+                        onClick={isLoggedIn ? onGoToDashboard : onLogin}
                         className="px-5 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-neutral-200 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                     >
-                        {t('common.login')} {`->`}
+                        {isLoggedIn ? t('common.to_dashboard', 'Dashboard ->') : `${t('common.login')} ->`}
                     </button>
                 </div>
             </nav>
@@ -87,10 +89,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
 
                     <div className="flex items-center gap-4 pt-4">
                         <button
-                            onClick={onLogin}
+                            onClick={isLoggedIn ? onGoToDashboard : onLogin}
                             className="group px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all shadow-[0_0_40px_-10px_rgba(16,185,129,0.4)] flex items-center gap-2"
                         >
-                            {t('landing.cta')}
+                            {isLoggedIn ? t('common.to_dashboard', 'Dashboard') : t('landing.cta')}
                             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </button>
                         <button className="px-8 py-3.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium rounded-xl transition-all flex items-center gap-2">
