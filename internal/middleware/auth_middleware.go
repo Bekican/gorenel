@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Bekican/gorenel/pkg/auth"
 )
@@ -15,19 +15,29 @@ const UserKey userContextKey = "user"
 func RequireAuth(jwtSvc *auth.JWTService) func(http.HandlerFunc) http.HandlerFunc {
 	return func(next http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
+			var tokenString string
+
+			// 1. Check Cookie
 			cookie, err := r.Cookie("auth_token")
-			if err != nil {
-				// Log ALL cookies for debugging
-				allCookies := r.Header.Get("Cookie")
-				fmt.Printf("[DEBUG] Auth failed: Missing auth_token cookie. ALL cookies received: '%s'\n", allCookies)
+			if err == nil {
+				tokenString = cookie.Value
+			}
+
+			// 2. Fallback to Authorization Header (Bearer)
+			if tokenString == "" {
+				authHeader := r.Header.Get("Authorization")
+				if strings.HasPrefix(authHeader, "Bearer ") {
+					tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+				}
+			}
+
+			if tokenString == "" {
 				http.Error(w, "Unauthorized: Missing token", http.StatusUnauthorized)
 				return
 			}
 
-			claims, err := jwtSvc.ValidateToken(cookie.Value)
+			claims, err := jwtSvc.ValidateToken(tokenString)
 			if err != nil {
-				// Log for debugging
-				fmt.Printf("[DEBUG] Auth failed: Invalid token: %v\n", err)
 				http.Error(w, "Unauthorized: Invalid token", http.StatusUnauthorized)
 				return
 			}

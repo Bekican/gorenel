@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Bekican/gorenel/internal/middleware"
@@ -59,7 +60,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 				return errors.Internal(err)
 			}
 
-			// Set Cookie
+			// Set Cookie with dynamic domain
+			cookieDomain := ""
+			if h.isProd {
+				cookieDomain = "." + strings.TrimPrefix(r.Host, "www.")
+			}
+
 			http.SetCookie(w, &http.Cookie{
 				Name:     "auth_token",
 				Value:    tokenString,
@@ -67,7 +73,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 				HttpOnly: true,
 				Secure:   h.isProd,
 				Path:     "/",
-				Domain:   ".gorenel.site",
+				Domain:   cookieDomain,
 				SameSite: http.SameSiteLaxMode,
 			})
 
