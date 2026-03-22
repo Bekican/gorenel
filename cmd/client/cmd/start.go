@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/hashicorp/yamux"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -78,7 +80,7 @@ func runStart(cmd *cobra.Command, args []string) {
 	if serverAddr == "" {
 		serverAddr = viper.GetString("server")
 		if serverAddr == "" {
-			serverAddr = "gorenel.site:7000"
+			serverAddr = "wss://gorenel.site/tunnel/connect"
 		}
 	}
 
@@ -186,10 +188,27 @@ func runStart(cmd *cobra.Command, args []string) {
 
 // startTunnel - Ana tunnel mantığı
 func startTunnel(ctx context.Context, serverAddr string, localPort int, domain string, tType string) error {
-	// 1. Server'a bağlan
-	conn, err := net.Dial("tcp", serverAddr)
-	if err != nil {
-		return fmt.Errorf("server'a bağlanılamadı: %w", err)
+	// 1. Server'a bağlan (WebSocket üzerinden)
+	var conn net.Conn
+	var err error
+
+	if strings.HasPrefix(serverAddr, "ws://") || strings.HasPrefix(serverAddr, "wss://") {
+		// WebSocket bağlantısı (Fly.io shared IP için)
+		header := http.Header{}
+		dialer := websocket.Dialer{
+			HandshakeTimeout: 15 * time.Second,
+		}
+		ws, _, err := dialer.DialContext(ctx, serverAddr, header)
+		if err != nil {
+			return fmt.Errorf("WebSocket bağlantısı kurulamadı: %w", err)
+		}
+		conn = NewClientWSConn(ws)
+	} else {
+		// Legacy: Raw TCP bağlantısı
+		conn, err = net.Dial("tcp", serverAddr)
+		if err != nil {
+			return fmt.Errorf("server'a bağlanılamadı: %w", err)
+		}
 	}
 	defer conn.Close()
 

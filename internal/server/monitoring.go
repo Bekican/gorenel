@@ -72,6 +72,11 @@ func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.Aut
 	}
 }
 
+// SetTunnelHandler sets the callback function for handling tunnel client connections over WebSocket.
+func (m *MonitoringServer) SetTunnelHandler(handler TunnelClientHandler) {
+	m.tunnelHandler = handler
+}
+
 func (m *MonitoringServer) Start(port string) error {
 	mux := http.NewServeMux()
 
@@ -543,4 +548,38 @@ func (m *MonitoringServer) handleDownload(w http.ResponseWriter, r *http.Request
 	w.Header().Set("Content-Disposition", "attachment; filename=gorenel-windows-amd64.exe")
 	http.ServeFile(w, r, "/home/appuser/gorenel-windows-amd64.exe")
 }
+
+// WebSocket upgrader for tunnel connections
+var tunnelUpgrader = websocket.Upgrader{
+	ReadBufferSize:  16384,
+	WriteBufferSize: 16384,
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Allow all origins for CLI clients
+	},
+}
+
+// handleTunnelWebSocket upgrades HTTP to WebSocket and passes to tunnel handler.
+// This replaces the raw TCP control port (7000) so tunnels work over HTTPS (443).
+func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.Request) {
+	if m.tunnelHandler == nil {
+		http.Error(w, "Tunnel handler not configured", http.StatusServiceUnavailable)
+		return
+	}
+
+	ws, err := tunnelUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		m.logger.Error("WebSocket upgrade failed", zap.Error(err))
+		return
+	}
+
+	m.logger.Info("New WebSocket tunnel connection",
+		zap.String("remote_addr", r.RemoteAddr),
+		zap.String("x_forwarded_for", r.Header.Get("X-Forwarded-For")),
+	)
+
+	// Wrap WebSocket as net.Conn and hand off to existing tunnel handler
+	conn := NewWSConn(ws)
+	m.tunnelHandler(conn)
+}
+
 

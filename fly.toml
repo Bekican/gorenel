@@ -22,11 +22,7 @@ primary_region = "fra"
   timeout = "5s"
   path = "/"
 
-[[services]]
-  internal_port = 7005
-  protocol = "tcp"
-  [[services.ports]]
-    port = 7000
+
 
 [[vm]]
   size = "shared-cpu-4x"
