@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -221,6 +222,15 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	captureWriter := NewResponseCaptureWriter(w)
 
+	// Set proxy headers
+	if r.Header.Get("X-Forwarded-For") == "" {
+		r.Header.Set("X-Forwarded-For", clientIP)
+	}
+	if r.Header.Get("X-Forwarded-Proto") == "" {
+		r.Header.Set("X-Forwarded-Proto", "http")
+	}
+	r.Header.Set("X-Forwarded-Host", r.Host)
+
 	if err := r.Write(stream); err != nil {
 		statusCode = http.StatusBadGateway
 		p.logger.Error("Request forwarding failed", zap.Error(err))
@@ -246,15 +256,33 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Now populate the captured req body
 	captured.ReqBody = reqBodyBuf.Bytes()
 
-	bytesReceived, err = io.Copy(captureWriter, stream)
+	// Phase 6: Proper HTTP Response Parsing from Tunnel
+	// Yamux stream provides raw HTTP bytes, we MUST parse them to set headers/status correctly.
+	respReader := bufio.NewReader(stream)
+	resp, err := http.ReadResponse(respReader, r)
 	if err != nil {
-		p.logger.Error("Response copy error", zap.Error(err))
+		p.logger.Error("Failed to read response from tunnel", zap.Error(err))
+		http.Error(w, "Tunnel response error", http.StatusBadGateway)
+		return
 	}
+	defer resp.Body.Close()
+
+	// Copy headers from tunnel response to browser response
+	for k, vv := range resp.Header {
+		for _, v := range vv {
+			captureWriter.Header().Add(k, v)
+		}
+	}
+	captureWriter.WriteHeader(resp.StatusCode)
+
+	// Stream actual body to browser
+	bytesReceived, err = io.Copy(captureWriter, resp.Body)
+	if err != nil {
+		p.logger.Error("Response body copy error", zap.Error(err))
+	}
+
 	bytesOut = bytesReceived
-	statusCode = captureWriter.StatusCode
-	if statusCode == 0 {
-		statusCode = http.StatusOK
-	}
+	statusCode = resp.StatusCode
 
 	captured.RespHeaders = captureWriter.Header()
 	captured.RespBody = captureWriter.Body.Bytes()

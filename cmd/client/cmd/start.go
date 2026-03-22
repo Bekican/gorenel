@@ -324,6 +324,12 @@ func handleStreams(ctx context.Context, session *yamux.Session, localPort int) {
 func proxyToLocalhost(stream net.Conn, localAddr string) {
 	defer stream.Close()
 
+	// 'localhost' yerine '127.0.0.1' kullanmak IPv6/IPv4 karmaşasını önler
+	targetAddr := localAddr
+	if strings.HasPrefix(targetAddr, "localhost:") {
+		targetAddr = strings.Replace(targetAddr, "localhost:", "127.0.0.1:", 1)
+	}
+
 	startTime := time.Now()
 	var method, path string
 
@@ -333,25 +339,43 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 		n, _ := stream.Read(buf)
 		if n > 0 {
 			line := buf[:n]
-			parts := strings.Split(string(line), " ")
+			lineStr := string(line)
+			parts := strings.Split(lineStr, " ")
 			if len(parts) >= 2 {
 				method = parts[0]
 				path = parts[1]
 			}
+
+			// --- ÖNEMLİ: Host header'ını localhost'a çevir ---
+			// Next.js vb. frameworkler Host header'ı uyuşmazsa redirect atabilir veya hata verebilir.
+			modifiedBuf := line
+			hostIdx := strings.Index(lineStr, "Host: ")
+			if hostIdx != -1 {
+				endIdx := strings.Index(lineStr[hostIdx:], "\r\n")
+				if endIdx != -1 {
+					oldHostLine := lineStr[hostIdx : hostIdx+endIdx]
+					newHostLine := "Host: " + localAddr
+					lineStr = strings.Replace(lineStr, oldHostLine, newHostLine, 1)
+					modifiedBuf = []byte(lineStr)
+				}
+			}
+
 			// Wrap stream to not lose read data
 			stream = &MultiConn{
-				Reader: io.MultiReader(bytes.NewReader(buf[:n]), stream),
+				Reader: io.MultiReader(bytes.NewReader(modifiedBuf), stream),
 				Conn:   stream,
 			}
 		}
 	}
 
-	localConn, err := net.Dial("tcp", localAddr)
+	log.Printf("Yerel servise bağlanılıyor: %s...", targetAddr)
+	localConn, err := net.DialTimeout("tcp", targetAddr, 5*time.Second)
 	if err != nil {
-		log.Printf("Localhost'a bağlanılamadı: %v", err)
+		log.Printf("❌ Yerel servise BAĞLANILAMADI (%s): %v. Lütfen projenizin bu adreste çalıştığından emin olun.", targetAddr, err)
 		return
 	}
 	defer localConn.Close()
+	log.Printf("✅ Yerel servise BAĞLANILDI: %s", targetAddr)
 
 	// Bidirectional copy with metrics
 	done := make(chan struct{}, 2)
