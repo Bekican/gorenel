@@ -17,8 +17,9 @@ func RequireAuth(jwtSvc *auth.JWTService) func(http.HandlerFunc) http.HandlerFun
 		return func(w http.ResponseWriter, r *http.Request) {
 			cookie, err := r.Cookie("auth_token")
 			if err != nil {
-				// Log for debugging
-				fmt.Printf("[DEBUG] Auth failed: Missing auth_token cookie\n")
+				// Log ALL cookies for debugging
+				allCookies := r.Header.Get("Cookie")
+				fmt.Printf("[DEBUG] Auth failed: Missing auth_token cookie. ALL cookies received: '%s'\n", allCookies)
 				http.Error(w, "Unauthorized: Missing token", http.StatusUnauthorized)
 				return
 			}
