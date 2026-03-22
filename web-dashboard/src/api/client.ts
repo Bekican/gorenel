@@ -251,8 +251,9 @@ export const api = {
   },
 
   logout: async () => {
-    // We can clear cookies here or handle server-side
-    document.cookie = "auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    await apiClient.post('/api/logout');
+    // Clear any local user data just in case, though the cookie is the main one
+    localStorage.removeItem('gorenel_user');
   },
 
   // Traffic Inspection

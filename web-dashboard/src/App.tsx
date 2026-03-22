@@ -115,6 +115,7 @@ function App() {
     await api.logout();
     setUser(null);
     localStorage.removeItem('gorenel_user');
+    setIsAuthStarted(false);
   };
 
   // Handle public share links

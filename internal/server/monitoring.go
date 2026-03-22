@@ -93,7 +93,8 @@ func (m *MonitoringServer) Start(port string) error {
 	if m.authHandler != nil {
 		mux.HandleFunc("/api/login", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Login)))
 		mux.HandleFunc("/api/register", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Register)))
-		mux.HandleFunc("/api/callback", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Callback))) // YENİ
+		mux.HandleFunc("/api/callback", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Callback)))
+		mux.HandleFunc("/api/logout", m.corsMiddleware(serverErrors.ErrorWrapper(m.authHandler.Logout)))
 
 		authMw := middleware.RequireAuth(m.tokenSvc)
 		mux.HandleFunc("/api/me", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.authHandler.Me))))

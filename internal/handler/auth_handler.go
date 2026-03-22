@@ -185,7 +185,12 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		return errors.Internal(err)
 	}
 
-	// 5. Set JWT as HttpOnly Cookie
+	// 5. Set JWT as HttpOnly Cookie with dynamic domain
+	cookieDomain := ""
+	if h.isProd {
+		cookieDomain = "." + strings.TrimPrefix(r.Host, "www.")
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    tokenString,
@@ -193,12 +198,36 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		HttpOnly: true,
 		Secure:   h.isProd,
 		Path:     "/",
-		Domain:   ".gorenel.site", // Allow sharing between www and apex
+		Domain:   cookieDomain,
 		SameSite: http.SameSiteLaxMode,
 	})
 
 	// 6. Redirect to Frontend Dashboard
 	http.Redirect(w, r, "/dashboard?login=success", http.StatusSeeOther)
+	return nil
+}
+
+// Logout handles user logout by clearing the auth cookie
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
+	cookieDomain := ""
+	if h.isProd {
+		cookieDomain = "." + strings.TrimPrefix(r.Host, "www.")
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    "",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   h.isProd,
+		Path:     "/",
+		Domain:   cookieDomain,
+		SameSite: http.SameSiteLaxMode,
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "success"})
 	return nil
 }
 
