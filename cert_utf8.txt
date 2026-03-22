@@ -1,0 +1,7 @@
+﻿  Status                  = Not verified
+  Hostname                = *.gorenel.site
+
+! DNS validation for Let's Encrypt certificate failed
+  Add the required CNAME record for DNS validation
+
+Run fly certs setup '*.gorenel.site' to view DNS setup instructions.
