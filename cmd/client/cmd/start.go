@@ -224,6 +224,7 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 		APIKey:       apiKey,
 		CustomDomain: domain,
 		TunnelType:   tType,
+		LocalPort:    localPort,
 	}
 	reqPayload, _ := json.Marshal(regReq)
 

@@ -352,7 +352,11 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 	} else {
 		// DEFAULT: HTTP Subdomain
 		subdomain = utils.GenerateSubDomain(8)
-		fullURL = fmt.Sprintf("http://%s.%s%s", subdomain, cfg.BaseDomain, cfg.ProxyPort)
+		if cfg.Env == "production" {
+			fullURL = fmt.Sprintf("http://%s.%s", subdomain, cfg.BaseDomain)
+		} else {
+			fullURL = fmt.Sprintf("http://%s.%s%s", subdomain, cfg.BaseDomain, cfg.ProxyPort)
+		}
 		logger.Info("HTTP Subdomain atandı", zap.String("url", fullURL))
 	}
 
