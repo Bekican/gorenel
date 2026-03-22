@@ -352,7 +352,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 	} else {
 		// DEFAULT: HTTP Subdomain
 		subdomain = utils.GenerateSubDomain(8)
-		if cfg.Env == "production" {
+		if cfg.Env == "production" || cfg.BaseDomain == "gorenel.site" {
 			fullURL = fmt.Sprintf("http://%s.%s", subdomain, cfg.BaseDomain)
 		} else {
 			fullURL = fmt.Sprintf("http://%s.%s%s", subdomain, cfg.BaseDomain, cfg.ProxyPort)
