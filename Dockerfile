@@ -7,8 +7,9 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /home/appuser
 
-# Copy the server binary
+# Copy the server binary and client binaries for download
 COPY gorenel-server .
+COPY bin/ ./bin/
 # .env is optional — env vars are injected via docker-compose
 COPY .env* ./
 
