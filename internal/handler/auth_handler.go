@@ -69,22 +69,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 				return errors.Internal(err)
 			}
 
-			// Set Cookie with dynamic domain
-			cookieDomain := ""
-			if h.isProd {
-				cookieDomain = "." + strings.TrimPrefix(r.Host, "www.")
-			}
-
-			http.SetCookie(w, &http.Cookie{
-				Name:     "auth_token",
-				Value:    tokenString,
-				Expires:  time.Now().Add(24 * time.Hour),
-				HttpOnly: true,
-				Secure:   h.isProd,
-				Path:     "/",
-				Domain:   cookieDomain,
-				SameSite: http.SameSiteLaxMode,
-			})
+			// Set Cookie using helper
+			h.setAuthCookie(w, r, tokenString)
 
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]interface{}{
@@ -194,22 +180,8 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		return errors.Internal(err)
 	}
 
-	// 5. Set JWT as HttpOnly Cookie with dynamic domain
-	cookieDomain := ""
-	if h.isProd {
-		cookieDomain = "." + strings.TrimPrefix(r.Host, "www.")
-	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     "auth_token",
-		Value:    tokenString,
-		Expires:  time.Now().Add(24 * time.Hour),
-		HttpOnly: true,
-		Secure:   h.isProd,
-		Path:     "/",
-		Domain:   cookieDomain,
-		SameSite: http.SameSiteLaxMode,
-	})
+	// 5. Set JWT as HttpOnly Cookie using helper
+	h.setAuthCookie(w, r, tokenString)
 
 	// 6. Redirect to Frontend Dashboard
 	http.Redirect(w, r, "/dashboard?login=success", http.StatusSeeOther)
@@ -218,15 +190,27 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 
 // Logout handles user logout by clearing the auth cookie
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) error {
+	// Clear cookie using the same domain logic
 	cookieDomain := ""
 	if h.isProd {
-		cookieDomain = "." + strings.TrimPrefix(r.Host, "www.")
+		host := r.Host
+		if idx := strings.Index(host, ":"); idx != -1 {
+			host = host[:idx]
+		}
+		if host != "localhost" && host != "127.0.0.1" {
+			parts := strings.Split(host, ".")
+			if len(parts) >= 2 {
+				cookieDomain = "." + strings.Join(parts[len(parts)-2:], ".")
+			} else {
+				cookieDomain = "." + host
+			}
+		}
 	}
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    "",
-		Expires:  time.Now().Add(-1 * time.Hour),
+		Expires:  time.Now().Add(-24 * time.Hour),
 		MaxAge:   -1,
 		HttpOnly: true,
 		Secure:   h.isProd,
@@ -285,6 +269,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	apiKey := authmgr.GenerateAPIKey("gk")
 	h.authMgr.AddKey(apiKey, user.ID, 100)
 
+	// Automatic Login after Registration
+	tokenString, err := h.tokenSvc.GenerateToken(user)
+	if err == nil {
+		h.setAuthCookie(w, r, tokenString)
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -296,6 +286,40 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 		},
 	})
 	return nil
+}
+
+// setAuthCookie is a helper to set the authentication cookie consistently
+func (h *AuthHandler) setAuthCookie(w http.ResponseWriter, r *http.Request, tokenString string) {
+	cookieDomain := ""
+	if h.isProd {
+		// Try to extract base domain from host, but handle ports and localhost
+		host := r.Host
+		if idx := strings.Index(host, ":"); idx != -1 {
+			host = host[:idx]
+		}
+		
+		if host != "localhost" && host != "127.0.0.1" {
+			// If it's a subdomain like app.gorenel.site, set domain for .gorenel.site
+			// This allows the cookie to be shared among subdomains
+			parts := strings.Split(host, ".")
+			if len(parts) >= 2 {
+				cookieDomain = "." + strings.Join(parts[len(parts)-2:], ".")
+			} else {
+				cookieDomain = "." + host
+			}
+		}
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    tokenString,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HttpOnly: true,
+		Secure:   h.isProd,
+		Path:     "/",
+		Domain:   cookieDomain,
+		SameSite: http.SameSiteLaxMode,
+	})
 }
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) error {
