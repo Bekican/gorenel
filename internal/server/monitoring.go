@@ -167,7 +167,8 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 		// Security: Production secure CORS whitelist
 		isAllowed := false
 		if origin != "" {
-			if origin == "http://localhost" || strings.HasPrefix(origin, "http://localhost:") || origin == "http://127.0.0.1" || strings.HasPrefix(origin, "http://127.0.0.1:") {
+			// Localhost specifically for dev environment, disallow in production unless explicitly needed
+			if m.env != "production" && (origin == "http://localhost" || strings.HasPrefix(origin, "http://localhost:") || origin == "http://127.0.0.1" || strings.HasPrefix(origin, "http://127.0.0.1:")) {
 				isAllowed = true
 			} else if strings.HasSuffix(origin, ".fly.dev") || strings.HasSuffix(origin, ".gorenel.site") || origin == "https://gorenel.site" {
 				isAllowed = true
@@ -201,6 +202,21 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
+		
+		// 🛡️ Content Security Policy (CSP)
+		// Restrict scripts, styles and connections to trusted domains
+		csp := "default-src 'self'; " +
+			"script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com; " +
+			"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://rsms.me; " +
+			"font-src 'self' https://fonts.gstatic.com https://rsms.me; " +
+			"connect-src 'self' wss://*.gorenel.site wss://*.fly.dev https://*.gorenel.site https://*.fly.dev; " +
+			"img-src 'self' data: https:; "
+		w.Header().Set("Content-Security-Policy", csp)
+
+		// 🛡️ HTTP Strict Transport Security (HSTS) - Force HTTPS for 1 year
+		if m.env == "production" {
+			w.Header().Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
+		}
 
 		// Handle preflight requests
 		if r.Method == "OPTIONS" {

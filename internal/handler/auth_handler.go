@@ -43,6 +43,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&credentials); err == nil && credentials.Email != "" {
+		// Input validation
+		credentials.Email = strings.TrimSpace(strings.ToLower(credentials.Email))
+		if credentials.Email == "" || !strings.Contains(credentials.Email, "@") || !strings.Contains(credentials.Email, ".") {
+			return errors.BadRequest("Geçersiz e-posta adresi", nil)
+		}
+		if credentials.Password == "" {
+			return errors.BadRequest("Şifre gereklidir", nil)
+		}
+
 		// 1. Check if user exists locally
 		user, err := h.userRepo.GetByEmail(credentials.Email)
 		if err == nil {
@@ -241,6 +250,15 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		return errors.BadRequest("Invalid request body", err)
+	}
+
+	// Input validation
+	body.Email = strings.TrimSpace(strings.ToLower(body.Email))
+	if body.Email == "" || !strings.Contains(body.Email, "@") || !strings.Contains(body.Email, ".") {
+		return errors.BadRequest("Geçersiz e-posta adresi", nil)
+	}
+	if len(body.Password) < 6 {
+		return errors.BadRequest("Şifre en az 6 karakter olmalıdır", nil)
 	}
 
 	// Hash password
