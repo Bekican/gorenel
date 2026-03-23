@@ -14,11 +14,17 @@ import (
 // Re-export or use directly
 type RequestEvent = protocol.RequestEvent
 
+type consumerSlot struct {
+	c  EventConsumer
+	ch chan *RequestEvent
+}
+
 type EventStream struct {
 	events chan *RequestEvent
 
-	subscribers []EventConsumer
-	subMu       sync.RWMutex
+	slots []consumerSlot
+	subMu sync.RWMutex
+	perCh int // buffer size per consumer queue
 
 	TotalEvents   int64
 	DroppedEvents int64
@@ -27,7 +33,6 @@ type EventStream struct {
 	done   chan struct{}
 	logger *zap.Logger
 	closed atomic.Bool
-	sem    chan struct{}
 }
 
 type EventConsumer interface {
@@ -35,15 +40,18 @@ type EventConsumer interface {
 	Name() string
 }
 
-// yeni event streeam oluşturuyoruz
+// NewEventStream creates a pub/sub stream with a bounded main buffer and per-consumer worker queues.
 func NewEventStream(bufferSize int) *EventStream {
 	l, _ := zap.NewProduction()
+	perCh := 256
+	if bufferSize > 0 && bufferSize < perCh {
+		perCh = bufferSize
+	}
 	es := &EventStream{
-		events:      make(chan *RequestEvent, bufferSize),
-		subscribers: make([]EventConsumer, 0),
-		done:        make(chan struct{}),
-		logger:      l,
-		sem:         make(chan struct{}, 256),
+		events: make(chan *RequestEvent, bufferSize),
+		done:   make(chan struct{}),
+		logger: l,
+		perCh:  perCh,
 	}
 
 	go es.dispatcher()
@@ -51,7 +59,6 @@ func NewEventStream(bufferSize int) *EventStream {
 	return es
 }
 
-// event yayınlıyoruz
 func (es *EventStream) publish(event *RequestEvent) {
 	if es.closed.Load() {
 		return
@@ -68,15 +75,36 @@ func (es *EventStream) publish(event *RequestEvent) {
 	}
 }
 
-// yeni consumer ekleme fonksiyonumuz
+// Subscribe registers a consumer backed by its own buffered queue and a single worker goroutine.
 func (es *EventStream) Subscribe(consumer EventConsumer) {
-	es.subMu.Lock()
-	defer es.subMu.Unlock()
+	ch := make(chan *RequestEvent, es.perCh)
 
-	es.subscribers = append(es.subscribers, consumer)
+	es.subMu.Lock()
+	es.slots = append(es.slots, consumerSlot{c: consumer, ch: ch})
+	es.subMu.Unlock()
+
+	go es.consumerLoop(consumer, ch)
 }
 
-// dispatcher
+func (es *EventStream) consumerLoop(c EventConsumer, ch <-chan *RequestEvent) {
+	for {
+		select {
+		case <-es.done:
+			return
+		case event, ok := <-ch:
+			if !ok {
+				return
+			}
+			if event == nil {
+				continue
+			}
+			if err := c.Consume(event); err != nil {
+				es.logger.Error("Event processing error", zap.String("consumer", c.Name()), zap.Error(err))
+			}
+		}
+	}
+}
+
 func (es *EventStream) dispatcher() {
 	for {
 		select {
@@ -88,21 +116,14 @@ func (es *EventStream) dispatcher() {
 				continue
 			}
 			es.subMu.RLock()
-			for _, consumer := range es.subscribers {
+			for _, slot := range es.slots {
 				select {
-				case es.sem <- struct{}{}:
+				case slot.ch <- event:
 				default:
 					es.mu.Lock()
 					es.DroppedEvents++
 					es.mu.Unlock()
-					continue
 				}
-				go func(c EventConsumer, e *RequestEvent) {
-					defer func() { <-es.sem }()
-					if err := c.Consume(e); err != nil {
-						es.logger.Error("Event processing error", zap.String("consumer", c.Name()), zap.Error(err))
-					}
-				}(consumer, event)
 			}
 			es.subMu.RUnlock()
 
@@ -112,7 +133,6 @@ func (es *EventStream) dispatcher() {
 	}
 }
 
-// streami kapatma fonksiyonu
 func (es *EventStream) Close() {
 	if !es.closed.CompareAndSwap(false, true) {
 		return
@@ -120,24 +140,23 @@ func (es *EventStream) Close() {
 	close(es.done)
 }
 
-// stream istatistiklerini gördüğümüz fonksiyon
 func (es *EventStream) Stats() map[string]interface{} {
 	es.mu.RLock()
 	defer es.mu.RUnlock()
 
 	es.subMu.RLock()
-	defer es.subMu.RUnlock()
+	n := len(es.slots)
+	es.subMu.RUnlock()
 
 	return map[string]interface{}{
 		"total_events":   es.TotalEvents,
 		"dropped_events": es.DroppedEvents,
 		"buffer_size":    cap(es.events),
 		"buffer_usage":   len(es.events),
-		"subscribers":    len(es.subscribers),
+		"subscribers":    n,
 	}
 }
 
-// yeni request event oluşturuyoruz
 func NewRequestEvent(subdomain, method, path, userAgent, clientIP string) *RequestEvent {
 	return &RequestEvent{
 		EventID:   generateEventID(),
@@ -158,7 +177,6 @@ func generateEventID() string {
 	return time.Now().Format("20060102150405") + "-" + randomPart
 }
 
-// bu fonksiyondaki güvenlik açığı tespit edildi,değiştirildi
 func randomstring(n int) (string, error) {
 	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
 	result := make([]byte, n)

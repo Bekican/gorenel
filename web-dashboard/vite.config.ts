@@ -10,6 +10,17 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          charts: ['recharts'],
+          maps: ['leaflet', 'react-leaflet'],
+        },
+      },
+    },
+  },
   // TODO [K8S]: Local dev proxy'si burasıdır. 
   // Production için (K8s) bu yönlendirmeleri nginx.conf içinde yapmalısınız.
   server: {

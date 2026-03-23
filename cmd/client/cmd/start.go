@@ -265,7 +265,8 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 
 	// 4. Yamux session başlat
 	yamuxConfig := yamux.DefaultConfig()
-	// yamuxConfig.LogOutput = nil
+	yamuxConfig.EnableKeepAlive = true
+	yamuxConfig.KeepAliveInterval = 30 * time.Second
 
 	session, err := yamux.Client(conn, yamuxConfig)
 	if err != nil {
@@ -276,6 +277,9 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 	if Verbose {
 		log.Println("Yamux session başlatıldı")
 	}
+
+	// Periyodik ping ile tünel sağlığı (verbose: RTT loglanır)
+	go tunnelHealthLoop(ctx, session)
 
 	// 5. Başarı mesajı
 	if tType == "tcp" || tType == "udp" {
@@ -333,8 +337,82 @@ func handleStreams(ctx context.Context, session *yamux.Session, localPort int, s
 			log.Printf("Yeni istek (Stream ID: %d)", stream.StreamID())
 		}
 
-		go proxyToLocalhost(stream, localAddr)
+		if tunnelType == "udp" {
+			go proxyUDPStream(stream, localPort)
+		} else {
+			go proxyToLocalhost(stream, localAddr)
+		}
 	}
+}
+
+// tunnelHealthLoop runs application-level yamux pings (in addition to yamux keepalive frames).
+func tunnelHealthLoop(ctx context.Context, session *yamux.Session) {
+	ticker := time.NewTicker(45 * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			rtt, err := session.Ping()
+			if err != nil {
+				if Verbose {
+					log.Printf("⚠️ Tunnel ping başarısız: %v", err)
+				}
+				return
+			}
+			if Verbose {
+				log.Printf("🔌 Tunnel RTT: %s", rtt.Round(time.Millisecond))
+			}
+		}
+	}
+}
+
+// proxyUDPStream relays length-framed UDP datagrams between yamux and local UDP.
+func proxyUDPStream(stream net.Conn, localPort int) {
+	raddr := &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: localPort}
+	udpConn, err := net.DialUDP("udp", nil, raddr)
+	if err != nil {
+		log.Printf("❌ Yerel UDP bağlantısı kurulamadı (127.0.0.1:%d): %v", localPort, err)
+		return
+	}
+	defer udpConn.Close()
+	defer stream.Close()
+
+	done := make(chan struct{}, 2)
+
+	go func() {
+		for {
+			payload, err := protocol.ReadUDPFrame(stream)
+			if err != nil {
+				break
+			}
+			if _, err := udpConn.Write(payload); err != nil {
+				break
+			}
+			atomic.AddInt64(&bytesReceived, int64(len(payload)))
+		}
+		_ = udpConn.Close()
+		done <- struct{}{}
+	}()
+
+	go func() {
+		buf := make([]byte, 65507)
+		for {
+			n, err := udpConn.Read(buf)
+			if err != nil {
+				break
+			}
+			if err := protocol.WriteUDPFrame(stream, buf[:n]); err != nil {
+				break
+			}
+			atomic.AddInt64(&bytesSent, int64(n))
+		}
+		done <- struct{}{}
+	}()
+
+	<-done
+	<-done
 }
 
 // proxyToLocalhost - Stream'i localhost'a bağla

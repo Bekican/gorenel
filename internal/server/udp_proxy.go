@@ -6,11 +6,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Bekican/gorenel/internal/protocol"
 	"github.com/hashicorp/yamux"
 	"go.uber.org/zap"
 )
 
-// UDPProxy handles UDP packet forwarding using a virtual stream mapping
+// UDPProxy handles UDP packet forwarding using a virtual stream mapping.
+// Each internet peer address gets one yamux stream; datagrams are length-prefixed
+// so packet boundaries are preserved over the byte stream.
 type UDPProxy struct {
 	mu       sync.Mutex
 	sessions map[string]net.Conn
@@ -60,51 +63,64 @@ func (p *UDPProxy) ListenAndForward(publicPort int, session *yamux.Session) erro
 			}
 			data := buf[:n]
 
-			// Get or create virtual stream for this remote address
-			stream, err := p.getStream(remoteAddr.String(), session)
+			stream, err := p.getStream(remoteAddr.String(), remoteAddr, conn, session)
 			if err != nil {
 				p.logger.Debug("UDP stream acquisition failed", zap.Error(err))
 				continue
 			}
 
-			// Send data over stream (requires framing on client side if handled properly)
-			// For basic UDP, we simple write the packet data
-			if _, err := stream.Write(data); err != nil {
+			if err := protocol.WriteUDPFrame(stream, data); err != nil {
 				p.logger.Debug("UDP stream write failed", zap.Error(err))
 				p.removeSession(remoteAddr.String())
 				continue
 			}
 			p.markSeen(remoteAddr.String())
-
-			// Note: This is an oversimplification.
-			// UDP to TCP (Yamux) works for 1:1 sessions, but needs better management.
 		}
 	}()
 
 	return nil
 }
 
-func (p *UDPProxy) getStream(addr string, session *yamux.Session) (net.Conn, error) {
+func (p *UDPProxy) getStream(addr string, remote *net.UDPAddr, udpConn *net.UDPConn, session *yamux.Session) (net.Conn, error) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
 
 	if s, exists := p.sessions[addr]; exists {
 		p.lastSeen[addr] = time.Now()
+		p.mu.Unlock()
 		return s, nil
 	}
 
 	stream, err := session.OpenStream()
 	if err != nil {
+		p.mu.Unlock()
 		return nil, err
 	}
 
 	p.sessions[addr] = stream
 	p.lastSeen[addr] = time.Now()
+	p.mu.Unlock()
 
-	// Background reader for stream -> UDP
-	// go p.streamToUDP(stream, addr)
+	go p.streamToUDP(stream, udpConn, remote, addr)
 
 	return stream, nil
+}
+
+func (p *UDPProxy) streamToUDP(stream net.Conn, udpConn *net.UDPConn, remote *net.UDPAddr, sessionKey string) {
+	defer func() {
+		_ = stream.Close()
+		p.removeSession(sessionKey)
+	}()
+
+	for {
+		payload, err := protocol.ReadUDPFrame(stream)
+		if err != nil {
+			return
+		}
+		if _, err := udpConn.WriteToUDP(payload, remote); err != nil {
+			p.logger.Debug("UDP WriteToUDP failed", zap.Error(err))
+			return
+		}
+	}
 }
 
 func (p *UDPProxy) markSeen(addr string) {

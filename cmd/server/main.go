@@ -323,6 +323,8 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 	// 4. Yamux Session başlat
 	yamuxConfig := yamux.DefaultConfig()
 	yamuxConfig.LogOutput = io.Discard
+	yamuxConfig.EnableKeepAlive = true
+	yamuxConfig.KeepAliveInterval = 30 * time.Second
 
 	session, err := yamux.Server(conn, yamuxConfig)
 	if err != nil {

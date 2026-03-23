@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import {
   TrendingUp,
   LayoutDashboard,
@@ -79,7 +79,7 @@ function App() {
     checkSession();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [metricsData, analyticsData, tunnelsData, anomaliesData, mlStatsData, historyData, rulesData] = await Promise.all([
         api.getMetrics(),
@@ -104,7 +104,7 @@ function App() {
       setApiError(t('common.error_fetch', 'Failed to fetch latest data from backend.'));
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     if (user) {
@@ -112,14 +112,14 @@ function App() {
       const interval = setInterval(fetchData, 5000);
       return () => clearInterval(interval);
     }
-  }, [user]);
+  }, [user, fetchData]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await api.logout();
     setUser(null);
     localStorage.removeItem('gorenel_user');
     setIsAuthStarted(false);
-  };
+  }, []);
 
   // Handle public share links
   const path = window.location.pathname;
