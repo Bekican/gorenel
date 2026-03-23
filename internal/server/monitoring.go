@@ -135,8 +135,11 @@ func (m *MonitoringServer) Start(port string) error {
 	// ML Stats endpoint
 	mux.HandleFunc("/api/ml/stats", m.corsMiddleware(rl(m.mlStatsHandler)))
 
-	// CLI Download endpoint
+	// CLI Download & Install endpoints
 	mux.HandleFunc("/downloads/", m.corsMiddleware(m.handleDownload))
+	mux.HandleFunc("/v1/install", m.corsMiddleware(m.handleAutoInstall))
+	mux.HandleFunc("/install.sh", m.corsMiddleware(m.handleInstallSh))
+	mux.HandleFunc("/install.ps1", m.corsMiddleware(m.handleInstallPs1))
 
 	// WebSocket Tunnel endpoint (replaces raw TCP control port for Fly.io shared IP)
 	if m.tunnelHandler != nil {
@@ -556,14 +559,115 @@ func formatBytes(bytes int64) string {
 func (m *MonitoringServer) handleDownload(w http.ResponseWriter, r *http.Request) {
 	m.logger.Info("Download request received", zap.String("path", r.URL.Path))
 	
-	if !strings.HasSuffix(r.URL.Path, "gorenel-windows-amd64.exe") {
-		m.logger.Warn("Download requested for non-existent file", zap.String("path", r.URL.Path))
+	fileName := strings.TrimPrefix(r.URL.Path, "/downloads/")
+	if fileName == "" {
 		http.NotFound(w, r)
 		return
 	}
+
+	// Security: Prevent path traversal
+	if strings.Contains(fileName, "..") || strings.Contains(fileName, "/") || strings.Contains(fileName, "\\") {
+		m.logger.Warn("Malicious download path detected", zap.String("path", r.URL.Path))
+		http.Error(w, "Invalid path", http.StatusForbidden)
+		return
+	}
+
+	filePath := fmt.Sprintf("./bin/%s", fileName)
+	m.logger.Debug("Serving binary file", zap.String("file", filePath))
+
+	// Set appropriate headers
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
+	w.Header().Set("Content-Type", "application/octet-stream")
 	
-	w.Header().Set("Content-Disposition", "attachment; filename=gorenel-windows-amd64.exe")
-	http.ServeFile(w, r, "/home/appuser/gorenel-windows-amd64.exe")
+	http.ServeFile(w, r, filePath)
+}
+
+// handleAutoInstall detects OS and serves the appropriate script or instructions
+func (m *MonitoringServer) handleAutoInstall(w http.ResponseWriter, r *http.Request) {
+	ua := strings.ToLower(r.Header.Get("User-Agent"))
+	
+	if strings.Contains(ua, "windows") {
+		http.Redirect(w, r, "/install.ps1", http.StatusTemporaryRedirect)
+		return
+	}
+	
+	http.Redirect(w, r, "/install.sh", http.StatusTemporaryRedirect)
+}
+
+// handleInstallSh serves the Bash installation script
+func (m *MonitoringServer) handleInstallSh(w http.ResponseWriter, r *http.Request) {
+	script := `#!/bin/bash
+set -e
+
+# Gorenel Magic Install Script (Linux/Mac)
+# Usage: curl -sSL https://gorenel.site/install.sh | bash -s -- connect --key GK_...
+
+INSTALL_DIR="$HOME/.gorenel/bin"
+mkdir -p "$INSTALL_DIR"
+
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
+
+if [ "$ARCH" == "x86_64" ]; then ARCH="amd64"; fi
+if [ "$ARCH" == "aarch64" ]; then ARCH="arm64"; fi
+
+BINARY_NAME="gorenel-$OS-$ARCH"
+if [ "$OS" == "darwin" ]; then BINARY_NAME="gorenel-darwin-$ARCH"; fi
+
+echo "🚀 Downloading Gorenel for $OS/$ARCH..."
+curl -L -f -o "$INSTALL_DIR/gorenel" "https://gorenel.site/downloads/$BINARY_NAME" || { echo "❌ Download failed! Please check your internet connection."; exit 1; }
+chmod +x "$INSTALL_DIR/gorenel"
+
+# Add to PATH if not already there (optional but helpful)
+# export PATH="$INSTALL_DIR:$PATH"
+
+echo "✅ Gorenel successfully installed to $INSTALL_DIR/gorenel"
+
+if [ "$#" -gt 0 ]; then
+    echo "⚡ Executing: gorenel $*"
+    "$INSTALL_DIR/gorenel" "$@"
+else
+    echo "💡 Usage hint: gorenel connect --key YOUR_API_KEY"
+fi
+`
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(script))
+}
+
+// handleInstallPs1 serves the PowerShell installation script
+func (m *MonitoringServer) handleInstallPs1(w http.ResponseWriter, r *http.Request) {
+	script := `# Gorenel Magic Install Script (Windows)
+# Usage: iwr -useb https://gorenel.site/install.ps1 | iex
+
+$installDir = "$env:LOCALAPPDATA\gorenel"
+if (!(Test-Path $installDir)) { New-Item -ItemType Directory -Path $installDir | Out-Null }
+
+$binaryPath = "$installDir\gorenel.exe"
+
+Write-Host "🚀 Downloading Gorenel for Windows/amd64..." -ForegroundColor Cyan
+
+# Use WebClient for better compatibility if IWR fails
+try {
+    Invoke-WebRequest -Uri "https://gorenel.site/downloads/gorenel-windows-amd64.exe" -OutFile $binaryPath -ErrorAction Stop
+} catch {
+    Write-Host "❌ Download failed! Re-trying with alternative method..." -ForegroundColor Yellow
+    (New-Object System.Net.WebClient).DownloadFile("https://gorenel.site/downloads/gorenel-windows-amd64.exe", $binaryPath)
+}
+
+if (!(Test-Path $binaryPath) -or (Get-Item $binaryPath).Length -lt 1000) {
+    Write-Host "❌ Error: Binary download failed or file is corrupted." -ForegroundColor Red
+    exit 1
+}
+
+Write-Host "✅ Gorenel successfully installed to $binaryPath" -ForegroundColor Green
+
+# Set an alias for the current session
+function gorenel { & $binaryPath $args }
+
+Write-Host "⚡ Ready to connect! Use 'gorenel connect --key GK_...'" -ForegroundColor Yellow
+`
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(script))
 }
 
 // WebSocket upgrader for tunnel connections

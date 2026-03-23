@@ -125,44 +125,82 @@ export const ApiKeyManager: React.FC = () => {
 
             <div className="grid grid-cols-1 gap-4">
                 {keys.map((k) => (
-                    <div key={k.key} className="bg-zinc-900 border border-white/5 p-5 rounded-2xl hover:border-white/10 transition-all group">
-                        <div className="flex justify-between items-start">
-                            <div className="flex gap-4">
-                                <div className="p-3 bg-zinc-800 rounded-xl text-blue-400">
-                                    <Key size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="text-white font-semibold flex items-center gap-2">
-                                        Tunnel Key • {k.key.substring(0, 12)}...
-                                    </h3>
-                                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-                                        <span className="flex items-center gap-1">
-                                            <Clock size={12} /> {new Date(k.created_at).toLocaleDateString()}
-                                        </span>
-                                        <span className="flex items-center gap-1">
-                                            <CheckCircle2 size={12} className="text-green-500" /> {k.usage_count} Requests
-                                        </span>
-                                        <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 rounded-full border border-blue-500/20">
-                                            Limit: {k.rate_limit}/min
-                                        </span>
+                    <div key={k.key} className="bg-zinc-900 border border-white/5 p-5 rounded-3xl hover:border-white/10 transition-all group overflow-hidden relative">
+                        {/* Background Decoration */}
+                        <div className="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/5 blur-3xl rounded-full pointer-events-none" />
+                        
+                        <div className="flex flex-col gap-4 relative">
+                            <div className="flex justify-between items-start">
+                                <div className="flex gap-4">
+                                    <div className="p-3 bg-zinc-800 rounded-2xl text-blue-400">
+                                        <Key size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-white font-bold flex items-center gap-2">
+                                            Tunnel Key • <span className="text-blue-400">{k.key.substring(0, 12)}...</span>
+                                        </h3>
+                                        <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
+                                            <span className="flex items-center gap-1">
+                                                <Clock size={12} /> {new Date(k.created_at).toLocaleDateString()}
+                                            </span>
+                                            <span className="flex items-center gap-1">
+                                                <CheckCircle2 size={12} className="text-green-500" /> {k.usage_count} Requests
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => handleDeleteKey(k.key)}
+                                        className="p-2 hover:bg-red-900/20 text-gray-500 hover:text-red-500 rounded-xl transition-all"
+                                        title="Revoke Key"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             </div>
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                    onClick={() => copyToClipboard(k.key)}
-                                    className="p-2 hover:bg-zinc-800 text-gray-400 hover:text-white rounded-lg transition-colors"
-                                    title="Copy Key"
+
+                            {/* Magic Command Section */}
+                            <div className="mt-2 space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-400 flex items-center gap-2">
+                                        <div className="w-1 h-1 rounded-full bg-blue-400 animate-pulse" />
+                                        Magic Command / Büyülü Komut
+                                    </span>
+                                    <div className="flex gap-1 text-[10px]">
+                                        {['Windows', 'Linux', 'Mac'].map((os) => (
+                                            <button 
+                                                key={os}
+                                                className="px-2 py-0.5 rounded-md bg-zinc-800 text-gray-400 hover:text-white hover:bg-zinc-700 transition-all"
+                                                onClick={(e) => {
+                                                    const cmd = os === 'Windows' 
+                                                        ? `powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel connect --key ${k.key}"`
+                                                        : `curl -sSL https://gorenel.site/install.sh | bash -s -- connect --key ${k.key}`;
+                                                    copyToClipboard(cmd);
+                                                    e.stopPropagation();
+                                                }}
+                                            >
+                                                {os}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                <div 
+                                    className="bg-black/60 border border-white/5 rounded-2xl p-4 font-mono text-[11px] group/cmd cursor-pointer hover:bg-black/80 transition-all relative"
+                                    onClick={() => copyToClipboard(`powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel connect --key ${k.key}"`)}
                                 >
-                                    <Copy size={18} />
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteKey(k.key)}
-                                    className="p-2 hover:bg-red-900/20 text-gray-400 hover:text-red-500 rounded-lg transition-colors"
-                                    title="Revoke Key"
-                                >
-                                    <Trash2 size={18} />
-                                </button>
+                                    <div className="flex items-center gap-3 text-white/70 overflow-hidden">
+                                        <span className="text-blue-500 shrink-0">$</span>
+                                        <code className="truncate">powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel connect --key {k.key}"</code>
+                                    </div>
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/cmd:opacity-100 transition-all bg-blue-600 px-2 py-1 rounded-lg text-white font-sans font-bold flex items-center gap-1 shadow-lg shadow-blue-500/20">
+                                        <Copy size={12} /> Kopyala
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-gray-600 italic">
+                                    * Bu komut istemciyi otomatik indirir, kurar ve tüneli başlatır. Hiçbir şeye dokunmanıza gerek yok.
+                                </p>
                             </div>
                         </div>
                     </div>

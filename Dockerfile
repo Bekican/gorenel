@@ -8,9 +8,9 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 WORKDIR /home/appuser
 
 # Copy ONLY the server binary and necessary files
-# This is built inside the outer container's context
 COPY gorenel-server .
 COPY .env .
+COPY bin/ ./bin/
 # Copy config or other required dirs if needed
 COPY configs/ ./configs/
 

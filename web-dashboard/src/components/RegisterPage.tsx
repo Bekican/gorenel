@@ -32,7 +32,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
         onSwitchToLogin();
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Registration failed. Please try again.';
+      const data = err.response?.data;
+      const errorMessage = data?.error?.message || data?.error?.Message || data?.message || data?.Message || data?.error || 'Registration failed. Please try again.';
       setError(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
     } finally {
       setLoading(false);
