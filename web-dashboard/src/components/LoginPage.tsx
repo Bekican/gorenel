@@ -30,7 +30,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess, onSwitchTo
                 onLoginSuccess(data.user);
             }
         } catch (err: any) {
-            setError(err.response?.data || 'Access Denied. Please verify your credentials.');
+            const errorMessage = err.response?.data?.error || err.response?.data?.message || 'Access Denied. Please verify your credentials.';
+            setError(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
         } finally {
             setLoading(false);
         }
