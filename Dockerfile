@@ -7,12 +7,10 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /home/appuser
 
-# Copy ONLY the server binary and necessary files
+# Copy the server binary
 COPY gorenel-server .
-COPY .env .
-COPY bin/ ./bin/
-# Copy config or other required dirs if needed
-COPY configs/ ./configs/
+# .env is optional — env vars are injected via docker-compose
+COPY .env* ./
 
 RUN chmod +x gorenel-server
 
