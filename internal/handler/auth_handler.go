@@ -36,13 +36,17 @@ func NewAuthHandler(providers map[string]auth.OAuthProvider, tokenSvc *auth.JWTS
 
 // Login handles user login
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
-	// 1. Check for Demo user bypass
-	var credentials struct {
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
+	// Handle Manual Login (JSON POST)
+	if r.Method == http.MethodPost {
+		var credentials struct {
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
 
-	if err := json.NewDecoder(r.Body).Decode(&credentials); err == nil && credentials.Email != "" {
+		if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+			return errors.BadRequest("Geçersiz istek formatı", nil)
+		}
+
 		// Input validation
 		credentials.Email = strings.TrimSpace(strings.ToLower(credentials.Email))
 		if credentials.Email == "" || !strings.Contains(credentials.Email, "@") || !strings.Contains(credentials.Email, ".") {
@@ -54,36 +58,44 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 
 		// 1. Check if user exists locally
 		user, err := h.userRepo.GetByEmail(credentials.Email)
-		if err == nil {
-			// 2. Verify Password
-			if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(credentials.Password)); err != nil {
-				logger.Warn("Failed login attempt: invalid password", zap.String("email", credentials.Email))
-				return errors.Unauthorized("Invalid credentials")
-			}
-
-			logger.Info("Manual login successful", zap.String("email", user.Email))
-			
-			// Generate Token
-			tokenString, err := h.tokenSvc.GenerateToken(user)
-			if err != nil {
-				return errors.Internal(err)
-			}
-
-			// Set Cookie using helper
-			h.setAuthCookie(w, r, tokenString)
-
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]interface{}{
-				"user": map[string]string{
-					"email": user.Email,
-					"name":  user.Name,
-				},
-			})
-			return nil
+		if err != nil {
+			logger.Warn("Failed login attempt: user not found", zap.String("email", credentials.Email))
+			return errors.Unauthorized("Geçersiz e-posta veya şifre")
 		}
+
+		// 2. Verify Password
+		if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(credentials.Password)); err != nil {
+			logger.Warn("Failed login attempt: invalid password", zap.String("email", credentials.Email))
+			return errors.Unauthorized("Geçersiz e-posta veya şifre")
+		}
+
+		logger.Info("Manual login successful", zap.String("email", user.Email))
+		
+		// Generate Token
+		tokenString, err := h.tokenSvc.GenerateToken(user)
+		if err != nil {
+			return errors.Internal(err)
+		}
+
+		// Set Cookie using helper
+		h.setAuthCookie(w, r, tokenString)
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"user": map[string]string{
+				"email": user.Email,
+				"name":  user.Name,
+			},
+		})
+		return nil
 	}
 
-	// 2. Standard OAuth Flow (Fallback or Explicit)
+	// Handle Social Login Redirection (GET)
+	// Only allow GET for initial social login trigger
+	if r.Method != http.MethodGet {
+		return errors.BadRequest("Unsupported method for social login", nil)
+	}
+
 	provider := r.URL.Query().Get("provider")
 	if provider == "" {
 		provider = "google" // Default fallback
@@ -104,7 +116,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		HttpOnly: true,
 		Secure:   h.isProd,
 		Path:     "/",
-		Domain:   ".gorenel.site", // Allow sharing between www and apex
+		Domain:   ".gorenel.site", 
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -116,7 +128,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		HttpOnly: true,
 		Secure:   h.isProd,
 		Path:     "/",
-		Domain:   ".gorenel.site", // Allow sharing between www and apex
+		Domain:   ".gorenel.site", 
 		SameSite: http.SameSiteLaxMode,
 	})
 
