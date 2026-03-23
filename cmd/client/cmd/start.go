@@ -94,7 +94,7 @@ func runStart(cmd *cobra.Command, args []string) {
 	if apiKey == "" {
 		apiKey = viper.GetString("api_key")
 		if apiKey == "" {
-			log.Fatal("API key gerekli. --api-key flag'i veya config dosyasında 'api_key' belirtin.")
+			log.Fatal("API key gerekli. --api-key / --key flag'i veya config dosyasında 'api_key' belirtin.")
 		}
 	}
 
@@ -226,7 +226,10 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 		TunnelType:   tType,
 		LocalPort:    localPort,
 	}
-	reqPayload, _ := json.Marshal(regReq)
+	reqPayload, err := json.Marshal(regReq)
+	if err != nil {
+		return fmt.Errorf("REGISTER payload hazırlanamadı: %w", err)
+	}
 
 	registerMsg := protocol.Message{
 		Type:    protocol.MsgTypeRegister,
@@ -249,7 +252,9 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 
 	if response.Type == protocol.MsgTypeError {
 		var errResp protocol.ErrorResponse
-		json.Unmarshal([]byte(response.Payload), &errResp)
+		if err := json.Unmarshal([]byte(response.Payload), &errResp); err != nil {
+			return fmt.Errorf("server hata mesajı parse edilemedi: %w", err)
+		}
 		return fmt.Errorf("server hatası: %s", errResp.Message)
 	}
 
@@ -284,15 +289,23 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 	}
 
 	// 6. Stream'leri handle et
-	go handleStreams(ctx, session, localPort)
+	streamErr := make(chan error, 1)
+	go handleStreams(ctx, session, localPort, streamErr)
 
-	// Context iptal edilene kadar bekle
-	<-ctx.Done()
-	return nil
+	// Context iptal edilene veya session kopana kadar bekle
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-streamErr:
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("tunnel stream kapandı")
+	}
 }
 
 // handleStreams - Gelen stream'leri localhost'a yönlendir
-func handleStreams(ctx context.Context, session *yamux.Session, localPort int) {
+func handleStreams(ctx context.Context, session *yamux.Session, localPort int, streamErr chan<- error) {
 	localAddr := fmt.Sprintf("localhost:%d", localPort)
 
 	for {
@@ -306,6 +319,10 @@ func handleStreams(ctx context.Context, session *yamux.Session, localPort int) {
 		if err != nil {
 			if Verbose {
 				log.Printf("Stream kabul edilemedi: %v", err)
+			}
+			select {
+			case streamErr <- err:
+			default:
 			}
 			return
 		}

@@ -38,20 +38,20 @@ func init() {
 type TunnelClientHandler func(conn net.Conn)
 
 type MonitoringServer struct {
-	tunnelManager      *TunnelManager
-	analyticsEngine    *AnalyticsEngine
-	authHandler        *handler.AuthHandler
-	advancedRL         *limiter.RateLimiter
-	inspector          *TrafficInspector
-	tokenSvc           *auth.JWTService
-	anomalyStore       *AnomalyStore
-	mlClient           *ml.Client
-	traceSharer        *TraceSharer
-	tunnelHandler      TunnelClientHandler
-	baseDomain         string
-	proxyPort          string
-	env                string
-	logger             *zap.Logger
+	tunnelManager   *TunnelManager
+	analyticsEngine *AnalyticsEngine
+	authHandler     *handler.AuthHandler
+	advancedRL      *limiter.RateLimiter
+	inspector       *TrafficInspector
+	tokenSvc        *auth.JWTService
+	anomalyStore    *AnomalyStore
+	mlClient        *ml.Client
+	traceSharer     *TraceSharer
+	tunnelHandler   TunnelClientHandler
+	baseDomain      string
+	proxyPort       string
+	env             string
+	logger          *zap.Logger
 }
 
 func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, proxyPort, env string, logger *zap.Logger) *MonitoringServer {
@@ -184,7 +184,7 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		} else if origin != "" {
 			// Log rejected origin for debugging
-			m.logger.Warn("CORS request rejected: origin not in whitelist", 
+			m.logger.Warn("CORS request rejected: origin not in whitelist",
 				zap.String("origin", origin),
 				zap.String("method", r.Method),
 				zap.String("path", r.URL.Path))
@@ -205,7 +205,7 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("X-Frame-Options", "DENY")
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
-		
+
 		// 🛡️ Content Security Policy (CSP)
 		// Restrict scripts, styles and connections to trusted domains
 		csp := "default-src 'self'; " +
@@ -267,10 +267,7 @@ func (m *MonitoringServer) mlStatsHandler(w http.ResponseWriter, r *http.Request
 
 	stats, err := m.mlClient.GetModelStats()
 	if err != nil {
-		// ML servisi kapalıysa 500 dönmek yerine boş veri dönelim.
-		// Böylece dashboard'daki Promise.all patlamaz.
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]interface{}{})
+		http.Error(w, "ML service unavailable", http.StatusServiceUnavailable)
 		return
 	}
 
@@ -501,7 +498,12 @@ func (m *MonitoringServer) getSharedTraceHandler(w http.ResponseWriter, r *http.
 
 	// Extract ID from path /api/shares/{id}
 	path := r.URL.Path
-	shareID := path[len("/api/shares/"):]
+	prefix := "/api/shares/"
+	if len(path) < len(prefix) || path[:len(prefix)] != prefix {
+		http.Error(w, "Invalid share path", http.StatusBadRequest)
+		return
+	}
+	shareID := path[len(prefix):]
 	if shareID == "" {
 		http.Error(w, "Missing share ID", http.StatusBadRequest)
 		return
@@ -558,7 +560,7 @@ func formatBytes(bytes int64) string {
 // handleDownload serves the CLI binary
 func (m *MonitoringServer) handleDownload(w http.ResponseWriter, r *http.Request) {
 	m.logger.Info("Download request received", zap.String("path", r.URL.Path))
-	
+
 	fileName := strings.TrimPrefix(r.URL.Path, "/downloads/")
 	if fileName == "" {
 		http.NotFound(w, r)
@@ -578,19 +580,19 @@ func (m *MonitoringServer) handleDownload(w http.ResponseWriter, r *http.Request
 	// Set appropriate headers
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", fileName))
 	w.Header().Set("Content-Type", "application/octet-stream")
-	
+
 	http.ServeFile(w, r, filePath)
 }
 
 // handleAutoInstall detects OS and serves the appropriate script or instructions
 func (m *MonitoringServer) handleAutoInstall(w http.ResponseWriter, r *http.Request) {
 	ua := strings.ToLower(r.Header.Get("User-Agent"))
-	
+
 	if strings.Contains(ua, "windows") {
 		http.Redirect(w, r, "/install.ps1", http.StatusTemporaryRedirect)
 		return
 	}
-	
+
 	http.Redirect(w, r, "/install.sh", http.StatusTemporaryRedirect)
 }
 
@@ -614,20 +616,30 @@ if [ "$ARCH" == "aarch64" ]; then ARCH="arm64"; fi
 BINARY_NAME="gorenel-$OS-$ARCH"
 if [ "$OS" == "darwin" ]; then BINARY_NAME="gorenel-darwin-$ARCH"; fi
 
-echo "🚀 Downloading Gorenel for $OS/$ARCH..."
-curl -L -f -o "$INSTALL_DIR/gorenel" "https://gorenel.site/downloads/$BINARY_NAME" || { echo "❌ Download failed! Please check your internet connection."; exit 1; }
+echo "Downloading Gorenel for $OS/$ARCH..."
+curl -L -f -o "$INSTALL_DIR/gorenel" "https://gorenel.site/downloads/$BINARY_NAME" || { echo "Download failed!"; exit 1; }
 chmod +x "$INSTALL_DIR/gorenel"
 
-# Add to PATH if not already there (optional but helpful)
-# export PATH="$INSTALL_DIR:$PATH"
+# Add to PATH via shell profile
+SHELL_PROFILE=""
+if [ -f "$HOME/.zshrc" ]; then SHELL_PROFILE="$HOME/.zshrc"
+elif [ -f "$HOME/.bashrc" ]; then SHELL_PROFILE="$HOME/.bashrc"
+elif [ -f "$HOME/.profile" ]; then SHELL_PROFILE="$HOME/.profile"
+fi
 
-echo "✅ Gorenel successfully installed to $INSTALL_DIR/gorenel"
+if [ -n "$SHELL_PROFILE" ] && ! grep -q ".gorenel/bin" "$SHELL_PROFILE" 2>/dev/null; then
+    echo 'export PATH="$HOME/.gorenel/bin:$PATH"' >> "$SHELL_PROFILE"
+    echo "Added to PATH in $SHELL_PROFILE (restart terminal or run: source $SHELL_PROFILE)"
+fi
+export PATH="$INSTALL_DIR:$PATH"
+
+echo "Gorenel installed to $INSTALL_DIR/gorenel"
 
 if [ "$#" -gt 0 ]; then
-    echo "⚡ Executing: gorenel $*"
+    echo "Executing: gorenel $*"
     "$INSTALL_DIR/gorenel" "$@"
 else
-    echo "💡 Usage hint: gorenel connect --key YOUR_API_KEY"
+    echo "Run: gorenel connect --key YOUR_API_KEY --port 3000"
 fi
 `
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -644,27 +656,37 @@ if (!(Test-Path $installDir)) { New-Item -ItemType Directory -Path $installDir |
 
 $binaryPath = "$installDir\gorenel.exe"
 
-Write-Host "🚀 Downloading Gorenel for Windows/amd64..." -ForegroundColor Cyan
+Write-Host "Downloading Gorenel for Windows/amd64..." -ForegroundColor Cyan
 
-# Use WebClient for better compatibility if IWR fails
 try {
     Invoke-WebRequest -Uri "https://gorenel.site/downloads/gorenel-windows-amd64.exe" -OutFile $binaryPath -ErrorAction Stop
 } catch {
-    Write-Host "❌ Download failed! Re-trying with alternative method..." -ForegroundColor Yellow
+    Write-Host "Re-trying with alternative method..." -ForegroundColor Yellow
     (New-Object System.Net.WebClient).DownloadFile("https://gorenel.site/downloads/gorenel-windows-amd64.exe", $binaryPath)
 }
 
 if (!(Test-Path $binaryPath) -or (Get-Item $binaryPath).Length -lt 1000) {
-    Write-Host "❌ Error: Binary download failed or file is corrupted." -ForegroundColor Red
+    Write-Host "Error: Binary download failed or file is corrupted." -ForegroundColor Red
     exit 1
 }
 
-Write-Host "✅ Gorenel successfully installed to $binaryPath" -ForegroundColor Green
+# Add to User PATH permanently if not already there
+$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
+if ($userPath -notlike "*$installDir*") {
+    [Environment]::SetEnvironmentVariable("Path", "$userPath;$installDir", "User")
+    Write-Host "Added $installDir to User PATH (restart terminal for permanent effect)" -ForegroundColor DarkCyan
+}
 
-# Set an alias for the current session
-function gorenel { & $binaryPath $args }
+# Add to current session PATH
+if ($env:Path -notlike "*$installDir*") {
+    $env:Path = "$installDir;$env:Path"
+}
 
-Write-Host "⚡ Ready to connect! Use 'gorenel connect --key GK_...'" -ForegroundColor Yellow
+# Set alias for current session
+function global:gorenel { & $binaryPath @args }
+
+Write-Host "Gorenel installed to $binaryPath" -ForegroundColor Green
+Write-Host "Run: gorenel connect --key YOUR_API_KEY --port 3000" -ForegroundColor Yellow
 `
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(script))
@@ -702,5 +724,3 @@ func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.
 	conn := NewWSConn(ws)
 	m.tunnelHandler(conn)
 }
-
-

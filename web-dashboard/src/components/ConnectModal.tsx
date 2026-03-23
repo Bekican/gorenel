@@ -18,12 +18,12 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
     const isWindows = typeof window !== 'undefined' && /win/i.test(navigator.platform);
     const apiToken = apiKey || 'demo-key-12345';
     // Use .\ for Windows, and ensure WebSocket URL for Fly.dev/Nginx
-    const binary = isWindows ? '.\\gorenel' : 'gorenel';
+    const binary = isWindows ? 'gorenel' : 'gorenel';
     
     // In production, use the current host but with the correct WebSocket path
     // If we're on gorenel.site, the CLI default is already correct, but being explicit is safer
     const serverUrl = host === 'localhost' ? 'ws://localhost:9091' : `wss://${host}/tunnel/connect`;
-    const command = `${binary} start --server ${serverUrl} --port 3000 --api-key ${apiToken}`;
+    const command = `${binary} connect --server ${serverUrl} --port 3000 --key ${apiToken}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(command);
@@ -33,12 +33,18 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-[#0A0A0A] border border-white/10 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative">
+            <div
+                className="bg-[#0A0A0A] border border-white/10 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 relative"
+                role="dialog"
+                aria-modal="true"
+                aria-label={t('connect_modal.title')}
+            >
 
                 {/* Close Button */}
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 p-2 hover:bg-white/10 rounded-full transition-all text-white/50 hover:text-white"
+                    aria-label={t('common.close', 'Close')}
                 >
                     <X className="w-5 h-5" />
                 </button>
@@ -77,7 +83,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
                             onClick={handleCopy}
                             className="bg-black/50 border border-white/10 rounded-xl p-4 flex items-center gap-3 cursor-pointer group hover:border-primary/30 transition-all text-left"
                         >
-                            <code className="text-primary font-mono text-xs md:text-sm flex-1 break-all line-clamp-2">
+                            <code className="text-primary font-mono text-xs md:text-sm flex-1 break-all">
                                 {command}
                             </code>
                             <div className="p-2 bg-white/5 rounded-lg group-hover:bg-primary/20 transition-colors">

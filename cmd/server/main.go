@@ -283,7 +283,9 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 	if msg.Type != protocol.MsgTypeRegister {
 		logger.Warn("Beklenmeyen mesaj tipi", zap.String("type", msg.Type))
 		errMsg := protocol.NewErrorMessage(400, "İlk mesaj REGISTER olmalı")
-		protocol.WriteMessage(conn, errMsg)
+		if err := protocol.WriteMessage(conn, errMsg); err != nil {
+			logger.Warn("Error message gönderilemedi", zap.Error(err))
+		}
 		return
 	}
 
@@ -294,7 +296,9 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 	if err := json.Unmarshal([]byte(msg.Payload), &regReq); err != nil {
 		logger.Error("REGISTER parse edilemedi", zap.Error(err))
 		errMsg := protocol.NewErrorMessage(400, "Invalid REGISTER payload")
-		protocol.WriteMessage(conn, errMsg)
+		if err := protocol.WriteMessage(conn, errMsg); err != nil {
+			logger.Warn("Error message gönderilemedi", zap.Error(err))
+		}
 		return
 	}
 
@@ -303,11 +307,17 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 	if err != nil {
 		logger.Warn("Authentication başarısız", zap.Error(err))
 		errMsg := protocol.NewErrorMessage(401, fmt.Sprintf("Authentication failed: %v", err))
-		protocol.WriteMessage(conn, errMsg)
+		if err := protocol.WriteMessage(conn, errMsg); err != nil {
+			logger.Warn("Auth error message gönderilemedi", zap.Error(err))
+		}
 		return
 	}
 
-	logger.Info("Authentication başarılı", zap.String("api_key_prefix", regReq.APIKey[:8]+"..."), zap.String("user_id", authKey.UserID))
+	apiKeyPrefix := regReq.APIKey
+	if len(apiKeyPrefix) > 8 {
+		apiKeyPrefix = apiKeyPrefix[:8]
+	}
+	logger.Info("Authentication başarılı", zap.String("api_key_prefix", apiKeyPrefix+"..."), zap.String("user_id", authKey.UserID))
 	authManager.IncrementUsage(regReq.APIKey)
 
 	// 4. Yamux Session başlat
@@ -331,20 +341,27 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 		publicPort, err = tm.AllocatePort()
 		if err != nil {
 			logger.Error("Port tahsis hatası", zap.Error(err))
-			protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "Boş port bulunamadı"))
+			if err := protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "Boş port bulunamadı")); err != nil {
+				logger.Warn("Port tahsis hatası response gönderilemedi", zap.Error(err))
+			}
 			return
 		}
+		defer tm.ReleasePort(publicPort, regReq.TunnelType)
 
 		if regReq.TunnelType == "tcp" {
 			if err := tcpProx.ListenAndForward(publicPort, session); err != nil {
 				logger.Error("TCP Proxy hatası", zap.Error(err))
-				protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "TCP Proxy başlatılamadı"))
+				if err := protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "TCP Proxy başlatılamadı")); err != nil {
+					logger.Warn("TCP proxy hata response gönderilemedi", zap.Error(err))
+				}
 				return
 			}
 		} else {
 			if err := udpProx.ListenAndForward(publicPort, session); err != nil {
 				logger.Error("UDP Proxy hatası", zap.Error(err))
-				protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "UDP Proxy başlatılamadı"))
+				if err := protocol.WriteMessage(conn, protocol.NewErrorMessage(500, "UDP Proxy başlatılamadı")); err != nil {
+					logger.Warn("UDP proxy hata response gönderilemedi", zap.Error(err))
+				}
 				return
 			}
 		}
@@ -353,7 +370,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 		// DEFAULT: HTTP Subdomain
 		subdomain = utils.GenerateSubDomain(8)
 		if cfg.Env == "production" || cfg.BaseDomain == "gorenel.site" {
-			fullURL = fmt.Sprintf("http://%s.%s", subdomain, cfg.BaseDomain)
+			fullURL = fmt.Sprintf("https://%s.%s", subdomain, cfg.BaseDomain)
 		} else {
 			fullURL = fmt.Sprintf("http://%s.%s%s", subdomain, cfg.BaseDomain, cfg.ProxyPort)
 		}
@@ -366,11 +383,18 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 		FullURL:    fullURL,
 		PublicPort: publicPort,
 	}
-	respJson, _ := json.Marshal(respPayload)
-	protocol.WriteMessage(conn, protocol.Message{
+	respJson, err := json.Marshal(respPayload)
+	if err != nil {
+		logger.Error("REGISTERED payload marshal edilemedi", zap.Error(err))
+		return
+	}
+	if err := protocol.WriteMessage(conn, protocol.Message{
 		Type:    protocol.MsgTypeRegistered,
 		Payload: string(respJson),
-	})
+	}); err != nil {
+		logger.Error("REGISTERED mesajı gönderilemedi", zap.Error(err))
+		return
+	}
 
 	logger.Info("Yamux session başlatıldı", zap.String("subdomain", subdomain))
 

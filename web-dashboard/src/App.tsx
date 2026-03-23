@@ -54,6 +54,7 @@ function App() {
   const [rules, setRules] = useState<ModificationRule[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -96,9 +97,11 @@ function App() {
       setMlStats(mlStatsData || {});
       setHistory(historyData || []);
       setRules(rulesData || []);
+      setApiError(null);
       setLoading(false);
     } catch (err) {
       console.error('Core Analytics Sync Failed: Backend unreachable or returning 502.');
+      setApiError(t('common.error_fetch', 'Failed to fetch latest data from backend.'));
       setLoading(false);
     }
   };
@@ -257,7 +260,12 @@ function App() {
       )}
 
       {/* Mobile Sidebar (Slide-over) */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0A0C10] border-r border-white/5 p-6 transition-transform duration-300 md:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0A0C10] border-r border-white/5 p-6 transition-transform duration-300 md:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('common.mobile_navigation', 'Mobile navigation')}
+      >
         <div className="flex items-center justify-between mb-10">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
@@ -268,6 +276,7 @@ function App() {
           <button 
             onClick={() => setIsMobileMenuOpen(false)}
             className="p-2 hover:bg-white/5 rounded-lg text-white/40 hover:text-white transition-colors"
+            aria-label={t('common.close_menu', 'Close menu')}
           >
             <X size={20} />
           </button>
@@ -321,7 +330,7 @@ function App() {
                   {activeTab === 'api_keys' && t('dashboard.api_keys')}
                   {activeTab === 'settings' && t('dashboard.global_rules')}
                 </h2>
-                <p className="text-sm md:text-lg text-white/50 font-normal max-w-2xl hidden xs:block">
+                <p className="text-sm md:text-lg text-white/50 font-normal max-w-2xl hidden sm:block">
                   {activeTab === 'overview' && t('dashboard.overview_desc')}
                   {activeTab === 'tunnels' && t('dashboard.tunnels_desc')}
                   {activeTab === 'ai_gateway' && t('dashboard.ai_desc')}
@@ -334,6 +343,7 @@ function App() {
               <button 
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="md:hidden p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-emerald-400"
+                aria-label={t('common.open_menu', 'Open menu')}
               >
                 <Menu size={20} />
               </button>
@@ -359,6 +369,11 @@ function App() {
               </button>
             </div>
           </header>
+          {apiError && (
+            <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300" role="alert">
+              {apiError}
+            </div>
+          )}
 
           <Suspense fallback={<div className="h-96 flex items-center justify-center"><Activity className="w-8 h-8 text-emerald-500 animate-spin" /></div>}>
             {activeTab === 'overview' && (
@@ -366,10 +381,10 @@ function App() {
 
                 {/* Metrics Grid - Airy */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <MetricCard title="Active Tunnels" value={metrics?.tunnels.active_count || 0} icon={Globe} color="emerald" />
-                  <MetricCard title="Total Requests" value={analytics?.total_requests || 0} icon={TrendingUp} color="blue" trend={{ value: 12, isPositive: true }} />
-                  <MetricCard title="System Load" value={`${metrics?.system.goroutines || 0}`} icon={Activity} color="violet" />
-                  <MetricCard title="Avg Latency" value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(0)} ms`} icon={Activity} color="rose" />
+                  <MetricCard title={t('dashboard.active_tunnels_metric', 'Active Tunnels')} value={metrics?.tunnels.active_count || 0} icon={Globe} color="emerald" />
+                  <MetricCard title={t('dashboard.total_requests_metric', 'Total Requests')} value={analytics?.total_requests || 0} icon={TrendingUp} color="blue" />
+                  <MetricCard title={t('dashboard.system_load_metric', 'System Load')} value={`${metrics?.system.goroutines || 0}`} icon={Activity} color="violet" />
+                  <MetricCard title={t('dashboard.avg_latency_metric', 'Avg Latency')} value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(0)} ms`} icon={Activity} color="rose" />
                 </div>
 
                 {/* Quick Start Onboarding Section */}
@@ -404,8 +419,8 @@ function App() {
 
                 {/* Charts - Floating */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <RealtimeChart data={analytics?.time_series || []} metric="requests" title="Global Requests / Sec" color="#10b981" />
-                  <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title="P95 Latency (ms)" color="#eff6ff" />
+                  <RealtimeChart data={analytics?.time_series || []} metric="requests" title={t('dashboard.global_requests_chart', 'Global Requests / Sec')} color="#10b981" />
+                  <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title={t('dashboard.latency_chart', 'P95 Latency (ms)')} color="#eff6ff" />
                 </div>
 
                 {/* Bottom Section */}
@@ -420,9 +435,9 @@ function App() {
                       <div className="absolute inset-0 bg-emerald-500/5 blur-3xl" />
                       <div className="relative z-10">
                         <ShieldCheck className="w-10 h-10 text-emerald-400 mb-4" />
-                        <h3 className="text-xl font-bold text-white mb-2">System Secure</h3>
+                        <h3 className="text-xl font-bold text-white mb-2">{t('dashboard.system_secure')}</h3>
                         <p className="text-white/50 leading-relaxed">
-                          Anomaly detection is active. No threats detected in the last 24 hours.
+                          {t('dashboard.no_threats')}
                         </p>
                       </div>
                     </div>

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"time"
 
 	"github.com/hashicorp/yamux"
 	"go.uber.org/zap"
@@ -28,6 +29,12 @@ func (p *TCPProxy) ListenAndForward(publicPort int, session *yamux.Session) erro
 
 	p.logger.Info("TCP Proxy listening", zap.Int("port", publicPort))
 
+	// Ensure listener is closed if yamux session dies without new incoming accepts.
+	go func() {
+		<-session.CloseChan()
+		_ = listener.Close()
+	}()
+
 	go func() {
 		defer listener.Close()
 		for {
@@ -37,6 +44,10 @@ func (p *TCPProxy) ListenAndForward(publicPort int, session *yamux.Session) erro
 				// If session is closed, accept will fail
 				if session.IsClosed() {
 					return
+				}
+				if ne, ok := err.(net.Error); ok && ne.Temporary() {
+					time.Sleep(100 * time.Millisecond)
+					continue
 				}
 				p.logger.Error("TCP Accept error", zap.Error(err))
 				continue
@@ -66,15 +77,20 @@ func (p *TCPProxy) proxyConn(conn net.Conn, stream net.Conn) {
 
 	// Local internet -> Yamux stream -> Client
 	go func() {
-		io.Copy(stream, conn)
+		if _, err := io.Copy(stream, conn); err != nil {
+			p.logger.Debug("TCP copy conn->stream ended", zap.Error(err))
+		}
 		done <- struct{}{}
 	}()
 
 	// Client -> Yamux stream -> Local internet
 	go func() {
-		io.Copy(conn, stream)
+		if _, err := io.Copy(conn, stream); err != nil {
+			p.logger.Debug("TCP copy stream->conn ended", zap.Error(err))
+		}
 		done <- struct{}{}
 	}()
 
+	<-done
 	<-done
 }

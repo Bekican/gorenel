@@ -53,13 +53,23 @@ func (tm *TunnelManager) AllocatePort() (int, error) {
 			ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 			if err == nil {
 				_ = ln.Close()
-				// Artık AllocatePort sadece portu rezerve eder
-				// Kayıt işlemi Register aşamasında yapılacak veya burada geçici işaretlenebilir
+				// Reserve immediately to prevent concurrent duplicate allocation.
+				tm.tcpPorts[port] = "reserved"
 				return port, nil
 			}
 		}
 	}
 	return 0, fmt.Errorf("boş port bulunamadı")
+}
+
+func (tm *TunnelManager) ReleasePort(port int, proto string) {
+	tm.portMutex.Lock()
+	defer tm.portMutex.Unlock()
+	if proto == "udp" {
+		delete(tm.udpPorts, port)
+		return
+	}
+	delete(tm.tcpPorts, port)
 }
 
 // NewTunnelManager creates a new instance of TunnelManager with initialized maps.
@@ -109,24 +119,26 @@ func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session
 // GetTunnel attempts to find a session matching the provided host.
 // It first checks if the host is a direct subdomain, then checks custom domain mappings.
 func (tm *TunnelManager) GetTunnel(host string) (*yamux.Session, bool) {
-	tm.mu.Lock()
-	defer tm.mu.Unlock()
-
-	// 1. Durum: Host direkt bir subdomain (örn: "xyz-123")
-	if info, exists := tm.tunnels[host]; exists {
-		info.LastActivity = time.Now()
-		return info.Session, true
-	}
-
-	// 2. Durum: Host özel bir domain mi (örn: "api.bekircan.com")
-	if sub, exists := tm.customDomains[host]; exists {
-		if info, exists := tm.tunnels[sub]; exists {
-			info.LastActivity = time.Now()
-			return info.Session, true
+	tm.mu.RLock()
+	info, exists := tm.tunnels[host]
+	if !exists {
+		if sub, ok := tm.customDomains[host]; ok {
+			info, exists = tm.tunnels[sub]
 		}
 	}
+	tm.mu.RUnlock()
 
-	return nil, false
+	if !exists || info == nil {
+		return nil, false
+	}
+
+	tm.mu.Lock()
+	if current, ok := tm.tunnels[info.Subdomain]; ok && current != nil {
+		current.LastActivity = time.Now()
+	}
+	tm.mu.Unlock()
+
+	return info.Session, true
 }
 
 func (tm *TunnelManager) GetTunnels() []*TunnelInfo {
@@ -165,7 +177,6 @@ func (tm *TunnelManager) RemoveTunnel(subdomain string) {
 		if sub == subdomain {
 			delete(tm.customDomains, domain)
 			tm.logger.Info("Custom domain eşleşmesi silindi", zap.String("domain", domain))
-			break
 		}
 	}
 

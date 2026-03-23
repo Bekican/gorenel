@@ -2,7 +2,9 @@ package server
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -71,7 +73,15 @@ func (ti *TrafficInspector) Record(req *CapturedRequest) {
 func (ti *TrafficInspector) GetHistory() []*CapturedRequest {
 	ti.mu.RLock()
 	defer ti.mu.RUnlock()
-	return ti.history
+	out := make([]*CapturedRequest, 0, len(ti.history))
+	for _, r := range ti.history {
+		if r == nil {
+			continue
+		}
+		cp := *r
+		out = append(out, &cp)
+	}
+	return out
 }
 
 // ID ile spesifik req getirme
@@ -80,7 +90,8 @@ func (ti *TrafficInspector) GetByID(id string) *CapturedRequest {
 	defer ti.mu.RUnlock()
 	for _, r := range ti.history {
 		if r.ID == id {
-			return r
+			cp := *r
+			return &cp
 		}
 	}
 	return nil
@@ -90,7 +101,7 @@ func (ti *TrafficInspector) GetByID(id string) *CapturedRequest {
 func (ti *TrafficInspector) Replay(id string, client *http.Client, targetBase string) (*http.Response, error) {
 	captured := ti.GetByID(id)
 	if captured == nil {
-		return nil, http.ErrNoLocation
+		return nil, errors.New("captured request not found")
 	}
 
 	req, err := http.NewRequest(captured.Method, targetBase+captured.Path, bytes.NewReader(captured.ReqBody))
@@ -99,6 +110,11 @@ func (ti *TrafficInspector) Replay(id string, client *http.Client, targetBase st
 		return nil, err
 	}
 	for k, vv := range captured.ReqHeaders {
+		// Avoid forwarding hop-by-hop and host-specific headers on replay.
+		kl := strings.ToLower(k)
+		if kl == "host" || kl == "connection" || kl == "content-length" || kl == "transfer-encoding" || kl == "keep-alive" || kl == "proxy-authenticate" || kl == "proxy-authorization" || kl == "te" || kl == "trailers" || kl == "upgrade" {
+			continue
+		}
 		for _, v := range vv {
 			req.Header.Add(k, v)
 		}

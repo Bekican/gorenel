@@ -192,7 +192,7 @@ export const ApiKeyManager: React.FC = () => {
                                 >
                                     <div className="flex items-center gap-3 text-white/70 overflow-hidden">
                                         <span className="text-blue-500 shrink-0">$</span>
-                                        <code className="truncate">powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel connect --key {k.key}"</code>
+                                        <code className="truncate">powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel connect --key {k.key} --port 3000"</code>
                                     </div>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/cmd:opacity-100 transition-all bg-blue-600 px-2 py-1 rounded-lg text-white font-sans font-bold flex items-center gap-1 shadow-lg shadow-blue-500/20">
                                         <Copy size={12} /> Kopyala

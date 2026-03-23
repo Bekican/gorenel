@@ -54,13 +54,13 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 func (p *HTTPProxy) Start(port string) error {
 	p.logger.Info("HTTP Proxy initiating", zap.String("port", port))
 
-	// Certmagic (Auto-SSL) is disabled in production Docker environment 
+	// Certmagic (Auto-SSL) is disabled in production Docker environment
 	// because SSL is handled by Fly.io LBs and Nginx proxy.
 	/*
-	if p.env == "production" && p.baseDomain != "" && p.acmeEmail != "" {
-		certmagic.DefaultACME.Email = p.acmeEmail
-		// ...
-	}
+		if p.env == "production" && p.baseDomain != "" && p.acmeEmail != "" {
+			certmagic.DefaultACME.Email = p.acmeEmail
+			// ...
+		}
 	*/
 
 	server := &http.Server{
@@ -92,11 +92,15 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	statusCode := http.StatusOK // Default, will be overwritten by errors or response
 	var bytesOut int64
 	var bytesReceived int64
+	reqBytes := r.ContentLength
+	if reqBytes < 0 {
+		reqBytes = 0
+	}
 
 	// Ensure analytics are published for ALL requests, even on early return
 	defer func() {
 		dur := time.Since(startTime)
-		p.publishEvent(targetKey, r, clientIP, statusCode, dur, 0, bytesOut, "")
+		p.publishEvent(targetKey, r, clientIP, statusCode, dur, reqBytes, bytesOut, "")
 
 		// Panic recovery
 		if err := recover(); err != nil {
@@ -185,7 +189,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		p.triggerMLAnalysis(r, time.Since(startTime), statusCode, 0, clientIP, targetKey, aiMeta)
+		p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, time.Since(startTime), statusCode, 0, clientIP, targetKey, aiMeta)
 		return
 	}
 
@@ -248,7 +252,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				)
 			}
 			p.inspector.Record(captured)
-			p.triggerMLAnalysis(r, time.Since(startTime), statusCode, 0, clientIP, targetKey, aiMeta)
+			p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, time.Since(startTime), statusCode, 0, clientIP, targetKey, aiMeta)
 		}
 		return
 	}
@@ -331,7 +335,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ML Anomali Kontrolu
-	p.triggerMLAnalysis(r, responseTime, captureWriter.StatusCode, bytesReceived, clientIP, targetKey, captured.AIMetadata)
+	p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, responseTime, captureWriter.StatusCode, bytesReceived, clientIP, targetKey, captured.AIMetadata)
 
 	p.logger.Debug("İstek tamamlandı",
 		zap.String("method", r.Method),
@@ -340,17 +344,20 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	)
 }
 
-func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, statusCode int, bytesReceived int64, clientIP string, targetKey string, aiMeta *AIMetadata) {
+func (p *HTTPProxy) triggerMLAnalysis(method, path, host string, requestSize int64, duration time.Duration, statusCode int, bytesReceived int64, clientIP string, targetKey string, aiMeta *AIMetadata) {
 	if p.mlClient == nil {
 		return
 	}
+	if requestSize < 0 {
+		requestSize = 0
+	}
 
 	requestData := map[string]interface{}{
-		"method":        r.Method,
-		"path":          r.URL.Path,
+		"method":        method,
+		"path":          path,
 		"response_time": duration.Milliseconds(),
 		"status_code":   statusCode,
-		"request_size":  r.ContentLength,
+		"request_size":  requestSize,
 		"response_size": bytesReceived,
 	}
 
@@ -398,8 +405,8 @@ func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, s
 			}
 
 			p.logger.Warn("Anomali tespit edildi!",
-				zap.String("path", r.URL.Path),
-				zap.String("method", r.Method),
+				zap.String("path", path),
+				zap.String("method", method),
 				zap.String("detected_by", detectedBy),
 				zap.Float64("max_score", maxScore),
 			)
@@ -414,8 +421,8 @@ func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, s
 					ID:           uuid.New().String(),
 					Timestamp:    time.Now(),
 					Subdomain:    targetKey,
-					Method:       r.Method,
-					Path:         r.URL.Path,
+					Method:       method,
+					Path:         path,
 					ClientIP:     clientIP,
 					AnomalyScore: maxScore,
 					DetectedBy:   detectedBy,
@@ -426,6 +433,7 @@ func (p *HTTPProxy) triggerMLAnalysis(r *http.Request, duration time.Duration, s
 			}
 		}
 	})
+	_ = host // kept for future ML enrichment dimensions
 }
 
 func resolveTargetKey(host string, baseDomain string) (key string, isCustom bool) {

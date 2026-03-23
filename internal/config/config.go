@@ -2,6 +2,8 @@ package config
 
 import (
 	"errors"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -109,5 +111,52 @@ func Load() (*Config, error) {
 		}
 	}
 
+	if config.RateLimitRequests <= 0 {
+		return nil, errors.New("RATE_LIMIT_REQUESTS must be greater than 0")
+	}
+	if config.RateLimitWindow <= 0 {
+		return nil, errors.New("RATE_LIMIT_WINDOW must be greater than 0")
+	}
+	if config.RedisAddr == "" {
+		return nil, errors.New("REDIS_ADDR must be set")
+	}
+	if config.DBURL == "" {
+		return nil, errors.New("DB_URL must be set")
+	}
+	if config.ControlPort == config.ProxyPort || config.ControlPort == config.MonitorPort || config.ProxyPort == config.MonitorPort {
+		return nil, errors.New("CONTROL_PORT, PROXY_PORT and MONITOR_PORT must be different")
+	}
+
+	for _, p := range []struct {
+		name  string
+		value string
+	}{
+		{name: "CONTROL_PORT", value: config.ControlPort},
+		{name: "PROXY_PORT", value: config.ProxyPort},
+		{name: "MONITOR_PORT", value: config.MonitorPort},
+	} {
+		if err := validatePort(p.value); err != nil {
+			return nil, fmt.Errorf("%s is invalid: %w", p.name, err)
+		}
+	}
+
 	return &config, nil
+}
+
+func validatePort(port string) error {
+	if !strings.HasPrefix(port, ":") {
+		return errors.New("must start with ':' (example :7000)")
+	}
+	numeric := strings.TrimPrefix(port, ":")
+	if numeric == "" {
+		return errors.New("empty port value")
+	}
+	p, err := strconv.Atoi(numeric)
+	if err != nil {
+		return err
+	}
+	if p < 1 || p > 65535 {
+		return errors.New("port must be between 1 and 65535")
+	}
+	return nil
 }

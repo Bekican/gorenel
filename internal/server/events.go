@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"math/big"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Bekican/gorenel/internal/protocol"
@@ -25,6 +26,8 @@ type EventStream struct {
 
 	done   chan struct{}
 	logger *zap.Logger
+	closed atomic.Bool
+	sem    chan struct{}
 }
 
 type EventConsumer interface {
@@ -40,6 +43,7 @@ func NewEventStream(bufferSize int) *EventStream {
 		subscribers: make([]EventConsumer, 0),
 		done:        make(chan struct{}),
 		logger:      l,
+		sem:         make(chan struct{}, 256),
 	}
 
 	go es.dispatcher()
@@ -49,6 +53,9 @@ func NewEventStream(bufferSize int) *EventStream {
 
 // event yayınlıyoruz
 func (es *EventStream) publish(event *RequestEvent) {
+	if es.closed.Load() {
+		return
+	}
 	select {
 	case es.events <- event:
 		es.mu.Lock()
@@ -73,10 +80,25 @@ func (es *EventStream) Subscribe(consumer EventConsumer) {
 func (es *EventStream) dispatcher() {
 	for {
 		select {
-		case event := <-es.events:
+		case event, ok := <-es.events:
+			if !ok {
+				return
+			}
+			if event == nil {
+				continue
+			}
 			es.subMu.RLock()
 			for _, consumer := range es.subscribers {
+				select {
+				case es.sem <- struct{}{}:
+				default:
+					es.mu.Lock()
+					es.DroppedEvents++
+					es.mu.Unlock()
+					continue
+				}
 				go func(c EventConsumer, e *RequestEvent) {
+					defer func() { <-es.sem }()
 					if err := c.Consume(e); err != nil {
 						es.logger.Error("Event processing error", zap.String("consumer", c.Name()), zap.Error(err))
 					}
@@ -92,8 +114,10 @@ func (es *EventStream) dispatcher() {
 
 // streami kapatma fonksiyonu
 func (es *EventStream) Close() {
+	if !es.closed.CompareAndSwap(false, true) {
+		return
+	}
 	close(es.done)
-	close(es.events)
 }
 
 // stream istatistiklerini gördüğümüz fonksiyon

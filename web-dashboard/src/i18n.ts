@@ -35,6 +35,12 @@ const resources = {
         "settings_sub": "Traffic Rules",
         "provider_status": "Provider Status",
         "operational": "Operational"
+        ,
+        "close": "Close",
+        "open_menu": "Open menu",
+        "close_menu": "Close menu",
+        "mobile_navigation": "Mobile navigation",
+        "error_fetch": "Failed to fetch latest data from backend."
       },
       "dashboard": {
         "command_center": "Command Center",
@@ -57,7 +63,13 @@ const resources = {
         "step_2": "2. Inspect Traffic",
         "step_2_desc": "See requests in the Traffic Inspector.",
         "step_3": "3. Set AI Rules",
-        "step_3_desc": "Apply transformations or proxy LLMs."
+        "step_3_desc": "Apply transformations or proxy LLMs.",
+        "active_tunnels_metric": "Active Tunnels",
+        "total_requests_metric": "Total Requests",
+        "system_load_metric": "System Load",
+        "avg_latency_metric": "Avg Latency",
+        "global_requests_chart": "Global Requests / Sec",
+        "latency_chart": "P95 Latency (ms)"
       },
       "connect_modal": {
         "title": "Connect Your Device",
@@ -123,7 +135,10 @@ const resources = {
       },
       "auth": {
         "no_account": "Don't have an account?",
-        "have_account": "Already have an account?"
+        "have_account": "Already have an account?",
+        "name": "Name",
+        "email": "Email",
+        "password": "Password"
       },
       "traffic_inspector": {
         "title": "Packet Streams",
@@ -150,7 +165,9 @@ const resources = {
         "payload": "Payload",
         "body": "Body Output",
         "share": "Share Trace",
-        "collapse": "Collapse Inspector"
+        "collapse": "Collapse Inspector",
+        "no_results_title": "No matching requests",
+        "no_results_desc": "Try a different search term or clear filters."
       }
     }
   },
@@ -186,6 +203,12 @@ const resources = {
         "settings_sub": "Traffic Rules",
         "provider_status": "Provider Status",
         "operational": "Operational"
+        ,
+        "close": "Kapat",
+        "open_menu": "Menüyü aç",
+        "close_menu": "Menüyü kapat",
+        "mobile_navigation": "Mobil gezinme",
+        "error_fetch": "Backend'den güncel veriler alınamadı."
       },
       "dashboard": {
         "command_center": "Komuta Merkezi",
@@ -208,7 +231,13 @@ const resources = {
         "step_2": "2. Trafiği İzle",
         "step_2_desc": "Gelen istekleri Traffic Inspector'da gör.",
         "step_3": "3. AI Kuralları Koy",
-        "step_3_desc": "Dönüşümler uygula veya LLM'leri proxy et."
+        "step_3_desc": "Dönüşümler uygula veya LLM'leri proxy et.",
+        "active_tunnels_metric": "Aktif Tüneller",
+        "total_requests_metric": "Toplam İstek",
+        "system_load_metric": "Sistem Yükü",
+        "avg_latency_metric": "Ortalama Gecikme",
+        "global_requests_chart": "Global İstek / Sn",
+        "latency_chart": "P95 Gecikme (ms)"
       },
       "connect_modal": {
         "title": "Cihazını Bağla",
@@ -274,7 +303,10 @@ const resources = {
       },
       "auth": {
         "no_account": "Hesabınız yok mu?",
-        "have_account": "Zaten hesabınız var mı?"
+        "have_account": "Zaten hesabınız var mı?",
+        "name": "İsim",
+        "email": "E-posta",
+        "password": "Şifre"
       },
       "traffic_inspector": {
         "title": "Packet Streams",
@@ -301,7 +333,9 @@ const resources = {
         "payload": "Payload",
         "body": "Body Output",
         "share": "Share Trace",
-        "collapse": "Collapse Inspector"
+        "collapse": "Collapse Inspector",
+        "no_results_title": "Eşleşen istek bulunamadı",
+        "no_results_desc": "Farklı bir arama terimi deneyin veya filtreyi temizleyin."
       }
     }
   }

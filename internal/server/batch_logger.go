@@ -64,7 +64,7 @@ func (bl *BatchLogger) Consume(event *RequestEvent) error {
 
 	bl.buffer = append(bl.buffer, event)
 
-	if len(bl.buffer) > bl.batchSize {
+	if len(bl.buffer) >= bl.batchSize {
 		return bl.flushLocked()
 	}
 	return nil
@@ -149,9 +149,14 @@ func (bl *BatchLogger) flushLocked() error {
 //batch logger'ı kapatıcaz
 
 func (bl *BatchLogger) Close() error {
-	close(bl.done)
+	select {
+	case <-bl.done:
+		// already closed
+	default:
+		close(bl.done)
+	}
 
-	bl.bufMu.Unlock()
+	bl.bufMu.Lock()
 	defer bl.bufMu.Unlock()
 
 	return bl.flushLocked()
@@ -159,16 +164,18 @@ func (bl *BatchLogger) Close() error {
 
 // istatistikleri gösteriyoruz
 func (bl *BatchLogger) Stats() map[string]interface{} {
+	bl.mu.RLock()
+	totalBatches := bl.TotalBatches
+	totalEvents := bl.TotalEvents
 	bl.mu.RUnlock()
-	defer bl.mu.RUnlock()
 
 	bl.bufMu.Lock()
 	bufferSize := len(bl.buffer)
 	bl.bufMu.Unlock()
 
 	return map[string]interface{}{
-		"total_batches":  bl.TotalBatches,
-		"total_events":   bl.TotalEvents,
+		"total_batches":  totalBatches,
+		"total_events":   totalEvents,
 		"current_buffer": bufferSize,
 		"batch_size":     bl.batchSize,
 		"flush_interval": bl.flushInterval.String(),

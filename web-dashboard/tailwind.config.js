@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: '475px',
+      },
       colors: {
         primary: "hsl(var(--primary) / <alpha-value>)",
         accent: "hsl(var(--accent) / <alpha-value>)",

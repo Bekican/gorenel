@@ -20,7 +20,7 @@ type RateLimiter struct {
 	tiers    map[string]Quota
 	userTier map[string]string // UserID/IP -> PlanID
 	mu       sync.RWMutex
-	
+
 	// Memory store fallback for testing (if rdb is nil)
 	memStore map[string][]time.Time
 }
@@ -54,10 +54,10 @@ func (rl *RateLimiter) Allow(identifier string, n int) bool {
 	if rl.rdb == nil {
 		rl.mu.Lock()
 		defer rl.mu.Unlock()
-		
+
 		now := time.Now()
 		expiry := now.Add(-quota.WindowSize)
-		
+
 		// Clean up old entries
 		var valid []time.Time
 		for _, t := range rl.memStore[identifier] {
@@ -65,13 +65,13 @@ func (rl *RateLimiter) Allow(identifier string, n int) bool {
 				valid = append(valid, t)
 			}
 		}
-		
+
 		// Check limit
 		if len(valid)+n > quota.Limit {
 			rl.memStore[identifier] = valid
 			return false
 		}
-		
+
 		// Add new entries
 		for i := 0; i < n; i++ {
 			valid = append(valid, now)
@@ -87,28 +87,38 @@ func (rl *RateLimiter) Allow(identifier string, n int) bool {
 
 	// Remove older elements
 	minScore := fmt.Sprintf("%d", now.Add(-quota.WindowSize).UnixNano())
-	rl.rdb.ZRemRangeByScore(ctx, windowKey, "-inf", minScore)
-
-	// Add new requests
-	for i := 0; i < n; i++ {
-		member := fmt.Sprintf("%d-%d", now.UnixNano(), i)
-		rl.rdb.ZAdd(ctx, windowKey, redis.Z{
-			Score:  float64(now.UnixNano()),
-			Member: member,
-		})
+	if err := rl.rdb.ZRemRangeByScore(ctx, windowKey, "-inf", minScore).Err(); err != nil {
+		return false
 	}
-
-	// Set expiry on the whole set to clean up automatically
-	rl.rdb.Expire(ctx, windowKey, quota.WindowSize)
 
 	// Count elements
 	count, err := rl.rdb.ZCard(ctx, windowKey).Result()
 	if err != nil {
-		// Log error, fallback allow
-		return true
+		return false
+	}
+	if count+int64(n) > int64(quota.Limit) {
+		return false
 	}
 
-	return count <= int64(quota.Limit)
+	// Add new requests only after quota check
+	members := make([]redis.Z, 0, n)
+	for i := 0; i < n; i++ {
+		member := fmt.Sprintf("%d-%d", now.UnixNano(), i)
+		members = append(members, redis.Z{
+			Score:  float64(now.UnixNano()),
+			Member: member,
+		})
+	}
+	if err := rl.rdb.ZAdd(ctx, windowKey, members...).Err(); err != nil {
+		return false
+	}
+
+	// Set expiry on the whole set to clean up automatically
+	if err := rl.rdb.Expire(ctx, windowKey, quota.WindowSize).Err(); err != nil {
+		return false
+	}
+
+	return true
 }
 
 func (rl *RateLimiter) SetUserTier(identifier, tierID string) {

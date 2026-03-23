@@ -22,9 +22,9 @@ var rootCmd = &cobra.Command{
 Network engineering prensipleriyle yazılmış, production-ready bir araç.
 
 Örnekler:
-  gorenel start --port 3000
-  gorenel start --port 8080 --subdomain my-app
-  gorenel start --config tunnel.yaml`,
+  gorenel connect --key GK_... --port 3000
+  gorenel start --api-key GK_... --port 8080 --subdomain my-app
+  gorenel connect --config tunnel.yaml`,
 	Version: "1.0.0",
 }
 

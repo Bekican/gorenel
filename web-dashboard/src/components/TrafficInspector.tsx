@@ -20,6 +20,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
         req.method.toLowerCase().includes(searchTerm.toLowerCase()) ||
         req.status_code.toString().includes(searchTerm)
     );
+    const hasActiveFilter = searchTerm.trim().length > 0;
 
     const handleReplay = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -74,7 +75,8 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
             </div>
             
             <div className="flex-1 overflow-y-auto custom-scrollbar relative">
-                <table className="w-full text-left border-separate border-spacing-0">
+                <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] text-left border-separate border-spacing-0">
                     <thead className="sticky top-0 bg-[#0c0c0c]/80 backdrop-blur-md z-10 border-b border-white/5">
                         <tr className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">
                             <th className="px-8 py-4">{t('traffic_inspector.method')}</th>
@@ -94,9 +96,11 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                            <Activity className="w-10 h-10 text-primary" />
                                         </div>
                                         <div className="space-y-2">
-                                            <h4 className="text-2xl font-black text-white tracking-tight">{t('traffic_inspector.listening_title')}</h4>
+                                            <h4 className="text-2xl font-black text-white tracking-tight">
+                                                {hasActiveFilter ? t('traffic_inspector.no_results_title', 'No matching requests') : t('traffic_inspector.listening_title')}
+                                            </h4>
                                             <p className="text-sm text-white/30 font-medium leading-relaxed">
-                                                {t('traffic_inspector.listening_desc')}
+                                                {hasActiveFilter ? t('traffic_inspector.no_results_desc', 'Try a different search term or clear filters.') : t('traffic_inspector.listening_desc')}
                                             </p>
                                         </div>
                                         <div className="flex items-center justify-center gap-4 pt-4">
@@ -360,6 +364,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                         )}
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
     );

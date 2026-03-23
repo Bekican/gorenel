@@ -35,10 +35,15 @@ func NewRedisPublisher(addr string) *RedisPublisher {
 
 func (r *RedisPublisher) Publish(data TrafficData) error {
 	ctx := context.Background()
-	jsonData, _ := json.Marshal(data)
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
 
 	return r.client.XAdd(ctx, &redis.XAddArgs{
 		Stream: r.streamName,
+		MaxLen: 100000,
+		Approx: true,
 		Values: map[string]interface{}{"data": string(jsonData)},
 	}).Err()
 }
