@@ -15,10 +15,15 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
     if (!isOpen) return null;
 
     const host = window.location.hostname;
-    console.log('ConnectModal: current hostname is', host);
+    const isWindows = typeof window !== 'undefined' && /win/i.test(navigator.platform);
     const apiToken = apiKey || 'demo-key-12345';
-    const command = `gorenel start --server ${host}:7000 --port 3000 --api-key ${apiToken}`;
-    console.log('ConnectModal: generated command is', command);
+    // Use .\ for Windows, and ensure WebSocket URL for Fly.dev/Nginx
+    const binary = isWindows ? '.\\gorenel' : 'gorenel';
+    
+    // In production, use the current host but with the correct WebSocket path
+    // If we're on gorenel.site, the CLI default is already correct, but being explicit is safer
+    const serverUrl = host === 'localhost' ? 'ws://localhost:9091' : `wss://${host}/tunnel/connect`;
+    const command = `${binary} start --server ${serverUrl} --port 3000 --api-key ${apiToken}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(command);
