@@ -182,10 +182,16 @@ func (c *Client) GetModelStats() (*ModelStatsResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
+	body, err := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("ml /models/stats: %d %s", resp.StatusCode, string(body))
+	}
 	var stats ModelStatsResponse
-	if err := json.NewDecoder(resp.Body).Decode(&stats); err != nil {
+	if err := json.Unmarshal(body, &stats); err != nil {
 		return nil, err
 	}
 	return &stats, nil

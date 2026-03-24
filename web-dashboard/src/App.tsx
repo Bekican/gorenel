@@ -81,32 +81,51 @@ function App() {
   }, []);
 
   const fetchData = useCallback(async () => {
-    try {
-      const [metricsData, analyticsData, tunnelsData, anomaliesData, mlStatsData, historyData, rulesData, tunnelHistoryData] = await Promise.all([
-        api.getMetrics(),
-        api.getAnalytics(),
-        api.getTunnels(),
-        api.getAnomalies(),
-        api.getMLStats(),
-        api.getTrafficHistory(),
-        api.getModificationRules(),
-        api.getTunnelHistory(),
-      ]);
-      setMetrics(metricsData);
-      setAnalytics(analyticsData);
-      setTunnels(tunnelsData.tunnels || []);
-      setAnomalies(anomaliesData.anomalies || []);
-      setMlStats(mlStatsData || {});
-      setHistory(historyData || []);
-      setRules(rulesData || []);
-      setTunnelHistory(tunnelHistoryData.sessions || []);
-      setApiError(null);
-      setLoading(false);
-    } catch (err) {
-      console.error('Core Analytics Sync Failed: Backend unreachable or returning 502.');
+    const settled = await Promise.allSettled([
+      api.getMetrics(),
+      api.getAnalytics(),
+      api.getTunnels(),
+      api.getAnomalies(),
+      api.getMLStats(),
+      api.getTrafficHistory(),
+      api.getModificationRules(),
+      api.getTunnelHistory(),
+    ]);
+
+    const [
+      metricsRes,
+      analyticsRes,
+      tunnelsRes,
+      anomaliesRes,
+      mlStatsRes,
+      historyRes,
+      rulesRes,
+      tunnelHistoryRes,
+    ] = settled;
+
+    if (metricsRes.status === 'fulfilled') setMetrics(metricsRes.value);
+    if (analyticsRes.status === 'fulfilled') setAnalytics(analyticsRes.value);
+    if (tunnelsRes.status === 'fulfilled') setTunnels(tunnelsRes.value.tunnels || []);
+    if (anomaliesRes.status === 'fulfilled') setAnomalies(anomaliesRes.value.anomalies || []);
+    if (mlStatsRes.status === 'fulfilled') setMlStats(mlStatsRes.value || {});
+    if (historyRes.status === 'fulfilled') setHistory(historyRes.value || []);
+    if (rulesRes.status === 'fulfilled') setRules(rulesRes.value || []);
+    if (tunnelHistoryRes.status === 'fulfilled') setTunnelHistory(tunnelHistoryRes.value.sessions || []);
+
+    const failed = settled.filter((r) => r.status === 'rejected');
+    failed.forEach((r) => {
+      if (r.status === 'rejected') console.warn('API partial failure:', r.reason);
+    });
+
+    const metricsDown = metricsRes.status === 'rejected';
+    const analyticsDown = analyticsRes.status === 'rejected';
+    if (metricsDown && analyticsDown) {
+      console.error('Core Analytics Sync Failed: Backend unreachable or returning 5xx.');
       setApiError(t('common.error_fetch', 'Failed to fetch latest data from backend.'));
-      setLoading(false);
+    } else {
+      setApiError(null);
     }
+    setLoading(false);
   }, [t]);
 
   useEffect(() => {

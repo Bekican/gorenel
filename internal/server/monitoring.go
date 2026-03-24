@@ -285,19 +285,21 @@ func (m *MonitoringServer) anomaliesHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (m *MonitoringServer) mlStatsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	// ML kapalı / eğitim sırasında bile 200 dön: dashboard Promise.all ile tümünü düşürmesin
 	if m.mlClient == nil {
-		http.Error(w, "ML client not initialized", http.StatusServiceUnavailable)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{})
 		return
 	}
 
 	stats, err := m.mlClient.GetModelStats()
 	if err != nil {
-		http.Error(w, "ML service unavailable", http.StatusServiceUnavailable)
+		m.logger.Warn("ML stats unavailable, returning empty stats", zap.Error(err))
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{})
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stats)
+	_ = json.NewEncoder(w).Encode(stats)
 }
 
 // healthHandler -- healthCheck
