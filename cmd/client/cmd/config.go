@@ -69,28 +69,33 @@ var configInitCmd = &cobra.Command{
 	Short: "Interaktif olarak config dosyasi olustur",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		reader := bufio.NewReader(os.Stdin)
-		server := promptWithDefault(reader, "Server URL", viper.GetString("server"))
-		portStr := promptWithDefault(reader, "Varsayilan local port", fmt.Sprintf("%d", viper.GetInt("port")))
-		tType := promptWithDefault(reader, "Tunnel tipi (http/tcp/udp)", viper.GetString("type"))
-		api := promptWithDefault(reader, "API key", viper.GetString("api_key"))
+		fmt.Println("Hizli kurulum: sadece API key zorunlu. Diger ayarlar varsayilanlarla gelir.")
 
-		p, err := strconv.Atoi(portStr)
-		if err != nil || p <= 0 || p > 65535 {
-			return fmt.Errorf("port gecersiz: %s", portStr)
-		}
+		api := promptWithDefault(reader, "API key", viper.GetString("api_key"))
 		if err := validateAPIKeyFormat(api); err != nil {
 			return err
 		}
 
-		viper.Set("server", server)
-		viper.Set("port", p)
-		viper.Set("type", tType)
+		portStr := promptWithDefault(reader, "Local port (bos=3000)", "3000")
+		p, err := strconv.Atoi(portStr)
+		if err != nil || p <= 0 || p > 65535 {
+			return fmt.Errorf("port gecersiz: %s", portStr)
+		}
+
 		viper.Set("api_key", api)
+		viper.Set("port", p)
+		if viper.GetString("server") == "" {
+			viper.Set("server", "wss://gorenel.site/tunnel/connect")
+		}
+		if viper.GetString("type") == "" {
+			viper.Set("type", "http")
+		}
+
 		if err := saveConfig(); err != nil {
 			return err
 		}
-		fmt.Printf("Config kaydedildi: %s\n", activeConfigPath())
-		fmt.Println("Not: Key formati dogrulandi. Istiyorsan `gorenel config validate` ile server erisimini test edebilirsin.")
+		fmt.Printf("Config kaydedildi: %s\\n", activeConfigPath())
+		fmt.Println("Hazir. Artik sadece `gorenel connect` yazman yeterli.")
 		return nil
 	},
 }

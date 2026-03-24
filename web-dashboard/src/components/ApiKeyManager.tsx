@@ -174,8 +174,8 @@ export const ApiKeyManager: React.FC = () => {
                                                 className="px-2 py-0.5 rounded-md bg-zinc-800 text-gray-400 hover:text-white hover:bg-zinc-700 transition-all"
                                                 onClick={(e) => {
                                                     const cmd = os === 'Windows' 
-                                                        ? `powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel connect --key ${k.key}"`
-                                                        : `curl -sSL https://gorenel.site/install.sh | bash -s -- connect --key ${k.key}`;
+                                                        ? `powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel config set api_key ${k.key}; gorenel connect --port 3000"`
+                                                        : `curl -sSL https://gorenel.site/install.sh | bash -s --; gorenel config set api_key ${k.key}; gorenel connect --port 3000`;
                                                     copyToClipboard(cmd);
                                                     e.stopPropagation();
                                                 }}
@@ -188,11 +188,11 @@ export const ApiKeyManager: React.FC = () => {
                                 
                                 <div 
                                     className="bg-black/60 border border-white/5 rounded-2xl p-4 font-mono text-[11px] group/cmd cursor-pointer hover:bg-black/80 transition-all relative"
-                                    onClick={() => copyToClipboard(`powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel connect --key ${k.key}"`)}
+                                    onClick={() => copyToClipboard(`powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel config set api_key ${k.key}; gorenel connect --port 3000"`)}
                                 >
                                     <div className="flex items-center gap-3 text-white/70 overflow-hidden">
                                         <span className="text-blue-500 shrink-0">$</span>
-                                        <code className="truncate">powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel connect --key {k.key} --port 3000"</code>
+                                        <code className="truncate">powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel config set api_key {k.key}; gorenel connect --port 3000"</code>
                                     </div>
                                     <div className="absolute right-3 top-1/2 -translate-y-1/2 opacity-0 group-hover/cmd:opacity-100 transition-all bg-blue-600 px-2 py-1 rounded-lg text-white font-sans font-bold flex items-center gap-1 shadow-lg shadow-blue-500/20">
                                         <Copy size={12} /> Kopyala
@@ -216,3 +216,6 @@ export const ApiKeyManager: React.FC = () => {
         </div>
     );
 };
+
+
+

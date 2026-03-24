@@ -78,12 +78,20 @@ fi
 # Wait for gorenel-server to be reachable internally
 echo "Waiting for Backend (9091) to be reachable from Dashboard..."
 for i in {1..30}; do
-  # Check if dashboard container can ping server container and get 200/404 from monitoring
-  if docker exec appuser-gorenel-dashboard-1 curl -s http://gorenel-server:9091/health > /dev/null; then
+  # Resolve dashboard container ID dynamically (name differs by compose project name)
+  DASHBOARD_CID="$(docker-compose ps -q gorenel-dashboard 2>/dev/null || true)"
+
+  # Check if dashboard container can reach server health endpoint
+  if [ -n "$DASHBOARD_CID" ] && docker exec "$DASHBOARD_CID" curl -s http://gorenel-server:9091/health > /dev/null; then
     echo "SUCCESS: Backend is reachable from Dashboard!"
     break
   fi
-  echo "Backend not reachable yet ($i/30)... Check logs for 'port already allocated' if this fails."
+
+  if [ -z "$DASHBOARD_CID" ]; then
+    echo "Dashboard container not ready yet ($i/30)..."
+  else
+    echo "Backend not reachable yet ($i/30)... Check logs for 'port already allocated' if this fails."
+  fi
   sleep 3
 done
 
@@ -93,3 +101,4 @@ docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 # The script should not exit, so we tail logs or just wait
 echo "Gorenel is up! Tailing logs..."
 docker-compose logs -f
+

@@ -23,7 +23,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
     // In production, use the current host but with the correct WebSocket path
     // If we're on gorenel.site, the CLI default is already correct, but being explicit is safer
     const serverUrl = host === 'localhost' ? 'ws://localhost:9091' : `wss://${host}/tunnel/connect`;
-    const command = `${binary} connect --server ${serverUrl} --port 3000 --key ${apiToken}`;
+    const command = `${binary} config set api_key ${apiToken} && ${binary} connect --server ${serverUrl} --port 3000`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(command);

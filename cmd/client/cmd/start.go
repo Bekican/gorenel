@@ -105,6 +105,21 @@ func runStart(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	serverAddr = strings.TrimSpace(serverAddr)
+	apiKey = strings.TrimSpace(apiKey)
+	tunnelType = strings.ToLower(strings.TrimSpace(tunnelType))
+	if tunnelType != "http" && tunnelType != "tcp" && tunnelType != "udp" {
+		log.Printf("Invalid tunnel type '%s', defaulting to http", tunnelType)
+		tunnelType = "http"
+	}
+	if localPort <= 0 || localPort > 65535 {
+		log.Printf("Invalid local port %d, defaulting to 3000", localPort)
+		localPort = 3000
+	}
+	if serverAddr == "" {
+		serverAddr = "wss://gorenel.site/tunnel/connect"
+	}
+
 	// Banner
 	printBanner()
 
