@@ -39,10 +39,11 @@ var configGetCmd = &cobra.Command{
 var configSetCmd = &cobra.Command{
 	Use:   "set <key> <value>",
 	Short: "Config anahtarini kalici olarak set et",
-	Args:  cobra.ExactArgs(2),
+	Args:  validateConfigSetArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		key := strings.TrimSpace(args[0])
+		key := normalizeConfigKey(strings.TrimSpace(args[0]))
 		val := strings.TrimSpace(args[1])
+
 		switch key {
 		case "api_key", "server", "type":
 			if key == "api_key" {
@@ -54,13 +55,20 @@ var configSetCmd = &cobra.Command{
 		case "port":
 			p, err := strconv.Atoi(val)
 			if err != nil || p <= 0 || p > 65535 {
-				return fmt.Errorf("port gecersiz: %s", val)
+				return fmt.Errorf("gecersiz port: %s (ornek: gorenel config set port 3000)", val)
 			}
 			viper.Set("port", p)
 		default:
-			return fmt.Errorf("desteklenmeyen key: %s (api_key|server|port|type)", key)
+			return fmt.Errorf("desteklenmeyen key: %s\nDesteklenen key'ler: api_key, server, port, type", args[0])
 		}
-		return saveConfig()
+
+		if err := saveConfig(); err != nil {
+			return err
+		}
+
+		fmt.Printf("Kaydedildi: %s = %s\n", key, renderConfigValue(key, val))
+		fmt.Println("Hazir. Tunnel baslatmak icin: gorenel connect --port 3000")
+		return nil
 	},
 }
 
@@ -79,7 +87,7 @@ var configInitCmd = &cobra.Command{
 		portStr := promptWithDefault(reader, "Local port (bos=3000)", "3000")
 		p, err := strconv.Atoi(portStr)
 		if err != nil || p <= 0 || p > 65535 {
-			return fmt.Errorf("port gecersiz: %s", portStr)
+			return fmt.Errorf("gecersiz port: %s", portStr)
 		}
 
 		viper.Set("api_key", api)
@@ -94,7 +102,7 @@ var configInitCmd = &cobra.Command{
 		if err := saveConfig(); err != nil {
 			return err
 		}
-		fmt.Printf("Config kaydedildi: %s\\n", activeConfigPath())
+		fmt.Printf("Config kaydedildi: %s\n", activeConfigPath())
 		fmt.Println("Hazir. Artik sadece `gorenel connect` yazman yeterli.")
 		return nil
 	},
@@ -141,6 +149,46 @@ func init() {
 	configCmd.AddCommand(configGetCmd, configSetCmd, configInitCmd, configValidateCmd)
 }
 
+func validateConfigSetArgs(cmd *cobra.Command, args []string) error {
+	if len(args) == 2 {
+		return nil
+	}
+
+	help := "Kullanim: gorenel config set <key> <value>\n" +
+		"Ornekler:\n" +
+		"  gorenel config set api_key gk_xxx\n" +
+		"  gorenel config set port 3000\n" +
+		"Not: key adi 'api_key' olmalidir (api key degil)."
+
+	if len(args) == 3 && strings.EqualFold(args[0], "api") && strings.EqualFold(args[1], "key") {
+		return fmt.Errorf("'api key' yerine 'api_key' kullanmalisin.\n\n%s", help)
+	}
+
+	if len(args) == 0 {
+		return fmt.Errorf("Eksik arguman.\n\n%s", help)
+	}
+	if len(args) == 1 {
+		return fmt.Errorf("Value eksik.\n\n%s", help)
+	}
+	return fmt.Errorf("Fazla arguman girdin (%d).\n\n%s", len(args), help)
+}
+
+func normalizeConfigKey(key string) string {
+	k := strings.ToLower(strings.TrimSpace(key))
+	k = strings.ReplaceAll(k, "-", "_")
+	if k == "apikey" {
+		return "api_key"
+	}
+	return k
+}
+
+func renderConfigValue(key, val string) string {
+	if key == "api_key" {
+		return "****"
+	}
+	return val
+}
+
 func promptWithDefault(reader *bufio.Reader, label, def string) string {
 	if def != "" {
 		fmt.Printf("%s [%s]: ", label, def)
@@ -160,7 +208,7 @@ func validateAPIKeyFormat(api string) error {
 		return fmt.Errorf("api_key bos olamaz")
 	}
 	if !strings.HasPrefix(api, "gk_") {
-		return fmt.Errorf("api_key formati gecersiz, gk_ ile baslamali")
+		return fmt.Errorf("api_key gecersiz: 'gk_' ile baslamali")
 	}
 	if len(api) < 12 {
 		return fmt.Errorf("api_key cok kisa")

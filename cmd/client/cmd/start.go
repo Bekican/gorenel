@@ -265,7 +265,11 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 		if err := json.Unmarshal([]byte(response.Payload), &errResp); err != nil {
 			return fmt.Errorf("server hata mesajı parse edilemedi: %w", err)
 		}
-		return fmt.Errorf("server hatası: %s", errResp.Message)
+		msg := strings.ToLower(errResp.Message)
+		if strings.Contains(msg, "authentication failed") || strings.Contains(msg, "invalid api key") {
+			return fmt.Errorf("kimlik dogrulama basarisiz: API key gecersiz veya iptal edilmis.\nCozum: gorenel config set api_key <YENI_KEY>\nKontrol: gorenel config get")
+		}
+		return fmt.Errorf("server hatasi: %s", errResp.Message)
 	}
 
 	var regResp protocol.RegisterResponse
