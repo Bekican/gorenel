@@ -79,7 +79,7 @@ npm run dev
 
 ### 4. Connect a Client
 ```bash
-go run cmd/client/main.go start --port 3001 --type http
+go run cmd/client/main.go connect --port 3001 --type http
 ```
 
 ## 🧠 Dual-Model Anomaly Detection
@@ -161,3 +161,5 @@ gorenel/
 ## 📜 License
 
 MIT — Built as an academic research & SaaS demo project.
+
+

@@ -11,7 +11,7 @@ interface LandingPageProps {
 export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, onGoToDashboard }) => {
     const { t, i18n } = useTranslation();
     const [typedText, setTypedText] = useState('');
-    const fullText = "gorenel start --port 3000";
+    const fullText = "gorenel connect";
 
     const toggleLanguage = () => {
         const newLang = i18n.language === 'en' ? 'tr' : 'en';
@@ -232,3 +232,4 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
         </div>
     );
 };
+

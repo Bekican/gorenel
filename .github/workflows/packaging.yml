@@ -1,0 +1,59 @@
+name: Packaging Artifacts
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  windows-installer:
+    name: Build Windows Installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build Windows client binary
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path bin | Out-Null
+          $env:GOOS = "windows"
+          $env:GOARCH = "amd64"
+          go build -o bin/gorenel-client-windows-amd64.exe cmd/client/main.go
+
+      - name: Install Inno Setup
+        shell: powershell
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer
+        shell: powershell
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "packaging/windows/gorenel.iss"
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gorenel-windows-installer
+          path: packaging/windows/gorenel-setup.exe
+
+  formula-assets:
+    name: Generate Homebrew SHA256
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Homebrew formula updater
+        run: bash scripts/update_homebrew_formula.sh
+
+      - name: Upload formula artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gorenel-homebrew-formula
+          path: packaging/homebrew/gorenel.rb

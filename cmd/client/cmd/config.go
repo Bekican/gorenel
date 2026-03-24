@@ -3,10 +3,12 @@ package cmd
 import (
 	"bufio"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,6 +45,11 @@ var configSetCmd = &cobra.Command{
 		val := strings.TrimSpace(args[1])
 		switch key {
 		case "api_key", "server", "type":
+			if key == "api_key" {
+				if err := validateAPIKeyFormat(val); err != nil {
+					return err
+				}
+			}
 			viper.Set(key, val)
 		case "port":
 			p, err := strconv.Atoi(val)
@@ -71,6 +78,9 @@ var configInitCmd = &cobra.Command{
 		if err != nil || p <= 0 || p > 65535 {
 			return fmt.Errorf("port gecersiz: %s", portStr)
 		}
+		if err := validateAPIKeyFormat(api); err != nil {
+			return err
+		}
 
 		viper.Set("server", server)
 		viper.Set("port", p)
@@ -80,13 +90,50 @@ var configInitCmd = &cobra.Command{
 			return err
 		}
 		fmt.Printf("Config kaydedildi: %s\n", activeConfigPath())
+		fmt.Println("Not: Key formati dogrulandi. Istiyorsan `gorenel config validate` ile server erisimini test edebilirsin.")
+		return nil
+	},
+}
+
+var configValidateCmd = &cobra.Command{
+	Use:   "validate",
+	Short: "Config degerlerini ve server erisimini test et",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		api := viper.GetString("api_key")
+		if err := validateAPIKeyFormat(api); err != nil {
+			return err
+		}
+		server := viper.GetString("server")
+		if server == "" {
+			return fmt.Errorf("server bos")
+		}
+
+		httpURL := strings.Replace(server, "wss://", "https://", 1)
+		httpURL = strings.Replace(httpURL, "ws://", "http://", 1)
+		if strings.Contains(httpURL, "/tunnel/connect") {
+			httpURL = strings.Replace(httpURL, "/tunnel/connect", "/health", 1)
+		} else {
+			httpURL = strings.TrimRight(httpURL, "/") + "/health"
+		}
+
+		client := &http.Client{Timeout: 5 * time.Second}
+		resp, err := client.Get(httpURL)
+		if err != nil {
+			return fmt.Errorf("server health ulasilamadi: %w", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode >= 400 {
+			return fmt.Errorf("server health basarisiz: %s", resp.Status)
+		}
+
+		fmt.Println("Config OK: key formati ve server health basarili")
 		return nil
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(configCmd)
-	configCmd.AddCommand(configGetCmd, configSetCmd, configInitCmd)
+	configCmd.AddCommand(configGetCmd, configSetCmd, configInitCmd, configValidateCmd)
 }
 
 func promptWithDefault(reader *bufio.Reader, label, def string) string {
@@ -101,6 +148,19 @@ func promptWithDefault(reader *bufio.Reader, label, def string) string {
 		return def
 	}
 	return val
+}
+
+func validateAPIKeyFormat(api string) error {
+	if strings.TrimSpace(api) == "" {
+		return fmt.Errorf("api_key bos olamaz")
+	}
+	if !strings.HasPrefix(api, "gk_") {
+		return fmt.Errorf("api_key formati gecersiz, gk_ ile baslamali")
+	}
+	if len(api) < 12 {
+		return fmt.Errorf("api_key cok kisa")
+	}
+	return nil
 }
 
 func activeConfigPath() string {
