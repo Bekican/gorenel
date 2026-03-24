@@ -201,9 +201,36 @@ func (c *Client) TrainAll(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("train request başarısız: %w", err)
 	}
-	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	_ = resp.Body.Close()
+
+	if resp.StatusCode == http.StatusAccepted {
+		// ML servisi eğitimi arka planda yapıyor; istatistikler hazır olana kadar bekle
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-ticker.C:
+				stats, err := c.GetModelStats()
+				if err != nil {
+					continue
+				}
+				allTrained := true
+				for _, s := range *stats {
+					if !s.IsTrained {
+						allTrained = false
+						break
+					}
+				}
+				if allTrained && len(*stats) > 0 {
+					return nil
+				}
+			}
+		}
+	}
 	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("train endpoint başarısız (%d): %s", resp.StatusCode, string(body))
 	}
 	return nil

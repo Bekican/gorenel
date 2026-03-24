@@ -45,20 +45,21 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
 
   return (
     <div className="card space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="p-4 bg-primary/10 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="p-4 bg-primary/10 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.1)] shrink-0">
             <Server className="w-6 h-6 text-primary" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h3 className="text-xl font-black">Managed Tunnels</h3>
             <p className="text-sm text-white/40 font-medium">{tunnels.length} Active Cloud Endpoints</p>
           </div>
         </div>
 
         <button
+          type="button"
           onClick={onOpenConnect}
-          className="btn-primary-premium text-sm py-2.5"
+          className="btn-primary-premium text-sm py-2.5 w-full sm:w-auto justify-center transition-transform duration-200 hover:brightness-110 active:scale-[0.98]"
         >
           <Plus className="w-4 h-4" /> {t('tunnels.cta', 'New Tunnel')}
         </button>
@@ -112,9 +113,9 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
             return (
               <div
                 key={tunnel.id}
-                className="group relative bg-white/[0.02] border border-white/5 rounded-3xl p-6 hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300"
+                className="group relative bg-white/[0.02] border border-white/5 rounded-3xl p-5 sm:p-6 hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300"
               >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 lg:gap-6">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-black border border-white/5 flex items-center justify-center font-black text-xl text-primary shrink-0">
                       {tunnel.subdomain.charAt(0).toUpperCase()}
@@ -140,27 +141,28 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-6">
-                    <div className="flex items-center gap-4 text-xs font-black tracking-widest uppercase">
-                      <div className="text-center">
+                  <div className="flex flex-col xs:flex-row xs:flex-wrap items-stretch sm:items-center gap-4 sm:gap-6 lg:flex-row">
+                    <div className="flex items-center justify-between sm:justify-start gap-4 text-xs font-black tracking-widest uppercase min-w-0 flex-1">
+                      <div className="text-center sm:text-left min-w-0">
                         <span className="block text-white/20 mb-1">Traffic In</span>
-                        <span className="flex items-center gap-1 text-emerald-400">
-                          <ArrowDown className="w-3 h-3" /> {formatBytes(tunnel.bandwidth.in)}
+                        <span className="flex items-center justify-center sm:justify-start gap-1 text-emerald-400 tabular-nums">
+                          <ArrowDown className="w-3 h-3 shrink-0" /> {formatBytes(tunnel.bandwidth.in)}
                         </span>
                       </div>
-                      <div className="w-px h-8 bg-white/5" />
-                      <div className="text-center">
+                      <div className="hidden sm:block w-px h-8 bg-white/5 shrink-0" aria-hidden />
+                      <div className="text-center sm:text-left min-w-0">
                         <span className="block text-white/20 mb-1">Traffic Out</span>
-                        <span className="flex items-center gap-1 text-violet-400">
-                          <ArrowUp className="w-3 h-3" /> {formatBytes(tunnel.bandwidth.out)}
+                        <span className="flex items-center justify-center sm:justify-start gap-1 text-violet-400 tabular-nums">
+                          <ArrowUp className="w-3 h-3 shrink-0" /> {formatBytes(tunnel.bandwidth.out)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 justify-end sm:justify-start shrink-0">
                       <button
+                        type="button"
                         onClick={() => copyToClipboard(tunnel.publicUrl)}
-                        className="p-3 bg-white/5 border border-white/5 rounded-2xl text-white/40 hover:text-white hover:bg-white/10 transition-all"
+                        className="p-3 bg-white/5 border border-white/5 rounded-2xl text-white/40 hover:text-white hover:bg-white/10 transition-all duration-200 active:scale-95"
                         title="Copy Public URL"
                       >
                         <Copy className="w-4 h-4" />
@@ -169,7 +171,7 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
                         href={tunnel.publicUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-3 bg-white/5 border border-white/5 rounded-2xl text-white/40 hover:text-primary hover:border-primary/20 hover:bg-primary/10 transition-all"
+                        className="p-3 bg-white/5 border border-white/5 rounded-2xl text-white/40 hover:text-primary hover:border-primary/20 hover:bg-primary/10 transition-all duration-200 active:scale-95"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </a>
@@ -188,14 +190,17 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
       </div>
 
       {historySessions.length > 0 && (
-        <div className="pt-2">
-          <div className="flex items-center justify-between mb-3">
+        <div className="pt-4 border-t border-white/5 mt-8">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-4">
             <h4 className="text-sm font-black uppercase tracking-widest text-white/40">Recent Session History</h4>
-            <span className="text-[10px] text-white/30 font-semibold">{historySessions.length} records</span>
+            <span className="text-[10px] text-white/30 font-semibold tabular-nums">{historySessions.length} records</span>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {historySessions.slice(0, 6).map((session) => (
-              <div key={session.id} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
+              <div
+                key={session.id}
+                className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-all duration-200 hover:border-white/10 hover:bg-white/[0.035]"
+              >
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-semibold text-white">{session.subdomain}.gorenel.site</span>
                   <span className="text-[10px] uppercase tracking-widest text-white/40">{session.tunnel_type || 'http'}</span>

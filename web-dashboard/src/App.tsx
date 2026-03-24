@@ -174,7 +174,7 @@ function App() {
         setActiveTab(id);
         setIsMobileMenuOpen(false);
       }}
-      className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 group ${activeTab === id
+      className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 group active:scale-[0.99] ${activeTab === id
         ? 'bg-emerald-500/10 text-emerald-400'
         : 'text-white/40 hover:text-white hover:bg-white/5'
         }`}
@@ -505,7 +505,7 @@ function App() {
             )}
           </Suspense>
         </div>
-      </main >
+      </main>
 
       <ConnectModal isOpen={isConnectOpen} onClose={() => setIsConnectOpen(false)} apiKey={user?.api_key} />
     </div >

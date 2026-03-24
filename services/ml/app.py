@@ -291,7 +291,15 @@ def train():
         }), 202
 
     # Senkron (test veya özel istemci); gunicorn timeout yeterli olmalı
-    _job()
+    ok, msg = run_training_job(
+        n_samples=n_samples,
+        ae_epochs=ae_epochs,
+        ae_batch=ae_batch,
+        reason='http_train',
+        force=force,
+    )
+    if not ok:
+        return jsonify({'status': 'busy', 'message': msg}), 409
     return jsonify({
         'status': 'success',
         'message': 'Eğitim tamamlandı',
