@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Copy, ExternalLink, Server, Plus, Zap, ArrowDown, ArrowUp, ArrowRight } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import type { TunnelSessionHistory } from '../api/client';
 
 interface Tunnel {
   id: string;
@@ -19,10 +20,11 @@ interface Tunnel {
 
 interface TunnelsListProps {
   tunnels: Tunnel[];
+  historySessions?: TunnelSessionHistory[];
   onOpenConnect: () => void;
 }
 
-export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, onOpenConnect }) => {
+export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessions = [], onOpenConnect }) => {
   const { t } = useTranslation();
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -184,6 +186,42 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, onOpenConnect
           })
         )}
       </div>
+
+      {historySessions.length > 0 && (
+        <div className="pt-2">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-black uppercase tracking-widest text-white/40">Recent Session History</h4>
+            <span className="text-[10px] text-white/30 font-semibold">{historySessions.length} records</span>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {historySessions.slice(0, 6).map((session) => (
+              <div key={session.id} className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-semibold text-white">{session.subdomain}.gorenel.site</span>
+                  <span className="text-[10px] uppercase tracking-widest text-white/40">{session.tunnel_type || 'http'}</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div>
+                    <div className="text-white/30">Requests</div>
+                    <div className="text-white font-semibold">{session.request_count.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div className="text-white/30">Avg RPS</div>
+                    <div className="text-white font-semibold">{session.avg_rps.toFixed(2)}</div>
+                  </div>
+                  <div>
+                    <div className="text-white/30">Traffic</div>
+                    <div className="text-white font-semibold">{formatBytes(session.bytes_out || 0)}</div>
+                  </div>
+                </div>
+                <div className="mt-2 text-[10px] text-white/30">
+                  Started {formatDistanceToNow(new Date(session.started_at), { addSuffix: true })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

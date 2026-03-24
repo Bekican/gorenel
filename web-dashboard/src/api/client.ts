@@ -86,6 +86,26 @@ export interface TunnelsResponse {
   count: number;
 }
 
+export interface TunnelSessionHistory {
+  id: string;
+  user_id: string;
+  subdomain: string;
+  tunnel_type: string;
+  local_port: number;
+  public_url: string;
+  started_at: string;
+  ended_at?: string | null;
+  request_count: number;
+  bytes_in: number;
+  bytes_out: number;
+  avg_rps: number;
+}
+
+export interface TunnelHistoryResponse {
+  sessions: TunnelSessionHistory[];
+  count: number;
+}
+
 export interface AnomalyRecord {
   id: string;
   timestamp: string;
@@ -223,6 +243,11 @@ export const api = {
 
   getTunnels: async (): Promise<TunnelsResponse> => {
     const { data } = await apiClient.get<TunnelsResponse>('/api/tunnels');
+    return data;
+  },
+
+  getTunnelHistory: async (): Promise<TunnelHistoryResponse> => {
+    const { data } = await apiClient.get<TunnelHistoryResponse>('/api/tunnels?history=1');
     return data;
   },
 

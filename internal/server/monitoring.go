@@ -47,6 +47,7 @@ type MonitoringServer struct {
 	anomalyStore    *AnomalyStore
 	mlClient        *ml.Client
 	traceSharer     *TraceSharer
+	historyStore    *TunnelHistoryStore
 	tunnelHandler   TunnelClientHandler
 	baseDomain      string
 	proxyPort       string
@@ -54,7 +55,7 @@ type MonitoringServer struct {
 	logger          *zap.Logger
 }
 
-func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, proxyPort, env string, logger *zap.Logger) *MonitoringServer {
+func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client, redisAddr string, historyStore *TunnelHistoryStore, baseDomain, proxyPort, env string, logger *zap.Logger) *MonitoringServer {
 	return &MonitoringServer{
 		tunnelManager:   tm,
 		analyticsEngine: ae,
@@ -65,6 +66,7 @@ func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.Aut
 		anomalyStore:    as,
 		mlClient:        mlc,
 		traceSharer:     NewTraceSharer(redisAddr),
+		historyStore:    historyStore,
 		baseDomain:      baseDomain,
 		proxyPort:       proxyPort,
 		env:             env,
@@ -128,6 +130,8 @@ func (m *MonitoringServer) Start(port string) error {
 
 	// Tunnels endpoint
 	mux.HandleFunc("/api/tunnels", m.corsMiddleware(rl(m.tunnelsHandlerFunc)))
+	mux.HandleFunc("/api/tunnels/", m.corsMiddleware(rl(m.tunnelsHandlerFunc)))
+	mux.HandleFunc("/api/tunnels/history", m.corsMiddleware(rl(m.tunnelHistoryHandler)))
 
 	// Anomaly endpoint
 	mux.HandleFunc("/api/anomalies", m.corsMiddleware(rl(m.anomaliesHandler)))
@@ -233,11 +237,32 @@ func (m *MonitoringServer) corsMiddleware(next http.HandlerFunc) http.HandlerFun
 }
 
 func (m *MonitoringServer) tunnelsHandlerFunc(w http.ResponseWriter, r *http.Request) {
+	if strings.HasPrefix(r.URL.Path, "/api/tunnels/history") || r.URL.Query().Get("history") == "1" {
+		m.tunnelHistoryHandler(w, r)
+		return
+	}
 	tunnels := m.tunnelManager.GetTunnels()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"tunnels": tunnels,
 		"count":   len(tunnels),
+	})
+}
+
+func (m *MonitoringServer) tunnelHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	if m.historyStore == nil {
+		http.Error(w, "tunnel history unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	records, err := m.historyStore.ListRecentSessions(100)
+	if err != nil {
+		http.Error(w, "failed to load tunnel history", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"sessions": records,
+		"count":    len(records),
 	})
 }
 

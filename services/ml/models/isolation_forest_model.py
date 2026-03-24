@@ -22,6 +22,8 @@ class IsolationForestAnomalyDetector:
         self.is_trained = False
         self.feature_names = []
         self.training_stats = {}
+        self.score_threshold = None
+        self.score_std = 1.0
     
     def train(self, X: np.ndarray, feature_names: list = None):
         """Modeli eğit"""
@@ -34,12 +36,18 @@ class IsolationForestAnomalyDetector:
         # Eğitim sonrası istatistikler
         predictions = self.model.predict(X)
         anomaly_count = np.sum(predictions == -1)
+        train_scores = self.model.score_samples(X)
+        self.score_threshold = float(np.quantile(train_scores, self.model.contamination))
+        self.score_std = float(np.std(train_scores))
+        if self.score_std <= 1e-9:
+            self.score_std = 1.0
         
         self.training_stats = {
             'n_samples': X.shape[0],
             'n_features': X.shape[1],
             'n_anomalies': int(anomaly_count),
-            'anomaly_ratio': float(anomaly_count / X.shape[0])
+            'anomaly_ratio': float(anomaly_count / X.shape[0]),
+            'score_threshold': self.score_threshold,
         }
         logger.info(f"Eğitim tamamlandı. {anomaly_count} anomali tespit edildi.")
     
@@ -53,13 +61,18 @@ class IsolationForestAnomalyDetector:
         return predictions, scores
     
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
-        """Anomali olasılıklarını [0, 1] aralığında döndür"""
+        """Anomali olasılıklarını [0, 1] aralığında döndür.
+
+        IsolationForest'ta daha düşük score daha anormal demektir.
+        Tek örnek tahminde min=max problemi olmaması için batch min/max yerine
+        eğitimde hesaplanan eşik etrafında sigmoid dönüşüm uygulanır.
+        """
         _, scores = self.predict(X)
-        # Score'ları normalize et
-        min_s, max_s = scores.min(), scores.max()
-        if max_s == min_s:
-            return np.zeros(len(scores))
-        return 1 - (scores - min_s) / (max_s - min_s)
+        threshold = self.score_threshold if self.score_threshold is not None else float(np.median(scores))
+        scale = max(self.score_std * 0.75, 1e-6)
+        z = (threshold - scores) / scale
+        probs = 1.0 / (1.0 + np.exp(-z))
+        return np.clip(probs, 0.0, 1.0)
     
     def save(self, filepath: str):
         """Modeli diske kaydet"""
@@ -68,7 +81,9 @@ class IsolationForestAnomalyDetector:
             'model': self.model,
             'feature_names': self.feature_names,
             'is_trained': self.is_trained,
-            'training_stats': self.training_stats
+            'training_stats': self.training_stats,
+            'score_threshold': self.score_threshold,
+            'score_std': self.score_std,
         }
         joblib.dump(data, filepath)
         logger.info(f"Model kaydedildi: {filepath}")
@@ -80,6 +95,8 @@ class IsolationForestAnomalyDetector:
         self.feature_names = data['feature_names']
         self.is_trained = data['is_trained']
         self.training_stats = data.get('training_stats', {})
+        self.score_threshold = data.get('score_threshold')
+        self.score_std = data.get('score_std', 1.0)
         logger.info(f"Model yüklendi: {filepath}")
 
 if __name__ == '__main__':

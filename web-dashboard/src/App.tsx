@@ -16,7 +16,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { api, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type ModelStatsResponse, type CapturedRequest, type ModificationRule } from './api/client';
+import { api, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type ModelStatsResponse, type CapturedRequest, type ModificationRule, type TunnelSessionHistory } from './api/client';
 import './index.css';
 
 // Lazy load components
@@ -52,6 +52,7 @@ function App() {
   const [mlStats, setMlStats] = useState<ModelStatsResponse>({});
   const [history, setHistory] = useState<CapturedRequest[]>([]);
   const [rules, setRules] = useState<ModificationRule[]>([]);
+  const [tunnelHistory, setTunnelHistory] = useState<TunnelSessionHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -81,7 +82,7 @@ function App() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [metricsData, analyticsData, tunnelsData, anomaliesData, mlStatsData, historyData, rulesData] = await Promise.all([
+      const [metricsData, analyticsData, tunnelsData, anomaliesData, mlStatsData, historyData, rulesData, tunnelHistoryData] = await Promise.all([
         api.getMetrics(),
         api.getAnalytics(),
         api.getTunnels(),
@@ -89,6 +90,7 @@ function App() {
         api.getMLStats(),
         api.getTrafficHistory(),
         api.getModificationRules(),
+        api.getTunnelHistory(),
       ]);
       setMetrics(metricsData);
       setAnalytics(analyticsData);
@@ -97,6 +99,7 @@ function App() {
       setMlStats(mlStatsData || {});
       setHistory(historyData || []);
       setRules(rulesData || []);
+      setTunnelHistory(tunnelHistoryData.sessions || []);
       setApiError(null);
       setLoading(false);
     } catch (err) {
@@ -448,7 +451,7 @@ function App() {
 
             {activeTab === 'tunnels' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <TunnelsList tunnels={tunnels} onOpenConnect={() => setIsConnectOpen(true)} />
+                <TunnelsList tunnels={tunnels} historySessions={tunnelHistory} onOpenConnect={() => setIsConnectOpen(true)} />
               </div>
             )}
 

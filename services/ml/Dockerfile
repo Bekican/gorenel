@@ -16,6 +16,7 @@ COPY trained_models/ ./trained_models/
 
 EXPOSE 5000
 
-CMD ["gunicorn","--bind","0.0.0.0:5000","app:app"]
+# Tek worker: TensorFlow bellek kullanımı; uzun eğitim için yüksek timeout (worker kill önlenir)
+CMD ["gunicorn","--bind","0.0.0.0:5000","--workers","1","--threads","4","--timeout","900","--graceful-timeout","120","app:app"]
 
 

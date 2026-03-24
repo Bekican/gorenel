@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -188,4 +189,60 @@ func (c *Client) GetModelStats() (*ModelStatsResponse, error) {
 		return nil, err
 	}
 	return &stats, nil
+}
+
+func (c *Client) TrainAll(ctx context.Context) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseUrl+"/train", bytes.NewBuffer([]byte("{}")))
+	if err != nil {
+		return fmt.Errorf("train request oluşturulamadı: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("train request başarısız: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("train endpoint başarısız (%d): %s", resp.StatusCode, string(body))
+	}
+	return nil
+}
+
+func (c *Client) EnsureModelsReady(maxRetries int) {
+	if maxRetries < 1 {
+		maxRetries = 1
+	}
+	for i := 0; i < maxRetries; i++ {
+		stats, err := c.GetModelStats()
+		if err == nil {
+			if len(*stats) > 0 {
+				allTrained := true
+				for _, s := range *stats {
+					if !s.IsTrained {
+						allTrained = false
+						break
+					}
+				}
+				if allTrained {
+					c.logger.Info("ML modelleri hazır", zap.Int("models", len(*stats)))
+					return
+				}
+			}
+			c.logger.Warn("ML modelleri eğitimsiz görünüyor, /train çağrılıyor", zap.Int("attempt", i+1))
+		} else {
+			c.logger.Warn("ML model stats okunamadı, /train denenecek", zap.Int("attempt", i+1), zap.Error(err))
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+		err = c.TrainAll(ctx)
+		cancel()
+		if err != nil {
+			c.logger.Warn("ML train çağrısı başarısız", zap.Int("attempt", i+1), zap.Error(err))
+			time.Sleep(3 * time.Second)
+			continue
+		}
+		time.Sleep(2 * time.Second)
+	}
+	c.logger.Warn("ML modelleri otomatik hazır hale getirilemedi; servis eğitimsiz olabilir")
 }

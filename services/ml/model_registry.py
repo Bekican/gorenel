@@ -31,27 +31,50 @@ class ModelRegistry:
         }
         logger.info(f"Model kaydedildi: {name}")
 
+    def _train_single_model(self, name: str, model, X: np.ndarray, **kwargs):
+        """Tek model eğitimi (train_all / train_one ortak yolu)."""
+        start = time.time()
+        if name == 'isolation_forest':
+            model.train(X, feature_names=kwargs.get('feature_names'))
+        elif name == 'autoencoder':
+            model.train(
+                X,
+                epochs=int(kwargs.get('epochs', 8)),
+                batch_size=int(kwargs.get('batch_size', 64)),
+            )
+        elif hasattr(model, 'feature_names'):
+            model.train(X, **kwargs)
+        else:
+            model.train(X)
+        elapsed = time.time() - start
+        model.save(self.model_paths[name])
+        self.stats[name]['is_trained'] = True
+        return {
+            'status': 'success',
+            'training_time_ms': round(elapsed * 1000, 2),
+            'stats': getattr(model, 'training_stats', {}),
+        }, elapsed
+
+    def train_one(self, name: str, X: np.ndarray, **kwargs):
+        """Tek bir modeli eğit ve kaydet."""
+        model = self.models.get(name)
+        if not model:
+            return {name: {'status': 'error', 'error': f'bilinmeyen model: {name}'}}
+        try:
+            result, elapsed = self._train_single_model(name, model, X, **kwargs)
+            logger.info(f"{name} eğitildi ({elapsed:.2f}s)")
+            return {name: result}
+        except Exception as e:
+            logger.error(f"{name} eğitim hatası: {e}")
+            return {name: {'status': 'error', 'error': str(e)}}
+
     def train_all(self, X: np.ndarray, **kwargs):
         """Tüm modelleri aynı veri ile eğit."""
         results = {}
         for name, model in self.models.items():
             try:
-                start = time.time()
-                if hasattr(model, 'feature_names'):
-                    model.train(X, **kwargs)
-                else:
-                    model.train(X)
-                elapsed = time.time() - start
-
-                # Modeli kaydet
-                model.save(self.model_paths[name])
-
-                self.stats[name]['is_trained'] = True
-                results[name] = {
-                    'status': 'success',
-                    'training_time_ms': round(elapsed * 1000, 2),
-                    'stats': getattr(model, 'training_stats', {}),
-                }
+                result, elapsed = self._train_single_model(name, model, X, **kwargs)
+                results[name] = result
                 logger.info(f"{name} eğitildi ({elapsed:.2f}s)")
             except Exception as e:
                 results[name] = {'status': 'error', 'error': str(e)}

@@ -184,7 +184,12 @@ func main() {
 	// Proxy servers
 	tcpProxy := server.NewTCPProxy()
 	udpProxy := server.NewUDPProxy()
+	historyStore := server.NewTunnelHistoryStore(db)
+	if err := historyStore.Init(); err != nil {
+		zapLogger.Error("TunnelHistoryStore init hatası", zap.Error(err))
+	}
 	anomalyStore := server.NewAnomalyStore(100) // Son 100 anomali kaydı
+	anomalyStore.SetHistoryStore(historyStore)
 	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient, cfg.RedisAddr, cfg.BaseDomain, cfg.AcmeEmail, cfg.Env)
 
 	go func() {
@@ -195,11 +200,11 @@ func main() {
 	}()
 
 	// Monitoring server
-	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient, cfg.RedisAddr, cfg.BaseDomain, cfg.ProxyPort, cfg.Env, zapLogger)
+	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient, cfg.RedisAddr, historyStore, cfg.BaseDomain, cfg.ProxyPort, cfg.Env, zapLogger)
 
 	// Set WebSocket tunnel handler - allows tunnel connections over HTTPS (replaces raw TCP for Fly.io shared IP)
 	monitor.SetTunnelHandler(func(conn net.Conn) {
-		handleClient(conn, tm, authManager, tcpProxy, udpProxy, zapLogger, cfg)
+		handleClient(conn, tm, authManager, tcpProxy, udpProxy, historyStore, zapLogger, cfg)
 	})
 
 	go func() {
@@ -255,7 +260,7 @@ func main() {
 			}
 
 			zapLogger.Info("Yeni bağlantı", zap.String("remote_addr", conn.RemoteAddr().String()))
-			go handleClient(conn, tm, authManager, tcpProxy, udpProxy, zapLogger, cfg)
+			go handleClient(conn, tm, authManager, tcpProxy, udpProxy, historyStore, zapLogger, cfg)
 		}
 	}()
 
@@ -270,7 +275,7 @@ func main() {
 	zapLogger.Info("Gorenel Server kapatıldı")
 }
 
-func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy, logger *zap.Logger, cfg *config.Config) {
+func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy, historyStore *server.TunnelHistoryStore, logger *zap.Logger, cfg *config.Config) {
 	defer conn.Close()
 
 	// 1. REGISTER mesajını oku
@@ -402,10 +407,29 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 
 	// 5. Session'ı kaydet
 	if subdomain != "" {
-		tm.RegisterTunnel(subdomain, session, regReq.CustomDomain, regReq.LocalPort, fullURL)
+		tm.RegisterTunnel(subdomain, session, regReq.CustomDomain, regReq.LocalPort, fullURL, authKey.UserID, regReq.TunnelType)
 		defer tm.RemoveTunnel(subdomain)
 	} else {
 		// TCP/UDP için de kaydetmek gerekebilir (opsiyonel, monitoring için iyi olur)
+	}
+
+	if historyStore != nil && subdomain != "" {
+		_ = historyStore.StartSession(server.TunnelSessionRecord{
+			ID:         utils.GenerateClientID(),
+			UserID:     authKey.UserID,
+			Subdomain:  subdomain,
+			TunnelType: regReq.TunnelType,
+			LocalPort:  regReq.LocalPort,
+			PublicURL:  fullURL,
+			StartedAt:  time.Now(),
+		})
+		defer func() {
+			info, ok := tm.GetTunnelInfo(subdomain)
+			if !ok || info == nil {
+				return
+			}
+			_ = historyStore.EndSession(subdomain, info.RequestCount, info.Bandwidth.In, info.Bandwidth.Out, info.StartedAt)
+		}()
 	}
 
 	logger.Info("Aktif tünel sayısı", zap.Int("count", tm.Count()))

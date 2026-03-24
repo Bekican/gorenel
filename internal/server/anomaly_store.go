@@ -25,6 +25,7 @@ type AnomalyStore struct {
 	records []AnomalyRecord
 	mu      sync.RWMutex
 	maxSize int
+	history *TunnelHistoryStore
 }
 
 // NewAnomalyStore yeni bir anomali deposu oluşturur
@@ -33,6 +34,12 @@ func NewAnomalyStore(maxSize int) *AnomalyStore {
 		records: make([]AnomalyRecord, 0),
 		maxSize: maxSize,
 	}
+}
+
+func (s *AnomalyStore) SetHistoryStore(history *TunnelHistoryStore) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.history = history
 }
 
 // Add yeni bir anomali kaydı ekler (en yenisi başta)
@@ -44,6 +51,12 @@ func (s *AnomalyStore) Add(record AnomalyRecord) {
 
 	if len(s.records) > s.maxSize {
 		s.records = s.records[:s.maxSize]
+	}
+	history := s.history
+	if history != nil {
+		go func() {
+			_ = history.PersistAnomaly(record)
+		}()
 	}
 }
 

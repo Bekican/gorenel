@@ -15,6 +15,8 @@ import (
 type TunnelInfo struct {
 	ID           string         `json:"id"`
 	Subdomain    string         `json:"subdomain"`
+	UserID       string         `json:"userId,omitempty"`
+	TunnelType   string         `json:"tunnelType,omitempty"`
 	LocalPort    int            `json:"localPort"`
 	PublicUrl    string         `json:"publicUrl"`
 	Status       string         `json:"status"`
@@ -86,13 +88,15 @@ func NewTunnelManager() *TunnelManager {
 
 // RegisterTunnel adds a new tunnel session to the manager.
 // If customDomain is provided, it links the domain to the subdomain.
-func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session, customDomain string, localPort int, publicUrl string) {
+func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session, customDomain string, localPort int, publicUrl, userID, tunnelType string) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
 	tm.tunnels[subdomain] = &TunnelInfo{
 		ID:           subdomain,
 		Subdomain:    subdomain,
+		UserID:       userID,
+		TunnelType:   tunnelType,
 		LocalPort:    localPort,
 		PublicUrl:    publicUrl,
 		Status:       "active",
@@ -114,6 +118,19 @@ func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session
 			zap.Int("total", len(tm.tunnels)),
 		)
 	}
+}
+
+// GetTunnelInfo returns a copy of tunnel metadata if present.
+func (tm *TunnelManager) GetTunnelInfo(subdomain string) (*TunnelInfo, bool) {
+	tm.mu.RLock()
+	defer tm.mu.RUnlock()
+	info, ok := tm.tunnels[subdomain]
+	if !ok || info == nil {
+		return nil, false
+	}
+	cp := *info
+	cp.Session = nil
+	return &cp, true
 }
 
 // GetTunnel attempts to find a session matching the provided host.
