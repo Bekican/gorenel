@@ -52,32 +52,7 @@ func (rl *RateLimiter) Allow(identifier string, n int) bool {
 
 	// If redis is not available, use memory store (fallback/testing)
 	if rl.rdb == nil {
-		rl.mu.Lock()
-		defer rl.mu.Unlock()
-
-		now := time.Now()
-		expiry := now.Add(-quota.WindowSize)
-
-		// Clean up old entries
-		var valid []time.Time
-		for _, t := range rl.memStore[identifier] {
-			if t.After(expiry) {
-				valid = append(valid, t)
-			}
-		}
-
-		// Check limit
-		if len(valid)+n > quota.Limit {
-			rl.memStore[identifier] = valid
-			return false
-		}
-
-		// Add new entries
-		for i := 0; i < n; i++ {
-			valid = append(valid, now)
-		}
-		rl.memStore[identifier] = valid
-		return true
+		return rl.allowInMemory(identifier, n, quota)
 	}
 
 	ctx := context.Background()
@@ -88,13 +63,13 @@ func (rl *RateLimiter) Allow(identifier string, n int) bool {
 	// Remove older elements
 	minScore := fmt.Sprintf("%d", now.Add(-quota.WindowSize).UnixNano())
 	if err := rl.rdb.ZRemRangeByScore(ctx, windowKey, "-inf", minScore).Err(); err != nil {
-		return false
+		return rl.allowInMemory(identifier, n, quota)
 	}
 
 	// Count elements
 	count, err := rl.rdb.ZCard(ctx, windowKey).Result()
 	if err != nil {
-		return false
+		return rl.allowInMemory(identifier, n, quota)
 	}
 	if count+int64(n) > int64(quota.Limit) {
 		return false
@@ -110,14 +85,40 @@ func (rl *RateLimiter) Allow(identifier string, n int) bool {
 		})
 	}
 	if err := rl.rdb.ZAdd(ctx, windowKey, members...).Err(); err != nil {
-		return false
+		return rl.allowInMemory(identifier, n, quota)
 	}
 
 	// Set expiry on the whole set to clean up automatically
 	if err := rl.rdb.Expire(ctx, windowKey, quota.WindowSize).Err(); err != nil {
+		return rl.allowInMemory(identifier, n, quota)
+	}
+
+	return true
+}
+
+func (rl *RateLimiter) allowInMemory(identifier string, n int, quota Quota) bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	now := time.Now()
+	expiry := now.Add(-quota.WindowSize)
+
+	var valid []time.Time
+	for _, t := range rl.memStore[identifier] {
+		if t.After(expiry) {
+			valid = append(valid, t)
+		}
+	}
+
+	if len(valid)+n > quota.Limit {
+		rl.memStore[identifier] = valid
 		return false
 	}
 
+	for i := 0; i < n; i++ {
+		valid = append(valid, now)
+	}
+	rl.memStore[identifier] = valid
 	return true
 }
 
