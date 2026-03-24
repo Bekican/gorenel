@@ -76,36 +76,31 @@ func init() {
 }
 
 func runStart(cmd *cobra.Command, args []string) {
-	// Config'den veya flag'den değerleri al
-	if serverAddr == "" {
+	// Flag > env > config > default
+	if !cmd.Flags().Changed("server") {
 		serverAddr = viper.GetString("server")
-		if serverAddr == "" {
-			serverAddr = "wss://gorenel.site/tunnel/connect"
+	}
+
+	if !cmd.Flags().Changed("port") {
+		if p := viper.GetInt("port"); p > 0 {
+			localPort = p
 		}
 	}
 
-	if localPort == 0 {
-		localPort = viper.GetInt("port")
-		if localPort == 0 {
-			localPort = 3000
-		}
-	}
-
-	if apiKey == "" {
+	apiKeyProvided := cmd.Flags().Changed("api-key") || cmd.Flags().Changed("key")
+	if !apiKeyProvided {
 		apiKey = viper.GetString("api_key")
-		if apiKey == "" {
-			log.Fatal("API key gerekli. --api-key / --key flag'i veya config dosyasında 'api_key' belirtin.")
-		}
+	}
+	if apiKey == "" {
+		log.Fatal("API key gerekli. `gorenel config init` veya `gorenel config set api_key <KEY>` ile kaydedin.")
 	}
 
-	// Flag boşsa viper'dan (config dosyasından) çek
-	if customDomain == "" {
+	if !cmd.Flags().Changed("domain") {
 		customDomain = viper.GetString("domain")
 	}
 
-	if tunnelType == "http" {
-		t := viper.GetString("type")
-		if t != "" {
+	if !cmd.Flags().Changed("type") {
+		if t := viper.GetString("type"); t != "" {
 			tunnelType = t
 		}
 	}
@@ -630,3 +625,4 @@ func formatBytes(bytes int64) string {
 	}
 	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
 }
+
