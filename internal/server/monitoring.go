@@ -602,7 +602,7 @@ func (m *MonitoringServer) handleInstallSh(w http.ResponseWriter, r *http.Reques
 set -e
 
 # Gorenel Magic Install Script (Linux/Mac)
-# Usage: curl -sSL https://gorenel.site/install.sh | bash -s -- connect --key GK_...
+# Usage: curl -sSL https://gorenel.site/install.sh | bash
 
 INSTALL_DIR="$HOME/.gorenel/bin"
 mkdir -p "$INSTALL_DIR"
@@ -639,7 +639,7 @@ if [ "$#" -gt 0 ]; then
     echo "Executing: gorenel $*"
     "$INSTALL_DIR/gorenel" "$@"
 else
-    echo "Run: gorenel connect --key YOUR_API_KEY --port 3000"
+    echo "Run: gorenel config set api_key YOUR_API_KEY && gorenel connect --port 3000"
 fi
 `
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -686,7 +686,7 @@ if ($env:Path -notlike "*$installDir*") {
 function global:gorenel { & $binaryPath @args }
 
 Write-Host "Gorenel installed to $binaryPath" -ForegroundColor Green
-Write-Host "Run: gorenel connect --key YOUR_API_KEY --port 3000" -ForegroundColor Yellow
+Write-Host "Run: gorenel config set api_key YOUR_API_KEY; gorenel connect --port 3000" -ForegroundColor Yellow
 `
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(script))

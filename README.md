@@ -163,3 +163,13 @@ gorenel/
 MIT — Built as an academic research & SaaS demo project.
 
 
+
+
+
+## Client Command Standard
+
+Use config-first flow:
+```bash
+go run cmd/client/main.go config set api_key YOUR_API_KEY
+go run cmd/client/main.go connect --port 3001 --type http
+```
