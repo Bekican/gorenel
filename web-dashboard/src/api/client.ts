@@ -104,6 +104,15 @@ export interface Tunnel {
   policy?: {
     key_auth_enabled?: boolean;
     ip_allowlist_enabled?: boolean;
+    basic_auth_enabled?: boolean;
+    basic_auth_username?: string;
+    https_redirect_enabled?: boolean;
+    rate_limit_enabled?: boolean;
+    rate_limit_requests?: number;
+    rate_limit_window_s?: number;
+    path_prefix?: string;
+    replace_path_from?: string;
+    replace_path_to?: string;
   };
   requestCount: number;
   bandwidth: {
@@ -226,6 +235,25 @@ export interface ModificationRule {
 }
 
 export type ModelStatsResponse = Record<string, ModelStat>;
+export interface MLStatsEnvelope {
+  stats: ModelStatsResponse;
+  active_tunnels: number;
+  ml_up: boolean;
+  last_prediction_at?: string | null;
+}
+
+export interface ReservedSubdomain {
+  subdomain: string;
+  user_id: string;
+  assigned_api_key_hash?: string | null;
+  created_at: string;
+  last_used_at?: string | null;
+}
+
+export interface ReservationsResponse {
+  reservations: ReservedSubdomain[];
+  count: number;
+}
 
 // API Functions
 export const api = {
@@ -287,7 +315,25 @@ export const api = {
 
   updateTunnelPolicy: async (
     subdomain: string,
-    body: { key_auth_enabled?: boolean; ip_allowlist_enabled?: boolean; ip_allowlist?: string[] },
+    body: {
+      key_auth_enabled?: boolean;
+      ip_allowlist_enabled?: boolean;
+      ip_allowlist?: string[];
+      basic_auth_enabled?: boolean;
+      basic_auth_username?: string;
+      basic_auth_password?: string;
+      https_redirect_enabled?: boolean;
+      rate_limit_enabled?: boolean;
+      rate_limit_requests?: number;
+      rate_limit_window_s?: number;
+      add_request_headers?: Record<string, string>;
+      remove_request_headers?: string[];
+      add_response_headers?: Record<string, string>;
+      remove_response_headers?: string[];
+      path_prefix?: string;
+      replace_path_from?: string;
+      replace_path_to?: string;
+    },
   ): Promise<void> => {
     await apiClient.put(`/api/tunnel-policy/${encodeURIComponent(subdomain)}`, body);
   },
@@ -297,14 +343,38 @@ export const api = {
     return data;
   },
 
+  // Reservations
+  listReservations: async (): Promise<ReservationsResponse> => {
+    const { data } = await apiClient.get<ReservationsResponse>('/api/reservations');
+    return data;
+  },
+  reserveSubdomain: async (subdomain: string): Promise<ReservedSubdomain> => {
+    const { data } = await apiClient.post<ReservedSubdomain>('/api/reservations', { subdomain });
+    return data;
+  },
+  releaseSubdomain: async (subdomain: string): Promise<void> => {
+    await apiClient.delete(`/api/reservations/${encodeURIComponent(subdomain)}`);
+  },
+  assignReservationToKey: async (subdomain: string, apiKey: string | null): Promise<void> => {
+    await apiClient.put(`/api/reservations/${encodeURIComponent(subdomain)}/assign`, { api_key: apiKey || '' });
+  },
+
   getAnomalies: async (): Promise<AnomaliesResponse> => {
     const { data } = await apiClient.get<AnomaliesResponse>('/api/anomalies');
     return data;
   },
 
-  getMLStats: async (): Promise<ModelStatsResponse> => {
-    const { data } = await apiClient.get<ModelStatsResponse>('/api/ml/stats');
-    return data;
+  getMLStats: async (): Promise<MLStatsEnvelope> => {
+    const { data } = await apiClient.get<MLStatsEnvelope>('/api/ml/stats');
+    // Back-compat: if server returns the old map shape, normalize to envelope.
+    const isEnvelope = data && typeof data === 'object' && 'stats' in (data as any);
+    if (isEnvelope) return data;
+    return {
+      stats: (data as any) || {},
+      active_tunnels: 0,
+      ml_up: true,
+      last_prediction_at: null,
+    };
   },
 
   listAPIKeys: async () => {

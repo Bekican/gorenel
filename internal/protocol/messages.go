@@ -14,6 +14,7 @@ type RegisterRequest struct {
 	ClientID     string `json:"client_id"`
 	Version      string `json:"version"`
 	APIKey       string `json:"api_key"`
+	CustomSubdomain string `json:"custom_subdomain,omitempty"`
 	CustomDomain string `json:"custom_domain,omitempty"`
 	TunnelType   string `json:"tunnel_type,omitempty"`
 	LocalPort    int    `json:"local_port,omitempty"`

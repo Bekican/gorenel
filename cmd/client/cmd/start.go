@@ -36,6 +36,7 @@ var (
 	remotePort      int    // --- NEW: Requested remote port ---
 	keyAuthToken    string
 	ipWhitelist     []string
+	preferRegion    string
 
 	// Metrikler (atomic - thread-safe)
 	requestCount  int64
@@ -70,6 +71,7 @@ func init() {
 	startCmd.Flags().IntVarP(&remotePort, "remote-port", "r", 0, "İstenen uzak port (raw tüneller için)")
 	startCmd.Flags().StringVar(&keyAuthToken, "key-auth", "", "Tunnel key auth token (public requests must send header X-TOKEN)")
 	startCmd.Flags().StringArrayVar(&ipWhitelist, "ip-whitelist", []string{}, "Allowed client IP/CIDR (repeatable). Example: --ip-whitelist 1.2.3.4 --ip-whitelist 10.0.0.0/24")
+	startCmd.Flags().StringVar(&preferRegion, "region", "", "Prefer a Fly.io region for tunnel control-plane (sets Fly-Prefer-Region header, e.g. fra, ams, iad)")
 
 	// Viper ile config dosyasından değerleri bağla
 	viper.BindPFlag("server", startCmd.Flags().Lookup("server"))
@@ -77,6 +79,7 @@ func init() {
 	viper.BindPFlag("api_key", startCmd.Flags().Lookup("api-key"))
 	viper.BindPFlag("domain", startCmd.Flags().Lookup("domain"))
 	viper.BindPFlag("type", startCmd.Flags().Lookup("type"))
+	viper.BindPFlag("region", startCmd.Flags().Lookup("region"))
 }
 
 func runStart(cmd *cobra.Command, args []string) {
@@ -109,9 +112,14 @@ func runStart(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	if !cmd.Flags().Changed("region") {
+		preferRegion = viper.GetString("region")
+	}
+
 	serverAddr = strings.TrimSpace(serverAddr)
 	apiKey = strings.TrimSpace(apiKey)
 	tunnelType = strings.ToLower(strings.TrimSpace(tunnelType))
+	preferRegion = strings.ToLower(strings.TrimSpace(preferRegion))
 	if tunnelType != "http" && tunnelType != "tcp" && tunnelType != "udp" {
 		log.Printf("Invalid tunnel type '%s', defaulting to http", tunnelType)
 		tunnelType = "http"
@@ -209,6 +217,9 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 	if strings.HasPrefix(serverAddr, "ws://") || strings.HasPrefix(serverAddr, "wss://") {
 		// WebSocket bağlantısı (Fly.io shared IP için)
 		header := http.Header{}
+		if strings.TrimSpace(preferRegion) != "" {
+			header.Set("Fly-Prefer-Region", strings.TrimSpace(preferRegion))
+		}
 		dialer := websocket.Dialer{
 			HandshakeTimeout: 15 * time.Second,
 		}
@@ -236,6 +247,7 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 		ClientID:     clientID,
 		Version:      rootCmd.Version,
 		APIKey:       apiKey,
+		CustomSubdomain: strings.TrimSpace(customSubdomain),
 		CustomDomain: domain,
 		TunnelType:   tType,
 		LocalPort:    localPort,

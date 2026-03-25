@@ -3,12 +3,14 @@ package server
 import (
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"math/rand"
 	"net"
 	"net/http"
 	"net/netip"
+	"sync"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -17,6 +19,7 @@ import (
 	"github.com/Bekican/gorenel/internal/ml"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type HTTPProxy struct {
@@ -35,10 +38,12 @@ type HTTPProxy struct {
 	aiAnalyzer     *AIAnalyzer
 	inspectorMaxBodyBytes int64
 	inspectorSamplingRate float64
+	fullCaptureUntil sync.Map // subdomain -> unixnano expiry
+	inspectQueue      chan *CapturedRequest
 }
 
 func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, acmeEmail, env string, inspectorMaxBodyBytes int64, inspectorSamplingRate float64) *HTTPProxy {
-	return &HTTPProxy{
+	p := &HTTPProxy{
 		tunnelManager:  tm,
 		advancedRL:     rl,
 		eventStream:    es,
@@ -54,7 +59,29 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 		aiAnalyzer:     NewAIAnalyzer(),
 		inspectorMaxBodyBytes: inspectorMaxBodyBytes,
 		inspectorSamplingRate: inspectorSamplingRate,
+		inspectQueue:   make(chan *CapturedRequest, 512),
 	}
+
+	// Async worker: move inspector/AI analysis off request path
+	go func() {
+		for req := range p.inspectQueue {
+			if req == nil {
+				continue
+			}
+			if p.aiAnalyzer != nil {
+				aiMeta := p.aiAnalyzer.AnalyzeRequest(req.Subdomain, req.Path, req.ReqBody)
+				if aiMeta != nil {
+					p.aiAnalyzer.AnalyzeResponse(aiMeta, req.RespBody)
+					req.AIMetadata = aiMeta
+				}
+			}
+			if p.inspector != nil {
+				p.inspector.Record(req)
+			}
+		}
+	}()
+
+	return p
 }
 
 func (p *HTTPProxy) Start(port string) error {
@@ -70,8 +97,13 @@ func (p *HTTPProxy) Start(port string) error {
 	*/
 
 	server := &http.Server{
-		Addr:    port,
-		Handler: p,
+		Addr:              port,
+		Handler:           p,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       60 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		MaxHeaderBytes:    1 << 20,
 	}
 
 	return server.ListenAndServe()
@@ -103,6 +135,14 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			captureEnabled = rand.Float64() < p.inspectorSamplingRate
 		}
 	}
+	// If an anomaly was detected recently for this tunnel, temporarily force full capture.
+	if !captureEnabled {
+		if v, ok := p.fullCaptureUntil.Load(targetKey); ok {
+			if exp, ok2 := v.(int64); ok2 && exp > time.Now().UnixNano() {
+				captureEnabled = true
+			}
+		}
+	}
 
 	// Use a response wrapper to capture status code for analytics
 	statusCode := http.StatusOK // Default, will be overwritten by errors or response
@@ -113,7 +153,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		reqBytes = 0
 	}
 
-	// Enforce per-tunnel policies (KeyAuth + optional IP allowlist)
+	// Enforce per-tunnel policies (auth, allowlist, redirect, etc.)
 	// Apply early so we avoid spending resources on unauthorized traffic.
 	if policy, ok := p.tunnelManager.GetTunnelPolicy(host); ok {
 		if enforcePolicy(w, r, clientIP, policy) {
@@ -125,6 +165,13 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			statusCode = http.StatusForbidden
 			return
 		}
+	}
+
+	// Per-tunnel request shaping (path + request headers)
+	if policy, ok := p.tunnelManager.GetTunnelPolicy(host); ok {
+		applyRequestPolicy(r, policy)
+	} else if policy, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok {
+		applyRequestPolicy(r, policy)
 	}
 
 	// Ensure analytics are published for ALL requests, even on early return
@@ -181,7 +228,16 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// RateLimiter kontrolü
-	if !p.advancedRL.Allow(targetKey, 1) {
+	// If per-tunnel policy specifies a custom quota, prefer it; otherwise use default limiter tiers.
+	if pol, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok && pol.RateLimitEnabled && pol.RateLimitRequests > 0 && pol.RateLimitWindowS > 0 {
+		q := limiter.Quota{Limit: pol.RateLimitRequests, WindowSize: time.Duration(pol.RateLimitWindowS) * time.Second}
+		if !p.advancedRL.AllowWithQuota("tunnel:"+targetKey+":"+clientIP, 1, q) {
+			statusCode = http.StatusTooManyRequests
+			http.Error(w, "Rate limit exceeded", statusCode)
+			p.logger.Warn("Per-tunnel rate limit exceeded", zap.String("target", targetKey))
+			return
+		}
+	} else if !p.advancedRL.Allow(targetKey, 1) {
 		statusCode = http.StatusTooManyRequests
 		http.Error(w, "Rate limit exceeded", statusCode)
 		p.logger.Warn("Rate limit aşıldı", zap.String("target", targetKey))
@@ -329,22 +385,20 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	captured.RespBody = captureWriter.Body.Bytes()
 	captured.StatusCode = captureWriter.StatusCode
 	captured.Duration = time.Since(startTime)
-	if captureEnabled && p.inspector != nil {
-		// AI Analysis Phase
-		if p.aiAnalyzer != nil {
-			aiMeta := p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, captured.ReqBody)
-			if aiMeta != nil {
-				p.aiAnalyzer.AnalyzeResponse(aiMeta, captured.RespBody)
-				captured.AIMetadata = aiMeta
-				p.logger.Info("AI Traffic Detected",
-					zap.String("provider", aiMeta.Provider),
-					zap.String("model", aiMeta.Model),
-					zap.Int("tokens", aiMeta.Tokens.Total),
-				)
+
+	// Response header edits (policy)
+	if pol, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok {
+		applyResponsePolicy(captureWriter, pol)
+	}
+	if captureEnabled {
+		select {
+		case p.inspectQueue <- captured:
+		default:
+			// If queue is full, avoid blocking request; best-effort inline record.
+			if p.inspector != nil {
+				p.inspector.Record(captured)
 			}
 		}
-
-		p.inspector.Record(captured)
 	}
 
 	// Update Tunnel Stats
@@ -412,6 +466,9 @@ func (p *HTTPProxy) triggerMLAnalysis(method, path, host string, requestSize int
 		}
 
 		if isAnomaly {
+			// Force full capture for a short window after anomaly.
+			p.fullCaptureUntil.Store(targetKey, time.Now().Add(60*time.Second).UnixNano())
+
 			// Hangi modeller anomali dedi?
 			flaggedBy := []string{}
 			if err == nil {
@@ -534,7 +591,70 @@ type BoundedWriter struct {
 	n     int64
 }
 
+func applyRequestPolicy(r *http.Request, policy TunnelPolicy) {
+	// Path rewrite
+	if strings.TrimSpace(policy.ReplacePathFrom) != "" {
+		from := strings.TrimSpace(policy.ReplacePathFrom)
+		to := policy.ReplacePathTo
+		if strings.HasPrefix(r.URL.Path, from) {
+			r.URL.Path = to + strings.TrimPrefix(r.URL.Path, from)
+		}
+	}
+	if strings.TrimSpace(policy.PathPrefix) != "" {
+		prefix := strings.TrimSpace(policy.PathPrefix)
+		if !strings.HasPrefix(prefix, "/") {
+			prefix = "/" + prefix
+		}
+		if r.URL.Path == "" {
+			r.URL.Path = "/"
+		}
+		if !strings.HasPrefix(r.URL.Path, prefix) {
+			r.URL.Path = prefix + r.URL.Path
+		}
+	}
+
+	// Header edits (request)
+	for k, v := range policy.AddRequestHeaders {
+		if strings.TrimSpace(k) == "" {
+			continue
+		}
+		r.Header.Set(k, v)
+	}
+	for _, k := range policy.RemoveRequestHeaders {
+		k = strings.TrimSpace(k)
+		if k == "" {
+			continue
+		}
+		r.Header.Del(k)
+	}
+}
+
+func applyResponsePolicy(w http.ResponseWriter, policy TunnelPolicy) {
+	for k, v := range policy.AddResponseHeaders {
+		if strings.TrimSpace(k) == "" {
+			continue
+		}
+		w.Header().Set(k, v)
+	}
+	for _, k := range policy.RemoveResponseHeaders {
+		k = strings.TrimSpace(k)
+		if k == "" {
+			continue
+		}
+		w.Header().Del(k)
+	}
+}
+
 func enforcePolicy(w http.ResponseWriter, r *http.Request, clientIP string, policy TunnelPolicy) (denied bool) {
+	// HTTPS redirect
+	if policy.HttpsRedirectEnabled {
+		if strings.ToLower(strings.TrimSpace(r.Header.Get("X-Forwarded-Proto"))) == "http" {
+			target := "https://" + r.Host + r.URL.RequestURI()
+			http.Redirect(w, r, target, http.StatusMovedPermanently)
+			return true
+		}
+	}
+
 	// IP allowlist
 	if policy.IPAllowlistEnabled && len(policy.IPAllowlist) > 0 {
 		addr, err := netip.ParseAddr(strings.TrimSpace(clientIP))
@@ -570,6 +690,31 @@ func enforcePolicy(w http.ResponseWriter, r *http.Request, clientIP string, poli
 		}
 		if !allowed {
 			http.Error(w, "Forbidden", http.StatusForbidden)
+			return true
+		}
+	}
+
+	// Basic auth
+	if policy.BasicAuthEnabled && strings.TrimSpace(policy.BasicAuthUsername) != "" && strings.TrimSpace(policy.BasicAuthPasswordHash) != "" {
+		authz := strings.TrimSpace(r.Header.Get("Authorization"))
+		const prefix = "Basic "
+		if !strings.HasPrefix(authz, prefix) {
+			w.Header().Set("WWW-Authenticate", `Basic realm="gorenel"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return true
+		}
+		raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(authz, prefix))
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return true
+		}
+		parts := strings.SplitN(string(raw), ":", 2)
+		if len(parts) != 2 || parts[0] != policy.BasicAuthUsername {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return true
+		}
+		if bcrypt.CompareHashAndPassword([]byte(policy.BasicAuthPasswordHash), []byte(parts[1])) != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return true
 		}
 	}

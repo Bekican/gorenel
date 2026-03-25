@@ -16,12 +16,14 @@ import (
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/middleware"
 	"github.com/Bekican/gorenel/internal/ml"
+	"github.com/Bekican/gorenel/internal/authmgr"
 	"github.com/Bekican/gorenel/internal/utils"
 	"github.com/Bekican/gorenel/pkg/auth"
 	serverErrors "github.com/Bekican/gorenel/pkg/errors"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
@@ -43,6 +45,7 @@ type MonitoringServer struct {
 	tunnelManager   *TunnelManager
 	analyticsEngine *AnalyticsEngine
 	authHandler     *handler.AuthHandler
+	authManager     *authmgr.AuthManager
 	advancedRL      *limiter.RateLimiter
 	inspector       *TrafficInspector
 	tokenSvc        *auth.JWTService
@@ -50,6 +53,7 @@ type MonitoringServer struct {
 	mlClient        *ml.Client
 	traceSharer     *TraceSharer
 	historyStore    *TunnelHistoryStore
+	reservationRepo *PostgresReservationRepository
 	tunnelHandler   TunnelClientHandler
 	baseDomain      string
 	proxyPort       string
@@ -57,11 +61,12 @@ type MonitoringServer struct {
 	logger          *zap.Logger
 }
 
-func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client, redisAddr string, historyStore *TunnelHistoryStore, baseDomain, proxyPort, env string, logger *zap.Logger) *MonitoringServer {
+func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.AuthHandler, am *authmgr.AuthManager, rl *limiter.RateLimiter, ti *TrafficInspector, ts *auth.JWTService, as *AnomalyStore, mlc *ml.Client, redisAddr string, historyStore *TunnelHistoryStore, reservationRepo *PostgresReservationRepository, baseDomain, proxyPort, env string, logger *zap.Logger) *MonitoringServer {
 	return &MonitoringServer{
 		tunnelManager:   tm,
 		analyticsEngine: ae,
 		authHandler:     ah,
+		authManager:     am,
 		advancedRL:      rl,
 		inspector:       ti,
 		tokenSvc:        ts,
@@ -69,6 +74,7 @@ func NewMonitoringServer(tm *TunnelManager, ae *AnalyticsEngine, ah *handler.Aut
 		mlClient:        mlc,
 		traceSharer:     NewTraceSharer(redisAddr),
 		historyStore:    historyStore,
+		reservationRepo: reservationRepo,
 		baseDomain:      baseDomain,
 		proxyPort:       proxyPort,
 		env:             env,
@@ -120,6 +126,10 @@ func (m *MonitoringServer) Start(port string) error {
 
 		// Tunnel Policy Management (KeyAuth + IP allowlist)
 		mux.HandleFunc("/api/tunnel-policy/", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.tunnelPolicyHandler))))
+
+		// Reservations (Reserved Subdomains)
+		mux.HandleFunc("/api/reservations", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.reservationsHandler))))
+		mux.HandleFunc("/api/reservations/", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.reservationsHandler))))
 	}
 
 	// Register Inspector Endpoints
@@ -157,13 +167,148 @@ func (m *MonitoringServer) Start(port string) error {
 
 	l, _ := zap.NewProduction()
 	l.Info("Monitoring server başlatılıyor", zap.String("port", port))
-	return http.ListenAndServe(port, mux)
+	srv := &http.Server{
+		Addr:              port,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1 << 20,
+	}
+	return srv.ListenAndServe()
+}
+
+type reservationCreateRequest struct {
+	Subdomain string `json:"subdomain"`
+}
+
+type reservationAssignRequest struct {
+	APIKey string `json:"api_key"`
+}
+
+func (m *MonitoringServer) reservationsHandler(w http.ResponseWriter, r *http.Request) error {
+	if m.reservationRepo == nil {
+		http.Error(w, "reservations unavailable", http.StatusServiceUnavailable)
+		return nil
+	}
+	claims := middleware.GetUserFromContext(r.Context())
+	if claims == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return nil
+	}
+
+	// Routes:
+	// - GET    /api/reservations
+	// - POST   /api/reservations
+	// - DELETE /api/reservations/{subdomain}
+	// - PUT    /api/reservations/{subdomain}/assign  (body.api_key empty => unassign)
+	path := strings.TrimPrefix(r.URL.Path, "/api/reservations")
+	path = strings.Trim(path, "/")
+
+	if path == "" {
+		switch r.Method {
+		case http.MethodGet:
+			list, err := m.reservationRepo.ListByUser(claims.UserID)
+			if err != nil {
+				http.Error(w, "failed to list reservations", http.StatusInternalServerError)
+				return nil
+			}
+			w.Header().Set("Content-Type", "application/json")
+			return json.NewEncoder(w).Encode(map[string]interface{}{"reservations": list, "count": len(list)})
+		case http.MethodPost:
+			var req reservationCreateRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "invalid payload", http.StatusBadRequest)
+				return nil
+			}
+			rec, err := m.reservationRepo.Create(claims.UserID, req.Subdomain)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return nil
+			}
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			return json.NewEncoder(w).Encode(rec)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return nil
+		}
+	}
+
+	parts := strings.Split(path, "/")
+	sub := parts[0]
+	action := ""
+	if len(parts) > 1 {
+		action = parts[1]
+	}
+
+	if action == "assign" {
+		if r.Method != http.MethodPut {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return nil
+		}
+		var req reservationAssignRequest
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		req.APIKey = strings.TrimSpace(req.APIKey)
+		var keyHash *string
+		if req.APIKey != "" {
+			if m.authManager == nil {
+				http.Error(w, "auth unavailable", http.StatusServiceUnavailable)
+				return nil
+			}
+			info, ok := m.authManager.GetKeyInfo(req.APIKey)
+			if !ok || info == nil || info.UserID != claims.UserID {
+				http.Error(w, "invalid api_key (not owned by user)", http.StatusBadRequest)
+				return nil
+			}
+			h := authmgr.HashKey(req.APIKey)
+			keyHash = &h
+		}
+		if err := m.reservationRepo.Assign(claims.UserID, sub, keyHash); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return nil
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return nil
+	}
+
+	if r.Method == http.MethodDelete {
+		if err := m.reservationRepo.Delete(claims.UserID, sub); err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return nil
+		}
+		w.WriteHeader(http.StatusNoContent)
+		return nil
+	}
+
+	http.Error(w, "Not found", http.StatusNotFound)
+	return nil
 }
 
 type tunnelPolicyUpdateRequest struct {
 	KeyAuthEnabled      *bool    `json:"key_auth_enabled,omitempty"`
 	IPAllowlistEnabled  *bool    `json:"ip_allowlist_enabled,omitempty"`
 	IPAllowlist         []string `json:"ip_allowlist,omitempty"`
+
+	BasicAuthEnabled  *bool  `json:"basic_auth_enabled,omitempty"`
+	BasicAuthUsername *string `json:"basic_auth_username,omitempty"`
+	BasicAuthPassword *string `json:"basic_auth_password,omitempty"`
+
+	HttpsRedirectEnabled *bool `json:"https_redirect_enabled,omitempty"`
+
+	RateLimitEnabled  *bool  `json:"rate_limit_enabled,omitempty"`
+	RateLimitRequests *int   `json:"rate_limit_requests,omitempty"`
+	RateLimitWindowS  *int64 `json:"rate_limit_window_s,omitempty"`
+
+	AddRequestHeaders    map[string]string `json:"add_request_headers,omitempty"`
+	RemoveRequestHeaders []string          `json:"remove_request_headers,omitempty"`
+	AddResponseHeaders   map[string]string `json:"add_response_headers,omitempty"`
+	RemoveResponseHeaders []string         `json:"remove_response_headers,omitempty"`
+
+	PathPrefix      *string `json:"path_prefix,omitempty"`
+	ReplacePathFrom *string `json:"replace_path_from,omitempty"`
+	ReplacePathTo   *string `json:"replace_path_to,omitempty"`
 }
 
 type tunnelPolicyRotateResponse struct {
@@ -245,6 +390,33 @@ func (m *MonitoringServer) tunnelPolicyHandler(w http.ResponseWriter, r *http.Re
 					p.KeyAuthToken = ""
 				}
 			}
+			if req.BasicAuthEnabled != nil {
+				p.BasicAuthEnabled = *req.BasicAuthEnabled
+				if !p.BasicAuthEnabled {
+					p.BasicAuthUsername = ""
+					p.BasicAuthPasswordHash = ""
+				}
+			}
+			if req.BasicAuthUsername != nil {
+				p.BasicAuthUsername = strings.TrimSpace(*req.BasicAuthUsername)
+			}
+			if req.BasicAuthPassword != nil {
+				pw := strings.TrimSpace(*req.BasicAuthPassword)
+				if pw == "" {
+					p.BasicAuthPasswordHash = ""
+					p.BasicAuthEnabled = false
+				} else {
+					hash, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
+					if err != nil {
+						return err
+					}
+					p.BasicAuthPasswordHash = string(hash)
+					if p.BasicAuthUsername != "" {
+						p.BasicAuthEnabled = true
+					}
+				}
+			}
+
 			if req.IPAllowlistEnabled != nil {
 				p.IPAllowlistEnabled = *req.IPAllowlistEnabled
 				if !p.IPAllowlistEnabled {
@@ -265,6 +437,43 @@ func (m *MonitoringServer) tunnelPolicyHandler(w http.ResponseWriter, r *http.Re
 				if len(out) > 0 {
 					p.IPAllowlistEnabled = true
 				}
+			}
+
+			if req.HttpsRedirectEnabled != nil {
+				p.HttpsRedirectEnabled = *req.HttpsRedirectEnabled
+			}
+
+			if req.RateLimitEnabled != nil {
+				p.RateLimitEnabled = *req.RateLimitEnabled
+			}
+			if req.RateLimitRequests != nil {
+				p.RateLimitRequests = *req.RateLimitRequests
+			}
+			if req.RateLimitWindowS != nil {
+				p.RateLimitWindowS = *req.RateLimitWindowS
+			}
+
+			if req.AddRequestHeaders != nil {
+				p.AddRequestHeaders = req.AddRequestHeaders
+			}
+			if req.RemoveRequestHeaders != nil {
+				p.RemoveRequestHeaders = req.RemoveRequestHeaders
+			}
+			if req.AddResponseHeaders != nil {
+				p.AddResponseHeaders = req.AddResponseHeaders
+			}
+			if req.RemoveResponseHeaders != nil {
+				p.RemoveResponseHeaders = req.RemoveResponseHeaders
+			}
+
+			if req.PathPrefix != nil {
+				p.PathPrefix = strings.TrimSpace(*req.PathPrefix)
+			}
+			if req.ReplacePathFrom != nil {
+				p.ReplacePathFrom = strings.TrimSpace(*req.ReplacePathFrom)
+			}
+			if req.ReplacePathTo != nil {
+				p.ReplacePathTo = strings.TrimSpace(*req.ReplacePathTo)
 			}
 			return nil
 		}); err != nil {
@@ -413,19 +622,34 @@ func (m *MonitoringServer) anomaliesHandler(w http.ResponseWriter, r *http.Reque
 func (m *MonitoringServer) mlStatsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	// ML kapalı / eğitim sırasında bile 200 dön: dashboard Promise.all ile tümünü düşürmesin
-	if m.mlClient == nil {
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{})
-		return
+	type mlStatsEnvelope struct {
+		Stats            interface{} `json:"stats"`
+		ActiveTunnels    int         `json:"active_tunnels"`
+		MLUp             bool        `json:"ml_up"`
+		LastPredictionAt *string     `json:"last_prediction_at"`
 	}
 
-	stats, err := m.mlClient.GetModelStats()
-	if err != nil {
-		m.logger.Warn("ML stats unavailable, returning empty stats", zap.Error(err))
-		_ = json.NewEncoder(w).Encode(map[string]interface{}{})
-		return
+	env := mlStatsEnvelope{
+		Stats:         map[string]interface{}{},
+		ActiveTunnels: m.tunnelManager.Count(),
+		MLUp:          false,
 	}
 
-	_ = json.NewEncoder(w).Encode(stats)
+	if m.mlClient != nil {
+		env.MLUp = m.mlClient.HealthCheck()
+		stats, err := m.mlClient.GetModelStats()
+		if err != nil {
+			m.logger.Warn("ML stats unavailable, returning empty stats", zap.Error(err))
+		} else {
+			env.Stats = stats
+		}
+		if t, ok := m.mlClient.LastPredictionAt(); ok {
+			s := t.Format(time.RFC3339)
+			env.LastPredictionAt = &s
+		}
+	}
+
+	_ = json.NewEncoder(w).Encode(env)
 }
 
 // healthHandler -- healthCheck

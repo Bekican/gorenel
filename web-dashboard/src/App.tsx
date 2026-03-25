@@ -16,7 +16,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { api, AUTH_EVENTS, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type ModelStatsResponse, type CapturedRequest, type ModificationRule, type TunnelSessionHistory } from './api/client';
+import { api, AUTH_EVENTS, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type MLStatsEnvelope, type CapturedRequest, type ModificationRule, type TunnelSessionHistory } from './api/client';
 import './index.css';
 
 // Lazy load components
@@ -35,8 +35,9 @@ import { RegisterPage } from './components/RegisterPage';
 import { LandingPage } from './components/LandingPage';
 import { ConnectModal } from './components/ConnectModal';
 import { ShareView } from './components/ShareView';
+const Reservations = React.lazy(() => import('./components/Reservations').then(module => ({ default: module.Reservations })));
 
-type NavTab = 'overview' | 'tunnels' | 'ai_gateway' | 'traffic' | 'settings' | 'api_keys';
+type NavTab = 'overview' | 'tunnels' | 'ai_gateway' | 'traffic' | 'settings' | 'api_keys' | 'reservations';
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -49,7 +50,7 @@ function App() {
   const [analytics, setAnalytics] = useState<AnalyticsSnapshot | null>(null);
   const [tunnels, setTunnels] = useState<any[]>([]);
   const [anomalies, setAnomalies] = useState<AnomalyRecord[]>([]);
-  const [mlStats, setMlStats] = useState<ModelStatsResponse>({});
+  const [mlStats, setMlStats] = useState<MLStatsEnvelope>({ stats: {}, active_tunnels: 0, ml_up: false, last_prediction_at: null });
   const [history, setHistory] = useState<CapturedRequest[]>([]);
   const [rules, setRules] = useState<ModificationRule[]>([]);
   const [tunnelHistory, setTunnelHistory] = useState<TunnelSessionHistory[]>([]);
@@ -123,7 +124,7 @@ function App() {
     if (analyticsRes.status === 'fulfilled') setAnalytics(analyticsRes.value);
     if (tunnelsRes.status === 'fulfilled') setTunnels(tunnelsRes.value.tunnels || []);
     if (anomaliesRes.status === 'fulfilled') setAnomalies(anomaliesRes.value.anomalies || []);
-    if (mlStatsRes.status === 'fulfilled') setMlStats(mlStatsRes.value || {});
+    if (mlStatsRes.status === 'fulfilled') setMlStats(mlStatsRes.value || { stats: {}, active_tunnels: 0, ml_up: false, last_prediction_at: null });
     if (historyRes.status === 'fulfilled') setHistory(historyRes.value || []);
     if (rulesRes.status === 'fulfilled') setRules(rulesRes.value || []);
     if (tunnelHistoryRes.status === 'fulfilled') setTunnelHistory(tunnelHistoryRes.value.sessions || []);
@@ -272,6 +273,7 @@ function App() {
                 </div>
                 <NavItem id="traffic" icon={Microscope} label="Inspector" />
                 <NavItem id="api_keys" icon={ShieldCheck} label="API Keys" />
+                <NavItem id="reservations" icon={Globe} label="Reservations" />
                 <NavItem id="settings" icon={Settings} label="Rules" />
               </div>
             </nav>
@@ -493,7 +495,12 @@ function App() {
 
             {activeTab === 'tunnels' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <TunnelsList tunnels={tunnels} historySessions={tunnelHistory} onOpenConnect={() => setIsConnectOpen(true)} />
+                <TunnelsList
+                  tunnels={tunnels}
+                  historySessions={tunnelHistory}
+                  onOpenConnect={() => setIsConnectOpen(true)}
+                  onGoReservations={() => setActiveTab('reservations')}
+                />
               </div>
             )}
 
@@ -501,7 +508,7 @@ function App() {
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div className="lg:col-span-2">
-                    <ModelComparison stats={mlStats} />
+                    <ModelComparison ml={mlStats} />
                   </div>
                   <div className="lg:col-span-1">
                     {anomalies.length > 0 ? (
@@ -537,6 +544,12 @@ function App() {
             {activeTab === 'api_keys' && (
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <ApiKeyManager />
+              </div>
+            )}
+
+            {activeTab === 'reservations' && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <Reservations />
               </div>
             )}
 

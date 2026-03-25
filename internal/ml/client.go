@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
@@ -16,6 +17,7 @@ type Client struct {
 	baseUrl    string
 	httpClient *http.Client
 	logger     *zap.Logger
+	lastPredictionUnixNano atomic.Int64
 }
 
 type PredictionRequest struct {
@@ -159,6 +161,7 @@ func (c *Client) PredictCompare(ctx context.Context, requestData map[string]inte
 		return nil, fmt.Errorf("yanıt parse hatası: %w", err)
 	}
 
+	c.lastPredictionUnixNano.Store(time.Now().UnixNano())
 	return &compResp, nil
 }
 
@@ -195,6 +198,14 @@ func (c *Client) GetModelStats() (*ModelStatsResponse, error) {
 		return nil, err
 	}
 	return &stats, nil
+}
+
+func (c *Client) LastPredictionAt() (time.Time, bool) {
+	n := c.lastPredictionUnixNano.Load()
+	if n <= 0 {
+		return time.Time{}, false
+	}
+	return time.Unix(0, n).UTC(), true
 }
 
 func (c *Client) TrainAll(ctx context.Context) error {

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Shield, KeyRound, Copy, RotateCcw, X, Plus, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Shield, KeyRound, Copy, RotateCcw, X, CheckCircle2, AlertTriangle, Lock, Gauge, ArrowRightLeft, CornerDownRight, Plus } from 'lucide-react';
 import { api, type Tunnel } from '../api/client';
 import { Tooltip } from './ui/Tooltip';
 
@@ -26,6 +26,20 @@ export const TunnelPolicyModal: React.FC<Props> = ({ open, onClose, tunnel, onUp
   const [ipEnabled, setIpEnabled] = useState(false);
   const [keyEnabled, setKeyEnabled] = useState(false);
   const [freshToken, setFreshToken] = useState<string | null>(null);
+  const [basicEnabled, setBasicEnabled] = useState(false);
+  const [basicUser, setBasicUser] = useState('');
+  const [basicPass, setBasicPass] = useState('');
+  const [httpsRedirect, setHttpsRedirect] = useState(false);
+  const [rateEnabled, setRateEnabled] = useState(false);
+  const [rateReq, setRateReq] = useState(60);
+  const [rateWin, setRateWin] = useState(60);
+  const [pathPrefix, setPathPrefix] = useState('');
+  const [replaceFrom, setReplaceFrom] = useState('');
+  const [replaceTo, setReplaceTo] = useState('');
+  const [addReqHeadersText, setAddReqHeadersText] = useState('');
+  const [removeReqHeadersText, setRemoveReqHeadersText] = useState('');
+  const [addRespHeadersText, setAddRespHeadersText] = useState('');
+  const [removeRespHeadersText, setRemoveRespHeadersText] = useState('');
 
   const currentPolicy = tunnel?.policy || {};
 
@@ -35,7 +49,21 @@ export const TunnelPolicyModal: React.FC<Props> = ({ open, onClose, tunnel, onUp
     setFreshToken(null);
     setIpEnabled(!!currentPolicy.ip_allowlist_enabled);
     setKeyEnabled(!!currentPolicy.key_auth_enabled);
+    setBasicEnabled(!!currentPolicy.basic_auth_enabled);
+    setBasicUser(currentPolicy.basic_auth_username || '');
+    setBasicPass('');
+    setHttpsRedirect(!!currentPolicy.https_redirect_enabled);
+    setRateEnabled(!!currentPolicy.rate_limit_enabled);
+    setRateReq(currentPolicy.rate_limit_requests || 60);
+    setRateWin(currentPolicy.rate_limit_window_s || 60);
+    setPathPrefix(currentPolicy.path_prefix || '');
+    setReplaceFrom(currentPolicy.replace_path_from || '');
+    setReplaceTo(currentPolicy.replace_path_to || '');
     setIpText('');
+    setAddReqHeadersText('');
+    setRemoveReqHeadersText('');
+    setAddRespHeadersText('');
+    setRemoveRespHeadersText('');
   }, [open, tunnel?.subdomain]);
 
   useEffect(() => {
@@ -45,6 +73,27 @@ export const TunnelPolicyModal: React.FC<Props> = ({ open, onClose, tunnel, onUp
   }, [toast]);
 
   const allowlist = useMemo(() => splitAllowlist(ipText), [ipText]);
+
+  const parseHeaderMap = (text: string): Record<string, string> => {
+    const out: Record<string, string> = {};
+    text
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .forEach((line) => {
+        const idx = line.indexOf(':');
+        if (idx <= 0) return;
+        const k = line.slice(0, idx).trim();
+        const v = line.slice(idx + 1).trim();
+        if (k) out[k] = v;
+      });
+    return out;
+  };
+  const parseHeaderList = (text: string): string[] =>
+    text
+      .split(/[\s,]+/g)
+      .map((s) => s.trim())
+      .filter(Boolean);
 
   if (!open || !tunnel) return null;
 
@@ -78,10 +127,25 @@ export const TunnelPolicyModal: React.FC<Props> = ({ open, onClose, tunnel, onUp
         key_auth_enabled: keyEnabled,
         ip_allowlist_enabled: ipEnabled,
         ip_allowlist: ipEnabled ? allowlist : [],
+        basic_auth_enabled: basicEnabled,
+        basic_auth_username: basicUser || undefined,
+        basic_auth_password: basicPass || undefined,
+        https_redirect_enabled: httpsRedirect,
+        rate_limit_enabled: rateEnabled,
+        rate_limit_requests: rateEnabled ? rateReq : undefined,
+        rate_limit_window_s: rateEnabled ? rateWin : undefined,
+        path_prefix: pathPrefix || undefined,
+        replace_path_from: replaceFrom || undefined,
+        replace_path_to: replaceTo || undefined,
+        add_request_headers: parseHeaderMap(addReqHeadersText),
+        remove_request_headers: parseHeaderList(removeReqHeadersText),
+        add_response_headers: parseHeaderMap(addRespHeadersText),
+        remove_response_headers: parseHeaderList(removeRespHeadersText),
       });
       onUpdated();
       setToast('Policy saved');
       if (!keyEnabled) setFreshToken(null);
+      setBasicPass('');
     } catch (e) {
       console.error(e);
       setActionError('Failed to save policy. Check IP/CIDR formats.');
@@ -250,6 +314,164 @@ export const TunnelPolicyModal: React.FC<Props> = ({ open, onClose, tunnel, onUp
                       +{allowlist.length - 8} more
                     </span>
                   )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-2xl bg-white/[0.04] border border-white/10">
+                    <Lock className="w-4 h-4 text-white/70" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-white tracking-tight">Basic Auth</div>
+                    <div className="text-[11px] text-white/40 font-medium">Browser-native username/password gate.</div>
+                  </div>
+                </div>
+                <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={basicEnabled}
+                    onChange={(e) => setBasicEnabled(e.target.checked)}
+                    className="h-4 w-4 accent-emerald-400"
+                  />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-white/50">
+                    {basicEnabled ? 'ON' : 'OFF'}
+                  </span>
+                </label>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  value={basicUser}
+                  onChange={(e) => setBasicUser(e.target.value)}
+                  disabled={!basicEnabled}
+                  placeholder="username"
+                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80 disabled:opacity-50"
+                />
+                <input
+                  value={basicPass}
+                  onChange={(e) => setBasicPass(e.target.value)}
+                  disabled={!basicEnabled}
+                  placeholder="password (set to update)"
+                  type="password"
+                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80 disabled:opacity-50"
+                />
+              </div>
+              <div className="text-[11px] text-white/35 font-medium">
+                Password is stored hashed and never shown again.
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 space-y-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-2xl bg-white/[0.04] border border-white/10">
+                    <Gauge className="w-4 h-4 text-white/70" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-black text-white tracking-tight">Rate limit</div>
+                    <div className="text-[11px] text-white/40 font-medium">Per-tunnel, per-client IP sliding window.</div>
+                  </div>
+                </div>
+                <label className="inline-flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rateEnabled}
+                    onChange={(e) => setRateEnabled(e.target.checked)}
+                    className="h-4 w-4 accent-emerald-400"
+                  />
+                  <span className="text-[11px] font-black uppercase tracking-widest text-white/50">
+                    {rateEnabled ? 'ON' : 'OFF'}
+                  </span>
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Requests</div>
+                  <input
+                    value={rateReq}
+                    onChange={(e) => setRateReq(Number(e.target.value || 0))}
+                    disabled={!rateEnabled}
+                    type="number"
+                    min={1}
+                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80 disabled:opacity-50"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Window (s)</div>
+                  <input
+                    value={rateWin}
+                    onChange={(e) => setRateWin(Number(e.target.value || 0))}
+                    disabled={!rateEnabled}
+                    type="number"
+                    min={1}
+                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+              <label className="inline-flex items-center gap-2 cursor-pointer select-none pt-2">
+                <input
+                  type="checkbox"
+                  checked={httpsRedirect}
+                  onChange={(e) => setHttpsRedirect(e.target.checked)}
+                  className="h-4 w-4 accent-emerald-400"
+                />
+                <span className="text-[11px] font-black uppercase tracking-widest text-white/50">
+                  HTTPS redirect
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-2xl bg-white/[0.04] border border-white/10">
+                <ArrowRightLeft className="w-4 h-4 text-white/70" />
+              </div>
+              <div>
+                <div className="text-sm font-black text-white tracking-tight">Rewrite & headers</div>
+                <div className="text-[11px] text-white/40 font-medium">Lightweight request/response shaping per tunnel.</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+              <div className="lg:col-span-1 space-y-2">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 flex items-center gap-2"><CornerDownRight size={12} /> Path prefix</div>
+                <input
+                  value={pathPrefix}
+                  onChange={(e) => setPathPrefix(e.target.value)}
+                  placeholder="/api"
+                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80"
+                />
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Replace path from/to</div>
+                <input
+                  value={replaceFrom}
+                  onChange={(e) => setReplaceFrom(e.target.value)}
+                  placeholder="/v1"
+                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80"
+                />
+                <input
+                  value={replaceTo}
+                  onChange={(e) => setReplaceTo(e.target.value)}
+                  placeholder="/v2"
+                  className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80"
+                />
+              </div>
+              <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Add request headers (one per line: Key: Value)</div>
+                  <textarea value={addReqHeadersText} onChange={(e) => setAddReqHeadersText(e.target.value)} className="w-full h-24 px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80 resize-none" />
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Remove request headers (space/comma)</div>
+                  <input value={removeReqHeadersText} onChange={(e) => setRemoveReqHeadersText(e.target.value)} className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80" />
+                </div>
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Add response headers (one per line: Key: Value)</div>
+                  <textarea value={addRespHeadersText} onChange={(e) => setAddRespHeadersText(e.target.value)} className="w-full h-24 px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80 resize-none" />
+                  <div className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Remove response headers (space/comma)</div>
+                  <input value={removeRespHeadersText} onChange={(e) => setRemoveRespHeadersText(e.target.value)} className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-2xl text-xs font-mono outline-none text-white/80" />
                 </div>
               </div>
             </div>

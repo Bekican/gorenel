@@ -1,9 +1,9 @@
 import { Zap, Activity, ShieldCheck, AlertCircle, BarChart3, BrainCircuit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import type { ModelStatsResponse } from '../api/client';
+import type { MLStatsEnvelope, ModelStatsResponse } from '../api/client';
 
 interface Props {
-    stats: ModelStatsResponse;
+    ml: MLStatsEnvelope;
 }
 
 const modelNames: Record<string, string> = {
@@ -16,8 +16,15 @@ const modelColors: Record<string, string> = {
     autoencoder: 'text-violet-400 bg-violet-400/10 border-violet-400/20 glow-violet'
 };
 
-export const ModelComparison: React.FC<Props> = ({ stats }) => {
+export const ModelComparison: React.FC<Props> = ({ ml }) => {
     const { t } = useTranslation();
+    const stats: ModelStatsResponse = ml?.stats || {};
+    const statusLabel = !ml?.ml_up ? 'Offline' : (ml?.active_tunnels ?? 0) > 0 ? 'Live' : 'Idle';
+    const statusStyle = !ml?.ml_up
+        ? 'bg-rose-500/10 border-rose-500/20 text-rose-300'
+        : (ml?.active_tunnels ?? 0) > 0
+            ? 'bg-primary/10 border-primary/20 text-primary'
+            : 'bg-white/5 border-white/10 text-white/50';
     return (
         <div className="card h-full p-8 flex flex-col space-y-8">
             <div className="flex items-center justify-between">
@@ -31,9 +38,9 @@ export const ModelComparison: React.FC<Props> = ({ stats }) => {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full flex items-center gap-2">
-                        <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[10px] font-black uppercase text-primary tracking-widest">Neural Live</span>
+                    <div className={`px-3 py-1 border rounded-full flex items-center gap-2 ${statusStyle}`}>
+                        <div className={`w-1 h-1 rounded-full ${(ml?.active_tunnels ?? 0) > 0 && ml?.ml_up ? 'bg-primary animate-pulse' : 'bg-white/30'}`} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{statusLabel}</span>
                     </div>
                 </div>
             </div>

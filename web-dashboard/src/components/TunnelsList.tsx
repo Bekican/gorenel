@@ -4,14 +4,16 @@ import { formatDistanceToNow } from 'date-fns';
 import type { Tunnel, TunnelSessionHistory } from '../api/client';
 import React, { useState } from 'react';
 import { TunnelPolicyModal } from './TunnelPolicyModal';
+import { OnboardingCards } from './OnboardingCards';
 
 interface TunnelsListProps {
   tunnels: Tunnel[];
   historySessions?: TunnelSessionHistory[];
   onOpenConnect: () => void;
+  onGoReservations?: () => void;
 }
 
-export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessions = [], onOpenConnect }) => {
+export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessions = [], onOpenConnect, onGoReservations }) => {
   const { t } = useTranslation();
   const [policyTunnel, setPolicyTunnel] = useState<Tunnel | null>(null);
   const [isPolicyOpen, setIsPolicyOpen] = useState(false);
@@ -58,7 +60,12 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
 
       <div className="grid grid-cols-1 gap-4">
         {tunnels.length === 0 ? (
-          <div className="py-16 px-8 border-2 border-dashed border-white/5 rounded-[3rem] bg-white/[0.01] relative overflow-hidden group">
+          <div className="space-y-6">
+            <OnboardingCards
+              onGoTunnels={onOpenConnect}
+              onGoReservations={() => (onGoReservations ? onGoReservations() : onOpenConnect())}
+            />
+            <div className="py-16 px-8 border-2 border-dashed border-white/5 rounded-[3rem] bg-white/[0.01] relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
                <Zap className="w-64 h-64 text-primary" />
             </div>
@@ -98,11 +105,14 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
               </div>
             </div>
           </div>
+          </div>
         ) : (
           tunnels.map((tunnel) => {
             const status = getStatusInfo(tunnel.status);
             const keyOn = !!tunnel.policy?.key_auth_enabled;
             const ipOn = !!tunnel.policy?.ip_allowlist_enabled;
+            const basicOn = !!tunnel.policy?.basic_auth_enabled;
+            const rlOn = !!tunnel.policy?.rate_limit_enabled;
             return (
               <div
                 key={tunnel.id}
@@ -120,6 +130,11 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
                           <div className={`w-1 h-1 rounded-full ${status.glow} ${status.pulse ? 'animate-pulse' : ''}`} />
                           {status.text}
                         </div>
+                        {(keyOn || ipOn || basicOn || rlOn) && (
+                          <div className="hidden sm:flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest text-white/50">
+                            <Shield className="w-3 h-3 text-white/30" /> Secured
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-wrap items-center gap-2 pt-1">
                         {keyOn && (

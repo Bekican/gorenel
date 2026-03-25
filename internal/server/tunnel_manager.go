@@ -40,6 +40,30 @@ type TunnelPolicy struct {
 
 	IPAllowlistEnabled bool     `json:"ip_allowlist_enabled,omitempty"`
 	IPAllowlist        []string `json:"-"`
+
+	// Basic auth (secret password hash, never expose)
+	BasicAuthEnabled      bool   `json:"basic_auth_enabled,omitempty"`
+	BasicAuthUsername     string `json:"basic_auth_username,omitempty"`
+	BasicAuthPasswordHash string `json:"-"`
+
+	// HTTPS redirect (based on X-Forwarded-Proto)
+	HttpsRedirectEnabled bool `json:"https_redirect_enabled,omitempty"`
+
+	// Per-tunnel rate limit
+	RateLimitEnabled  bool  `json:"rate_limit_enabled,omitempty"`
+	RateLimitRequests int   `json:"rate_limit_requests,omitempty"`
+	RateLimitWindowS  int64 `json:"rate_limit_window_s,omitempty"`
+
+	// Header edits
+	AddRequestHeaders    map[string]string `json:"add_request_headers,omitempty"`
+	RemoveRequestHeaders []string          `json:"remove_request_headers,omitempty"`
+	AddResponseHeaders   map[string]string `json:"add_response_headers,omitempty"`
+	RemoveResponseHeaders []string         `json:"remove_response_headers,omitempty"`
+
+	// Path rewrite
+	PathPrefix      string `json:"path_prefix,omitempty"`
+	ReplacePathFrom string `json:"replace_path_from,omitempty"`
+	ReplacePathTo   string `json:"replace_path_to,omitempty"`
 }
 
 // TunnelManager maintains the mapping between host names and active tunnel sessions.

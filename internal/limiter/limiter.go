@@ -96,6 +96,46 @@ func (rl *RateLimiter) Allow(identifier string, n int) bool {
 	return true
 }
 
+func (rl *RateLimiter) AllowWithQuota(identifier string, n int, quota Quota) bool {
+	// If redis is not available, use memory store (fallback/testing)
+	if rl.rdb == nil {
+		return rl.allowInMemory(identifier, n, quota)
+	}
+
+	ctx := context.Background()
+	now := time.Now()
+	windowKey := fmt.Sprintf("rate_limit:%s", identifier)
+
+	minScore := fmt.Sprintf("%d", now.Add(-quota.WindowSize).UnixNano())
+	if err := rl.rdb.ZRemRangeByScore(ctx, windowKey, "-inf", minScore).Err(); err != nil {
+		return rl.allowInMemory(identifier, n, quota)
+	}
+
+	count, err := rl.rdb.ZCard(ctx, windowKey).Result()
+	if err != nil {
+		return rl.allowInMemory(identifier, n, quota)
+	}
+	if count+int64(n) > int64(quota.Limit) {
+		return false
+	}
+
+	members := make([]redis.Z, 0, n)
+	for i := 0; i < n; i++ {
+		member := fmt.Sprintf("%d-%d", now.UnixNano(), i)
+		members = append(members, redis.Z{
+			Score:  float64(now.UnixNano()),
+			Member: member,
+		})
+	}
+	if err := rl.rdb.ZAdd(ctx, windowKey, members...).Err(); err != nil {
+		return rl.allowInMemory(identifier, n, quota)
+	}
+	if err := rl.rdb.Expire(ctx, windowKey, quota.WindowSize).Err(); err != nil {
+		return rl.allowInMemory(identifier, n, quota)
+	}
+	return true
+}
+
 func (rl *RateLimiter) allowInMemory(identifier string, n int, quota Quota) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()

@@ -200,11 +200,16 @@ func main() {
 	}()
 
 	// Monitoring server
-	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient, cfg.RedisAddr, historyStore, cfg.BaseDomain, cfg.ProxyPort, cfg.Env, zapLogger)
+	reservationRepo := server.NewPostgresReservationRepository(db)
+	if err := reservationRepo.Init(); err != nil {
+		zapLogger.Error("ReservationRepo init hatası", zap.Error(err))
+	}
+
+	monitor := server.NewMonitoringServer(tm, analyticsEngine, authHandler, authManager, rateLimiter, inspector, jwtSvc, anomalyStore, mlClient, cfg.RedisAddr, historyStore, reservationRepo, cfg.BaseDomain, cfg.ProxyPort, cfg.Env, zapLogger)
 
 	// Set WebSocket tunnel handler - allows tunnel connections over HTTPS (replaces raw TCP for Fly.io shared IP)
 	monitor.SetTunnelHandler(func(conn net.Conn) {
-		handleClient(conn, tm, authManager, tcpProxy, udpProxy, historyStore, zapLogger, cfg)
+		handleClient(conn, tm, authManager, tcpProxy, udpProxy, historyStore, reservationRepo, zapLogger, cfg)
 	})
 
 	go func() {
@@ -260,7 +265,7 @@ func main() {
 			}
 
 			zapLogger.Info("Yeni bağlantı", zap.String("remote_addr", conn.RemoteAddr().String()))
-			go handleClient(conn, tm, authManager, tcpProxy, udpProxy, historyStore, zapLogger, cfg)
+			go handleClient(conn, tm, authManager, tcpProxy, udpProxy, historyStore, reservationRepo, zapLogger, cfg)
 		}
 	}()
 
@@ -275,7 +280,7 @@ func main() {
 	zapLogger.Info("Gorenel Server kapatıldı")
 }
 
-func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy, historyStore *server.TunnelHistoryStore, logger *zap.Logger, cfg *config.Config) {
+func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.AuthManager, tcpProx *server.TCPProxy, udpProx *server.UDPProxy, historyStore *server.TunnelHistoryStore, reservationRepo *server.PostgresReservationRepository, logger *zap.Logger, cfg *config.Config) {
 	defer conn.Close()
 
 	// 1. REGISTER mesajını oku
@@ -375,7 +380,35 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 		logger.Info("Tünel oluşturuldu", zap.String("type", strings.ToUpper(regReq.TunnelType)), zap.Int("port", publicPort))
 	} else {
 		// DEFAULT: HTTP Subdomain
-		subdomain = utils.GenerateSubDomain(8)
+		desired := strings.TrimSpace(regReq.CustomSubdomain)
+		if desired != "" {
+			// Enforce reservation ownership + optional api-key assignment.
+			rec, err := reservationRepo.Get(desired)
+			if err != nil {
+				_ = protocol.WriteMessage(conn, protocol.NewErrorMessage(400, "Invalid subdomain reservation"))
+				return
+			}
+			if rec == nil || rec.UserID != authKey.UserID {
+				_ = protocol.WriteMessage(conn, protocol.NewErrorMessage(403, "Subdomain is not reserved for this user"))
+				return
+			}
+			if rec.AssignedAPIKeyHash != nil && *rec.AssignedAPIKeyHash != "" {
+				if authmgr.HashKey(regReq.APIKey) != *rec.AssignedAPIKeyHash {
+					_ = protocol.WriteMessage(conn, protocol.NewErrorMessage(403, "Subdomain is assigned to a different API key"))
+					return
+				}
+			}
+			// Prevent hijacking active tunnel
+			if _, ok := tm.GetTunnelInfo(desired); ok {
+				_ = protocol.WriteMessage(conn, protocol.NewErrorMessage(409, "Subdomain already in use"))
+				return
+			}
+			subdomain = desired
+			// mark usage
+			reservationRepo.TouchLastUsed(subdomain)
+		} else {
+			subdomain = utils.GenerateSubDomain(8)
+		}
 		if cfg.Env == "production" || cfg.BaseDomain == "gorenel.site" {
 			fullURL = fmt.Sprintf("https://%s.%s", subdomain, cfg.BaseDomain)
 		} else {
