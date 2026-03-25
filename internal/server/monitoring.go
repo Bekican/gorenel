@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -15,6 +16,7 @@ import (
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/middleware"
 	"github.com/Bekican/gorenel/internal/ml"
+	"github.com/Bekican/gorenel/internal/utils"
 	"github.com/Bekican/gorenel/pkg/auth"
 	serverErrors "github.com/Bekican/gorenel/pkg/errors"
 	"github.com/google/uuid"
@@ -115,6 +117,9 @@ func (m *MonitoringServer) Start(port string) error {
 				return nil
 			}
 		}))))
+
+		// Tunnel Policy Management (KeyAuth + IP allowlist)
+		mux.HandleFunc("/api/tunnel-policy/", m.corsMiddleware(authMw(serverErrors.ErrorWrapper(m.tunnelPolicyHandler))))
 	}
 
 	// Register Inspector Endpoints
@@ -153,6 +158,127 @@ func (m *MonitoringServer) Start(port string) error {
 	l, _ := zap.NewProduction()
 	l.Info("Monitoring server başlatılıyor", zap.String("port", port))
 	return http.ListenAndServe(port, mux)
+}
+
+type tunnelPolicyUpdateRequest struct {
+	KeyAuthEnabled      *bool    `json:"key_auth_enabled,omitempty"`
+	IPAllowlistEnabled  *bool    `json:"ip_allowlist_enabled,omitempty"`
+	IPAllowlist         []string `json:"ip_allowlist,omitempty"`
+}
+
+type tunnelPolicyRotateResponse struct {
+	Token string `json:"token"`
+}
+
+func (m *MonitoringServer) tunnelPolicyHandler(w http.ResponseWriter, r *http.Request) error {
+	// Routes:
+	// - PUT  /api/tunnel-policy/{subdomain}
+	// - POST /api/tunnel-policy/{subdomain}/rotate
+	path := strings.TrimPrefix(r.URL.Path, "/api/tunnel-policy/")
+	path = strings.Trim(path, "/")
+	if path == "" {
+		http.Error(w, "Missing subdomain", http.StatusBadRequest)
+		return nil
+	}
+
+	parts := strings.Split(path, "/")
+	subdomain := parts[0]
+	action := ""
+	if len(parts) > 1 {
+		action = parts[1]
+	}
+
+	switch r.Method {
+	case http.MethodPost:
+		if action != "rotate" {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return nil
+		}
+		token := utils.GenerateTunnelToken()
+		if err := m.tunnelManager.UpdateTunnelPolicy(subdomain, func(p *TunnelPolicy) error {
+			p.KeyAuthEnabled = true
+			p.KeyAuthToken = token
+			return nil
+		}); err != nil {
+			http.Error(w, "Tunnel not found", http.StatusNotFound)
+			return nil
+		}
+		w.Header().Set("Content-Type", "application/json")
+		return json.NewEncoder(w).Encode(tunnelPolicyRotateResponse{Token: token})
+
+	case http.MethodPut:
+		if action != "" {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return nil
+		}
+		var req tunnelPolicyUpdateRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid payload", http.StatusBadRequest)
+			return nil
+		}
+
+		// Validate allowlist (if present)
+		if req.IPAllowlist != nil {
+			for _, raw := range req.IPAllowlist {
+				raw = strings.TrimSpace(raw)
+				if raw == "" {
+					continue
+				}
+				if strings.Contains(raw, "/") {
+					if _, err := netip.ParsePrefix(raw); err != nil {
+						http.Error(w, "Invalid CIDR in allowlist: "+raw, http.StatusBadRequest)
+						return nil
+					}
+					continue
+				}
+				if _, err := netip.ParseAddr(raw); err != nil {
+					http.Error(w, "Invalid IP in allowlist: "+raw, http.StatusBadRequest)
+					return nil
+				}
+			}
+		}
+
+		if err := m.tunnelManager.UpdateTunnelPolicy(subdomain, func(p *TunnelPolicy) error {
+			if req.KeyAuthEnabled != nil {
+				p.KeyAuthEnabled = *req.KeyAuthEnabled
+				if !p.KeyAuthEnabled {
+					p.KeyAuthToken = ""
+				}
+			}
+			if req.IPAllowlistEnabled != nil {
+				p.IPAllowlistEnabled = *req.IPAllowlistEnabled
+				if !p.IPAllowlistEnabled {
+					p.IPAllowlist = nil
+				}
+			}
+			if req.IPAllowlist != nil {
+				// Replace allowlist
+				out := make([]string, 0, len(req.IPAllowlist))
+				for _, raw := range req.IPAllowlist {
+					raw = strings.TrimSpace(raw)
+					if raw == "" {
+						continue
+					}
+					out = append(out, raw)
+				}
+				p.IPAllowlist = out
+				if len(out) > 0 {
+					p.IPAllowlistEnabled = true
+				}
+			}
+			return nil
+		}); err != nil {
+			http.Error(w, "Tunnel not found", http.StatusNotFound)
+			return nil
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+		return nil
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return nil
+	}
 }
 
 // corsMiddleware adds CORS headers to allow cross-origin requests

@@ -1,22 +1,9 @@
 import { useTranslation } from 'react-i18next';
-import { Copy, ExternalLink, Server, Plus, Zap, ArrowDown, ArrowUp, ArrowRight } from 'lucide-react';
+import { Copy, ExternalLink, Server, Plus, Zap, ArrowDown, ArrowUp, ArrowRight, Shield, KeyRound, Lock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
-import type { TunnelSessionHistory } from '../api/client';
-
-interface Tunnel {
-  id: string;
-  subdomain: string;
-  localPort: number;
-  publicUrl: string;
-  status: 'active' | 'idle' | 'error';
-  requestCount: number;
-  bandwidth: {
-    in: number;
-    out: number;
-  };
-  startedAt: string;
-  lastActivity: string;
-}
+import type { Tunnel, TunnelSessionHistory } from '../api/client';
+import React, { useState } from 'react';
+import { TunnelPolicyModal } from './TunnelPolicyModal';
 
 interface TunnelsListProps {
   tunnels: Tunnel[];
@@ -26,6 +13,9 @@ interface TunnelsListProps {
 
 export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessions = [], onOpenConnect }) => {
   const { t } = useTranslation();
+  const [policyTunnel, setPolicyTunnel] = useState<Tunnel | null>(null);
+  const [isPolicyOpen, setIsPolicyOpen] = useState(false);
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
   };
@@ -45,6 +35,7 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
 
   return (
     <div className="card space-y-8">
+      <TunnelPolicyModal open={isPolicyOpen} onClose={() => setIsPolicyOpen(false)} tunnel={policyTunnel} onUpdated={() => {}} />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4 min-w-0">
           <div className="p-4 bg-primary/10 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.1)] shrink-0">
@@ -110,6 +101,8 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
         ) : (
           tunnels.map((tunnel) => {
             const status = getStatusInfo(tunnel.status);
+            const keyOn = !!tunnel.policy?.key_auth_enabled;
+            const ipOn = !!tunnel.policy?.ip_allowlist_enabled;
             return (
               <div
                 key={tunnel.id}
@@ -127,6 +120,23 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
                           <div className={`w-1 h-1 rounded-full ${status.glow} ${status.pulse ? 'animate-pulse' : ''}`} />
                           {status.text}
                         </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        {keyOn && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-200/90">
+                            <KeyRound className="w-3 h-3" /> KeyAuth
+                          </span>
+                        )}
+                        {ipOn && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-violet-200/90">
+                            <Lock className="w-3 h-3" /> IP Allowlist
+                          </span>
+                        )}
+                        {!keyOn && !ipOn && (
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white/30">
+                            <Shield className="w-3 h-3" /> Open
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-4 text-xs font-bold text-white/30 tracking-tight">
                         <span className="flex items-center gap-1.5">
@@ -159,6 +169,17 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
                     </div>
 
                     <div className="flex items-center gap-2 justify-end sm:justify-start shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPolicyTunnel(tunnel);
+                          setIsPolicyOpen(true);
+                        }}
+                        className="px-4 py-3 bg-white/5 border border-white/5 rounded-2xl text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 active:scale-95 text-xs font-black uppercase tracking-widest flex items-center gap-2"
+                        title="Security Policy"
+                      >
+                        <Shield className="w-4 h-4" /> Security
+                      </button>
                       <button
                         type="button"
                         onClick={() => copyToClipboard(tunnel.publicUrl)}

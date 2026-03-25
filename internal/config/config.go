@@ -50,6 +50,10 @@ type Config struct {
 
 	// Traffic Inspector
 	InspectorHistorySize int `mapstructure:"INSPECTOR_HISTORY_SIZE"`
+	// Hard cap for captured request/response bodies (for inspector + ML).
+	InspectorMaxBodyBytes int64 `mapstructure:"INSPECTOR_MAX_BODY_BYTES"`
+	// Sampling rate for inspector + ML analysis. 1.0 = always, 0.0 = never.
+	InspectorSamplingRate float64 `mapstructure:"INSPECTOR_SAMPLING_RATE"`
 }
 
 func Load() (*Config, error) {
@@ -70,6 +74,8 @@ func Load() (*Config, error) {
 	viper.SetDefault("RATE_LIMIT_REQUESTS", 1000)
 	viper.SetDefault("RATE_LIMIT_WINDOW", 1*time.Minute)
 	viper.SetDefault("INSPECTOR_HISTORY_SIZE", 100)
+	viper.SetDefault("INSPECTOR_MAX_BODY_BYTES", int64(5*1024*1024))
+	viper.SetDefault("INSPECTOR_SAMPLING_RATE", 1.0)
 
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
@@ -98,6 +104,11 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	// In production, prefer faster defaults unless user explicitly set sampling rate.
+	if config.Env == "production" && !viper.IsSet("INSPECTOR_SAMPLING_RATE") {
+		config.InspectorSamplingRate = 0.05
+	}
+
 	// Security Check: Fail if using default JWT secret in production
 	if config.Env == "production" {
 		if config.JWTSecret == "SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD" {
@@ -116,6 +127,12 @@ func Load() (*Config, error) {
 	}
 	if config.RateLimitWindow <= 0 {
 		return nil, errors.New("RATE_LIMIT_WINDOW must be greater than 0")
+	}
+	if config.InspectorMaxBodyBytes <= 0 {
+		return nil, errors.New("INSPECTOR_MAX_BODY_BYTES must be greater than 0")
+	}
+	if config.InspectorSamplingRate < 0 || config.InspectorSamplingRate > 1 {
+		return nil, errors.New("INSPECTOR_SAMPLING_RATE must be between 0 and 1")
 	}
 	if config.RedisAddr == "" {
 		return nil, errors.New("REDIS_ADDR must be set")

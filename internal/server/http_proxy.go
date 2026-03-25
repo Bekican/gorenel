@@ -5,8 +5,10 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"net/http"
+	"net/netip"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -31,9 +33,11 @@ type HTTPProxy struct {
 	acmeEmail      string
 	env            string
 	aiAnalyzer     *AIAnalyzer
+	inspectorMaxBodyBytes int64
+	inspectorSamplingRate float64
 }
 
-func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, acmeEmail, env string) *HTTPProxy {
+func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, acmeEmail, env string, inspectorMaxBodyBytes int64, inspectorSamplingRate float64) *HTTPProxy {
 	return &HTTPProxy{
 		tunnelManager:  tm,
 		advancedRL:     rl,
@@ -48,6 +52,8 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 		acmeEmail:      acmeEmail,
 		env:            env,
 		aiAnalyzer:     NewAIAnalyzer(),
+		inspectorMaxBodyBytes: inspectorMaxBodyBytes,
+		inspectorSamplingRate: inspectorSamplingRate,
 	}
 }
 
@@ -88,6 +94,16 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	host := r.Host
 	targetKey, isCustom := resolveTargetKey(host, p.baseDomain)
 
+	// Sampling gate: heavy inspector/ML work is executed only for a fraction of requests.
+	captureEnabled := false
+	if p.inspector != nil {
+		if p.inspectorSamplingRate >= 1 {
+			captureEnabled = true
+		} else if p.inspectorSamplingRate > 0 {
+			captureEnabled = rand.Float64() < p.inspectorSamplingRate
+		}
+	}
+
 	// Use a response wrapper to capture status code for analytics
 	statusCode := http.StatusOK // Default, will be overwritten by errors or response
 	var bytesOut int64
@@ -95,6 +111,20 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	reqBytes := r.ContentLength
 	if reqBytes < 0 {
 		reqBytes = 0
+	}
+
+	// Enforce per-tunnel policies (KeyAuth + optional IP allowlist)
+	// Apply early so we avoid spending resources on unauthorized traffic.
+	if policy, ok := p.tunnelManager.GetTunnelPolicy(host); ok {
+		if enforcePolicy(w, r, clientIP, policy) {
+			statusCode = http.StatusForbidden
+			return
+		}
+	} else if policy, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok {
+		if enforcePolicy(w, r, clientIP, policy) {
+			statusCode = http.StatusForbidden
+			return
+		}
 	}
 
 	// Ensure analytics are published for ALL requests, even on early return
@@ -175,21 +205,22 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.logger.Warn("Tunnel not found", zap.String("host", host))
 		http.Error(w, "Tunnel bulunamadı", statusCode)
 
-		// Phase 5: Tunnel bulunmasa bile body'yi oku ve AI güvenlik taraması yap
-		var aiMeta *AIMetadata
-		if r.Body != nil && p.aiAnalyzer != nil {
-			bodyBytes, err := io.ReadAll(r.Body)
-			if err == nil && len(bodyBytes) > 0 {
-				aiMeta = p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, bodyBytes)
-				if aiMeta != nil {
-					p.logger.Info("AI Security scan (no tunnel)",
-						zap.Bool("is_risk", aiMeta.IsSecurityRisk),
-						zap.Float64("risk_score", aiMeta.RiskScore),
-					)
-				}
+		// Tunnel bulunmasa bile (sampling'e göre) bounded body consume edip AI güvenlik taraması yap.
+		if captureEnabled && r.Body != nil && p.aiAnalyzer != nil {
+			var reqBodyBuf bytes.Buffer
+			bw := &BoundedWriter{W: &reqBodyBuf, Limit: p.inspectorMaxBodyBytes}
+			r.Body = io.NopCloser(io.TeeReader(r.Body, bw))
+			_, _ = io.Copy(io.Discard, r.Body) // drain without unbounded buffering
+
+			aiMeta := p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, reqBodyBuf.Bytes())
+			if aiMeta != nil {
+				p.logger.Info("AI Security scan (no tunnel)",
+					zap.Bool("is_risk", aiMeta.IsSecurityRisk),
+					zap.Float64("risk_score", aiMeta.RiskScore),
+				)
 			}
+			p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, time.Since(startTime), statusCode, 0, clientIP, targetKey, aiMeta)
 		}
-		p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, time.Since(startTime), statusCode, 0, clientIP, targetKey, aiMeta)
 		return
 	}
 
@@ -207,10 +238,10 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	defer stream.Close()
 
-	// Phase 5: Streaming Body Capture (Bounded to 5MB to prevent OOM)
+	// Phase 5: Streaming Body Capture (bounded, sampling-gated)
 	var reqBodyBuf bytes.Buffer
-	if r.Body != nil {
-		bw := &BoundedWriter{W: &reqBodyBuf, Limit: 5 * 1024 * 1024}
+	if captureEnabled && r.Body != nil {
+		bw := &BoundedWriter{W: &reqBodyBuf, Limit: p.inspectorMaxBodyBytes}
 		r.Body = io.NopCloser(io.TeeReader(r.Body, bw))
 	}
 
@@ -224,7 +255,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Timestamp: startTime,
 	}
 
-	captureWriter := NewResponseCaptureWriter(w)
+	maxCaptureBytes := int64(0)
+	if captureEnabled {
+		maxCaptureBytes = p.inspectorMaxBodyBytes
+	}
+	captureWriter := NewResponseCaptureWriter(w, maxCaptureBytes)
 
 	// Set proxy headers
 	if r.Header.Get("X-Forwarded-For") == "" {
@@ -240,9 +275,9 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.logger.Error("Request forwarding failed", zap.Error(err))
 		http.Error(w, "Upstream error", statusCode)
 
-		// Phase 5 Fix: Upstream fail olsa bile AI analizi ve anomali kaydı yap
-		captured.ReqBody = reqBodyBuf.Bytes()
-		if p.inspector != nil && p.aiAnalyzer != nil {
+		// Upstream fail olsa bile (sampling'e göre) AI analizi ve inspector/ML kaydı yap.
+		if captureEnabled && p.inspector != nil && p.aiAnalyzer != nil {
+			captured.ReqBody = reqBodyBuf.Bytes()
 			aiMeta := p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, captured.ReqBody)
 			if aiMeta != nil {
 				captured.AIMetadata = aiMeta
@@ -258,7 +293,9 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Now populate the captured req body
-	captured.ReqBody = reqBodyBuf.Bytes()
+	if captureEnabled {
+		captured.ReqBody = reqBodyBuf.Bytes()
+	}
 
 	// Phase 6: Proper HTTP Response Parsing from Tunnel
 	// Yamux stream provides raw HTTP bytes, we MUST parse them to set headers/status correctly.
@@ -292,7 +329,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	captured.RespBody = captureWriter.Body.Bytes()
 	captured.StatusCode = captureWriter.StatusCode
 	captured.Duration = time.Since(startTime)
-	if p.inspector != nil {
+	if captureEnabled && p.inspector != nil {
 		// AI Analysis Phase
 		if p.aiAnalyzer != nil {
 			aiMeta := p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, captured.ReqBody)
@@ -335,7 +372,9 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// ML Anomali Kontrolu
-	p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, responseTime, captureWriter.StatusCode, bytesReceived, clientIP, targetKey, captured.AIMetadata)
+	if captureEnabled {
+		p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, responseTime, captureWriter.StatusCode, bytesReceived, clientIP, targetKey, captured.AIMetadata)
+	}
 
 	p.logger.Debug("İstek tamamlandı",
 		zap.String("method", r.Method),
@@ -493,6 +532,58 @@ type BoundedWriter struct {
 	W     io.Writer
 	Limit int64
 	n     int64
+}
+
+func enforcePolicy(w http.ResponseWriter, r *http.Request, clientIP string, policy TunnelPolicy) (denied bool) {
+	// IP allowlist
+	if policy.IPAllowlistEnabled && len(policy.IPAllowlist) > 0 {
+		addr, err := netip.ParseAddr(strings.TrimSpace(clientIP))
+		if err != nil {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return true
+		}
+		allowed := false
+		for _, raw := range policy.IPAllowlist {
+			raw = strings.TrimSpace(raw)
+			if raw == "" {
+				continue
+			}
+			if strings.Contains(raw, "/") {
+				prefix, err := netip.ParsePrefix(raw)
+				if err != nil {
+					continue
+				}
+				if prefix.Contains(addr) {
+					allowed = true
+					break
+				}
+				continue
+			}
+			ip, err := netip.ParseAddr(raw)
+			if err != nil {
+				continue
+			}
+			if ip == addr {
+				allowed = true
+				break
+			}
+		}
+		if !allowed {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return true
+		}
+	}
+
+	// KeyAuth (token)
+	if policy.KeyAuthEnabled && strings.TrimSpace(policy.KeyAuthToken) != "" {
+		got := strings.TrimSpace(r.Header.Get("X-TOKEN"))
+		if got == "" || got != strings.TrimSpace(policy.KeyAuthToken) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return true
+		}
+	}
+
+	return false
 }
 
 func (bw *BoundedWriter) Write(p []byte) (n int, err error) {

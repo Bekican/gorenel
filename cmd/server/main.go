@@ -190,7 +190,7 @@ func main() {
 	}
 	anomalyStore := server.NewAnomalyStore(100) // Son 100 anomali kaydı
 	anomalyStore.SetHistoryStore(historyStore)
-	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient, cfg.RedisAddr, cfg.BaseDomain, cfg.AcmeEmail, cfg.Env)
+	httpProxy := server.NewHTTPProxy(tm, eventStream, geoLocator, rateLimiter, inspector, zapLogger, anomalyStore, mlClient, cfg.RedisAddr, cfg.BaseDomain, cfg.AcmeEmail, cfg.Env, cfg.InspectorMaxBodyBytes, cfg.InspectorSamplingRate)
 
 	go func() {
 		zapLogger.Info("HTTP Proxy başlatılıyor", zap.String("port", cfg.ProxyPort))
@@ -407,7 +407,17 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 
 	// 5. Session'ı kaydet
 	if subdomain != "" {
-		tm.RegisterTunnel(subdomain, session, regReq.CustomDomain, regReq.LocalPort, fullURL, authKey.UserID, regReq.TunnelType)
+		policy := server.TunnelPolicy{}
+		if strings.TrimSpace(regReq.KeyAuthToken) != "" {
+			policy.KeyAuthEnabled = true
+			policy.KeyAuthToken = strings.TrimSpace(regReq.KeyAuthToken)
+		}
+		if len(regReq.IPWhitelist) > 0 {
+			policy.IPAllowlistEnabled = true
+			policy.IPAllowlist = regReq.IPWhitelist
+		}
+
+		tm.RegisterTunnel(subdomain, session, regReq.CustomDomain, regReq.LocalPort, fullURL, authKey.UserID, regReq.TunnelType, policy)
 		defer tm.RemoveTunnel(subdomain)
 	} else {
 		// TCP/UDP için de kaydetmek gerekebilir (opsiyonel, monitoring için iyi olur)

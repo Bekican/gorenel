@@ -25,3 +25,9 @@ func GenerateSubDomain(length int) string {
 func GenerateClientID() string {
 	return GenerateSubDomain(16)
 }
+
+func GenerateTunnelToken() string {
+	// Token is used as X-TOKEN header value.
+	// Keep it URL-safe and easy to paste.
+	return "tt_" + GenerateSubDomain(32)
+}

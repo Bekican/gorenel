@@ -25,11 +25,21 @@ type TunnelInfo struct {
 	StartedAt    time.Time      `json:"startedAt"`
 	LastActivity time.Time      `json:"lastActivity"`
 	Session      *yamux.Session `json:"-"`
+	Policy       TunnelPolicy   `json:"policy,omitempty"`
 }
 
 type BandwidthInfo struct {
 	In  int64 `json:"in"`
 	Out int64 `json:"out"`
+}
+
+type TunnelPolicy struct {
+	// KeyAuthToken is secret; never expose it via API.
+	KeyAuthEnabled bool `json:"key_auth_enabled,omitempty"`
+	KeyAuthToken   string `json:"-"`
+
+	IPAllowlistEnabled bool     `json:"ip_allowlist_enabled,omitempty"`
+	IPAllowlist        []string `json:"-"`
 }
 
 // TunnelManager maintains the mapping between host names and active tunnel sessions.
@@ -88,7 +98,7 @@ func NewTunnelManager() *TunnelManager {
 
 // RegisterTunnel adds a new tunnel session to the manager.
 // If customDomain is provided, it links the domain to the subdomain.
-func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session, customDomain string, localPort int, publicUrl, userID, tunnelType string) {
+func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session, customDomain string, localPort int, publicUrl, userID, tunnelType string, policy TunnelPolicy) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
@@ -103,6 +113,7 @@ func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session
 		StartedAt:    time.Now(),
 		LastActivity: time.Now(),
 		Session:      session,
+		Policy:       policy,
 	}
 
 	if customDomain != "" {
@@ -118,6 +129,31 @@ func (tm *TunnelManager) RegisterTunnel(subdomain string, session *yamux.Session
 			zap.Int("total", len(tm.tunnels)),
 		)
 	}
+}
+
+func (tm *TunnelManager) GetTunnelPolicy(host string) (TunnelPolicy, bool) {
+	tm.mu.RLock()
+	info, exists := tm.tunnels[host]
+	if !exists {
+		if sub, ok := tm.customDomains[host]; ok {
+			info, exists = tm.tunnels[sub]
+		}
+	}
+	tm.mu.RUnlock()
+	if !exists || info == nil {
+		return TunnelPolicy{}, false
+	}
+	return info.Policy, true
+}
+
+func (tm *TunnelManager) UpdateTunnelPolicy(subdomain string, update func(p *TunnelPolicy) error) error {
+	tm.mu.Lock()
+	defer tm.mu.Unlock()
+	info := tm.tunnels[subdomain]
+	if info == nil {
+		return fmt.Errorf("tunnel not found")
+	}
+	return update(&info.Policy)
 }
 
 // GetTunnelInfo returns a copy of tunnel metadata if present.

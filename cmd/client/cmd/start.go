@@ -34,6 +34,8 @@ var (
 	customDomain    string
 	tunnelType      string // --- NEW: "http", "tcp" or "udp" ---
 	remotePort      int    // --- NEW: Requested remote port ---
+	keyAuthToken    string
+	ipWhitelist     []string
 
 	// Metrikler (atomic - thread-safe)
 	requestCount  int64
@@ -66,6 +68,8 @@ func init() {
 	startCmd.Flags().StringVarP(&customDomain, "domain", "d", "", "Özel alan adı (Custom Domain)")
 	startCmd.Flags().StringVarP(&tunnelType, "type", "t", "http", "Tunnel tipi (http, tcp, udp)")
 	startCmd.Flags().IntVarP(&remotePort, "remote-port", "r", 0, "İstenen uzak port (raw tüneller için)")
+	startCmd.Flags().StringVar(&keyAuthToken, "key-auth", "", "Tunnel key auth token (public requests must send header X-TOKEN)")
+	startCmd.Flags().StringArrayVar(&ipWhitelist, "ip-whitelist", []string{}, "Allowed client IP/CIDR (repeatable). Example: --ip-whitelist 1.2.3.4 --ip-whitelist 10.0.0.0/24")
 
 	// Viper ile config dosyasından değerleri bağla
 	viper.BindPFlag("server", startCmd.Flags().Lookup("server"))
@@ -235,6 +239,8 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 		CustomDomain: domain,
 		TunnelType:   tType,
 		LocalPort:    localPort,
+		KeyAuthToken: strings.TrimSpace(keyAuthToken),
+		IPWhitelist:  ipWhitelist,
 	}
 	reqPayload, err := json.Marshal(regReq)
 	if err != nil {

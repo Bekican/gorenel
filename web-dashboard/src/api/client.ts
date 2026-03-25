@@ -72,6 +72,10 @@ export interface Tunnel {
   localPort: number;
   publicUrl: string;
   status: 'active' | 'idle' | 'error';
+  policy?: {
+    key_auth_enabled?: boolean;
+    ip_allowlist_enabled?: boolean;
+  };
   requestCount: number;
   bandwidth: {
     in: number;
@@ -244,6 +248,19 @@ export const api = {
   getTunnels: async (): Promise<TunnelsResponse> => {
     const { data } = await apiClient.get<TunnelsResponse>('/api/tunnels');
     return data;
+  },
+
+  // Tunnel Policy
+  rotateTunnelToken: async (subdomain: string): Promise<{ token: string }> => {
+    const { data } = await apiClient.post<{ token: string }>(`/api/tunnel-policy/${encodeURIComponent(subdomain)}/rotate`);
+    return data;
+  },
+
+  updateTunnelPolicy: async (
+    subdomain: string,
+    body: { key_auth_enabled?: boolean; ip_allowlist_enabled?: boolean; ip_allowlist?: string[] },
+  ): Promise<void> => {
+    await apiClient.put(`/api/tunnel-policy/${encodeURIComponent(subdomain)}`, body);
   },
 
   getTunnelHistory: async (): Promise<TunnelHistoryResponse> => {

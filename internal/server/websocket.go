@@ -2,6 +2,7 @@ package server
 
 import (
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -28,6 +29,21 @@ func IsWebSocketUpgrade(r *http.Request) bool {
 // Not: HTTPProxy struct'ının bir metodu olarak tanımladık, böylece diğer dosyadan çağrılabilir.
 func (p *HTTPProxy) HandleWebSocket(w http.ResponseWriter, r *http.Request, session *yamux.Session, subdomain string) {
 	p.logger.Info("WebSocket upgrade isteği", zap.String("subdomain", subdomain))
+
+	// Enforce same tunnel policies for WS upgrades.
+	clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
+	if clientIP == "" {
+		clientIP = r.RemoteAddr
+	}
+	if policy, ok := p.tunnelManager.GetTunnelPolicy(r.Host); ok {
+		if enforcePolicy(w, r, clientIP, policy) {
+			return
+		}
+	} else if policy, ok := p.tunnelManager.GetTunnelPolicy(subdomain); ok {
+		if enforcePolicy(w, r, clientIP, policy) {
+			return
+		}
+	}
 
 	hijacker, ok := w.(http.Hijacker)
 	if !ok {

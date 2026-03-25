@@ -17,6 +17,9 @@ type RegisterRequest struct {
 	CustomDomain string `json:"custom_domain,omitempty"`
 	TunnelType   string `json:"tunnel_type,omitempty"`
 	LocalPort    int    `json:"local_port,omitempty"`
+	// Security policies (applies to HTTP/WSS tunnel traffic)
+	KeyAuthToken string   `json:"key_auth_token,omitempty"`
+	IPWhitelist  []string `json:"ip_whitelist,omitempty"`
 }
 
 type RegisterResponse struct {
