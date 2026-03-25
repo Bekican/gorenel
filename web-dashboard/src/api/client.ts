@@ -1,6 +1,23 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+function defaultApiBaseUrl(): string {
+  // VITE_API_URL is preferred (build-time).
+  const fromEnv = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
+  if (fromEnv && typeof fromEnv === 'string' && fromEnv.trim() !== '') return fromEnv.trim();
+
+  // Runtime fallback: if the UI is opened on a tunnel subdomain, still call the apex API host.
+  // Otherwise, use relative URLs (same-origin) for dev/local setups.
+  const host = window.location.hostname;
+  if (host.endsWith('.gorenel.site') && host !== 'gorenel.site') return 'https://gorenel.site';
+  if (host.endsWith('.fly.dev') && host !== 'gorenel-app.fly.dev') return 'https://gorenel.site';
+  return '';
+}
+
+const API_BASE_URL = defaultApiBaseUrl();
+
+export const AUTH_EVENTS = {
+  unauthorized: 'gorenel:unauthorized',
+} as const;
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -10,6 +27,18 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+apiClient.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    const status = err?.response?.status;
+    if (status === 401) {
+      // Let the app react (clear stale local session, stop polling, show login).
+      window.dispatchEvent(new CustomEvent(AUTH_EVENTS.unauthorized));
+    }
+    return Promise.reject(err);
+  },
+);
 
 // Types
 export interface HealthStatus {

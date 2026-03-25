@@ -16,7 +16,7 @@ import {
   Zap
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { api, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type ModelStatsResponse, type CapturedRequest, type ModificationRule, type TunnelSessionHistory } from './api/client';
+import { api, AUTH_EVENTS, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type ModelStatsResponse, type CapturedRequest, type ModificationRule, type TunnelSessionHistory } from './api/client';
 import './index.css';
 
 // Lazy load components
@@ -57,6 +57,13 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  const clearLocalSession = useCallback(() => {
+    localStorage.removeItem('gorenel_user');
+    setUser(null);
+    setIsAuthStarted(true); // keep user in auth flow (login/register)
+    setAuthMode('login');
+  }, []);
+
   useEffect(() => {
     const checkSession = async () => {
       const storedUser = localStorage.getItem('gorenel_user');
@@ -73,12 +80,21 @@ function App() {
         }
       } catch (err) {
         console.log('No active session');
+        localStorage.removeItem('gorenel_user');
       } finally {
         setLoading(false);
       }
     };
     checkSession();
   }, []);
+
+  useEffect(() => {
+    const onUnauthorized = () => {
+      clearLocalSession();
+    };
+    window.addEventListener(AUTH_EVENTS.unauthorized, onUnauthorized as EventListener);
+    return () => window.removeEventListener(AUTH_EVENTS.unauthorized, onUnauthorized as EventListener);
+  }, [clearLocalSession]);
 
   const fetchData = useCallback(async () => {
     const settled = await Promise.allSettled([
@@ -117,6 +133,13 @@ function App() {
       if (r.status === 'rejected') console.warn('API partial failure:', r.reason);
     });
 
+    // If auth expired (cookie cleared) but localStorage still has a user, reset session.
+    const anyUnauthorized = failed.some((r: any) => r?.reason?.response?.status === 401);
+    if (anyUnauthorized) {
+      clearLocalSession();
+      return;
+    }
+
     const metricsDown = metricsRes.status === 'rejected';
     const analyticsDown = analyticsRes.status === 'rejected';
     if (metricsDown && analyticsDown) {
@@ -126,12 +149,12 @@ function App() {
       setApiError(null);
     }
     setLoading(false);
-  }, [t]);
+  }, [t, clearLocalSession]);
 
   useEffect(() => {
     if (user) {
       fetchData();
-      const interval = setInterval(fetchData, 5000);
+      const interval = setInterval(fetchData, 12000);
       return () => clearInterval(interval);
     }
   }, [user, fetchData]);
