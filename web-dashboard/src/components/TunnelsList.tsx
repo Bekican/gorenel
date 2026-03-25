@@ -5,6 +5,7 @@ import type { Tunnel, TunnelSessionHistory } from '../api/client';
 import React, { useState } from 'react';
 import { TunnelPolicyModal } from './TunnelPolicyModal';
 import { OnboardingCards } from './OnboardingCards';
+import { Button } from './ui/Button';
 
 interface TunnelsListProps {
   tunnels: Tunnel[];
@@ -25,86 +26,78 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
   const getStatusInfo = (status: string) => {
     switch (status) {
       case 'active':
-        return { text: 'Active', pulse: true, color: 'text-primary', glow: 'bg-primary shadow-[0_0_8px_rgba(16,185,129,1)]' };
+        return { text: 'Active', pulse: true, color: 'text-emerald-400', glow: 'bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]' };
       case 'idle':
         return { text: 'Idle', pulse: false, color: 'text-yellow-400', glow: 'bg-yellow-400' };
       case 'error':
-        return { text: 'Error', pulse: true, color: 'text-rose-500', glow: 'bg-rose-500' };
+        return { text: 'Error', pulse: true, color: 'text-rose-400', glow: 'bg-rose-400' };
       default:
-        return { text: 'Offline', pulse: false, color: 'text-white/20', glow: 'bg-white/10' };
+        return { text: 'Offline', pulse: false, color: 'text-white/25', glow: 'bg-white/15' };
     }
   };
 
   return (
-    <div className="card space-y-8">
+    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 md:p-8 space-y-6">
       <TunnelPolicyModal open={isPolicyOpen} onClose={() => setIsPolicyOpen(false)} tunnel={policyTunnel} onUpdated={() => {}} />
+
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4 min-w-0">
-          <div className="p-4 bg-primary/10 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.1)] shrink-0">
-            <Server className="w-6 h-6 text-primary" />
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/15 shrink-0">
+            <Server className="w-5 h-5 text-emerald-400" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-xl font-black">Managed Tunnels</h3>
-            <p className="text-sm text-white/40 font-medium">{tunnels.length} Active Cloud Endpoints</p>
+            <h3 className="text-lg font-semibold">Managed Tunnels</h3>
+            <p className="text-sm text-white/35">{tunnels.length} active endpoints</p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={onOpenConnect}
-          className="btn-primary-premium text-sm py-2.5 w-full sm:w-auto justify-center transition-transform duration-200 hover:brightness-110 active:scale-[0.98]"
-        >
+        <Button type="button" variant="primary" size="md" onClick={onOpenConnect} className="w-full sm:w-auto">
           <Plus className="w-4 h-4" /> {t('tunnels.cta', 'New Tunnel')}
-        </button>
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-3">
         {tunnels.length === 0 ? (
-          <div className="space-y-6">
+          <div className="space-y-5">
             <OnboardingCards
               onGoTunnels={onOpenConnect}
               onGoReservations={() => (onGoReservations ? onGoReservations() : onOpenConnect())}
             />
-            <div className="py-16 px-8 border-2 border-dashed border-white/5 rounded-[3rem] bg-white/[0.01] relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-12 opacity-[0.02] group-hover:opacity-[0.05] transition-opacity">
-               <Zap className="w-64 h-64 text-primary" />
-            </div>
-            
-            <div className="relative z-10 text-center max-w-2xl mx-auto space-y-10">
-              <div className="space-y-4">
-                <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl ring-1 ring-primary/20">
-                  <Zap className="w-10 h-10 text-primary animate-pulse" />
-                </div>
-                <h4 className="text-3xl font-black text-white tracking-tight">{t('tunnels.empty_title')}</h4>
-                <p className="text-white/40 font-medium text-lg leading-relaxed">
-                  {t('tunnels.empty_subtitle')}
-                </p>
+            <div className="py-14 px-6 border border-dashed border-white/[0.06] rounded-2xl bg-white/[0.01] relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-8 opacity-[0.02]">
+                <Zap className="w-48 h-48 text-emerald-500" />
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-                {[
-                  { step: 1, title: t('tunnels.step1_title'), desc: t('tunnels.step1_desc') },
-                  { step: 2, title: t('tunnels.step2_title'), desc: t('tunnels.step2_desc') },
-                  { step: 3, title: t('tunnels.step3_title'), desc: t('tunnels.step3_desc') }
-                ].map((s) => (
-                  <div key={s.step} className="p-6 rounded-3xl bg-white/5 border border-white/5 space-y-2">
-                    <span className="text-xs font-black text-primary uppercase tracking-widest">Step 0{s.step}</span>
-                    <h5 className="font-bold text-white">{s.title}</h5>
-                    <p className="text-xs text-white/30 leading-relaxed">{s.desc}</p>
+              
+              <div className="relative z-10 text-center max-w-lg mx-auto space-y-6">
+                <div className="space-y-3">
+                  <div className="w-14 h-14 bg-emerald-500/10 rounded-xl flex items-center justify-center mx-auto border border-emerald-500/15">
+                    <Zap className="w-7 h-7 text-emerald-400 animate-pulse" />
                   </div>
-                ))}
-              </div>
+                  <h4 className="text-xl font-semibold text-white">{t('tunnels.empty_title')}</h4>
+                  <p className="text-white/35 text-sm leading-relaxed">
+                    {t('tunnels.empty_subtitle')}
+                  </p>
+                </div>
 
-              <div className="pt-4">
-                <button 
-                  onClick={onOpenConnect}
-                  className="btn-primary-premium px-10 py-4 text-lg"
-                >
-                  {t('tunnels.cta')} <ArrowRight className="ml-2 w-5 h-5" />
-                </button>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
+                  {[
+                    { step: 1, title: t('tunnels.step1_title'), desc: t('tunnels.step1_desc') },
+                    { step: 2, title: t('tunnels.step2_title'), desc: t('tunnels.step2_desc') },
+                    { step: 3, title: t('tunnels.step3_title'), desc: t('tunnels.step3_desc') }
+                  ].map((s) => (
+                    <div key={s.step} className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.06] space-y-1.5">
+                      <span className="text-[10px] font-semibold text-emerald-400 uppercase tracking-wider">Step {s.step}</span>
+                      <h5 className="font-medium text-sm text-white">{s.title}</h5>
+                      <p className="text-[11px] text-white/30 leading-relaxed">{s.desc}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <Button type="button" variant="primary" size="lg" onClick={onOpenConnect}>
+                  {t('tunnels.cta')} <ArrowRight className="ml-1 w-4 h-4" />
+                </Button>
               </div>
             </div>
-          </div>
           </div>
         ) : (
           tunnels.map((tunnel) => {
@@ -116,107 +109,101 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
             return (
               <div
                 key={tunnel.id}
-                className="group relative bg-white/[0.02] border border-white/5 rounded-3xl p-5 sm:p-6 hover:bg-white/[0.04] hover:border-white/10 transition-all duration-300"
+                className="group relative bg-white/[0.02] border border-white/[0.06] rounded-xl p-5 hover:bg-white/[0.04] hover:border-white/[0.1] transition-all duration-200"
               >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 lg:gap-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-black border border-white/5 flex items-center justify-center font-black text-xl text-primary shrink-0">
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center font-semibold text-lg text-emerald-400 shrink-0">
                       {tunnel.subdomain.charAt(0).toUpperCase()}
                     </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-3">
-                        <span className="font-black text-lg tracking-tight">{tunnel.subdomain}.gorenel.site</span>
-                        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest ${status.color}`}>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-base">{tunnel.subdomain}.gorenel.site</span>
+                        <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.06] text-[10px] font-medium ${status.color}`}>
                           <div className={`w-1 h-1 rounded-full ${status.glow} ${status.pulse ? 'animate-pulse' : ''}`} />
                           {status.text}
                         </div>
                         {(keyOn || ipOn || basicOn || rlOn) && (
-                          <div className="hidden sm:flex items-center gap-2 px-2 py-0.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest text-white/50">
-                            <Shield className="w-3 h-3 text-white/30" /> Secured
+                          <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.06] text-[10px] font-medium text-white/40">
+                            <Shield className="w-2.5 h-2.5" /> Secured
                           </div>
                         )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         {keyOn && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-200/90">
-                            <KeyRound className="w-3 h-3" /> KeyAuth
+                          <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/15 bg-emerald-500/[0.06] px-2 py-0.5 text-[10px] font-medium text-emerald-300/80">
+                            <KeyRound className="w-2.5 h-2.5" /> KeyAuth
                           </span>
                         )}
                         {ipOn && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/20 bg-violet-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-violet-200/90">
-                            <Lock className="w-3 h-3" /> IP Allowlist
+                          <span className="inline-flex items-center gap-1 rounded-md border border-violet-400/15 bg-violet-400/[0.06] px-2 py-0.5 text-[10px] font-medium text-violet-300/80">
+                            <Lock className="w-2.5 h-2.5" /> IP Allowlist
                           </span>
                         )}
                         {!keyOn && !ipOn && (
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white/30">
-                            <Shield className="w-3 h-3" /> Open
+                          <span className="inline-flex items-center gap-1 rounded-md border border-white/[0.06] bg-white/[0.02] px-2 py-0.5 text-[10px] font-medium text-white/25">
+                            <Shield className="w-2.5 h-2.5" /> Open
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 text-xs font-bold text-white/30 tracking-tight">
-                        <span className="flex items-center gap-1.5">
-                          <div className="w-1 h-1 rounded-full bg-white/10" />
-                          Local: <span className="text-white/60">127.0.0.1:{tunnel.localPort}</span>
-                        </span>
-                        <span className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-4 text-xs text-white/30">
+                        <span>Local: <span className="text-white/55">127.0.0.1:{tunnel.localPort}</span></span>
+                        <span className="flex items-center gap-1">
                           <Zap className="w-3 h-3" />
-                          <span className="text-white/60">{tunnel.requestCount.toLocaleString()} Hits</span>
+                          <span className="text-white/55">{tunnel.requestCount.toLocaleString()} hits</span>
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col xs:flex-row xs:flex-wrap items-stretch sm:items-center gap-4 sm:gap-6 lg:flex-row">
-                    <div className="flex items-center justify-between sm:justify-start gap-4 text-xs font-black tracking-widest uppercase min-w-0 flex-1">
-                      <div className="text-center sm:text-left min-w-0">
-                        <span className="block text-white/20 mb-1">Traffic In</span>
-                        <span className="flex items-center justify-center sm:justify-start gap-1 text-emerald-400 tabular-nums">
+                  <div className="flex flex-col xs:flex-row items-stretch sm:items-center gap-3 lg:flex-row">
+                    <div className="flex items-center gap-4 text-xs min-w-0">
+                      <div className="text-center sm:text-left">
+                        <span className="block text-white/20 mb-0.5 text-[10px]">In</span>
+                        <span className="flex items-center gap-1 text-emerald-400 font-medium tabular-nums">
                           <ArrowDown className="w-3 h-3 shrink-0" /> {formatBytes(tunnel.bandwidth.in)}
                         </span>
                       </div>
-                      <div className="hidden sm:block w-px h-8 bg-white/5 shrink-0" aria-hidden />
-                      <div className="text-center sm:text-left min-w-0">
-                        <span className="block text-white/20 mb-1">Traffic Out</span>
-                        <span className="flex items-center justify-center sm:justify-start gap-1 text-violet-400 tabular-nums">
+                      <div className="w-px h-6 bg-white/[0.04]" />
+                      <div className="text-center sm:text-left">
+                        <span className="block text-white/20 mb-0.5 text-[10px]">Out</span>
+                        <span className="flex items-center gap-1 text-violet-400 font-medium tabular-nums">
                           <ArrowUp className="w-3 h-3 shrink-0" /> {formatBytes(tunnel.bandwidth.out)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 justify-end sm:justify-start shrink-0">
-                      <button
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Button
                         type="button"
-                        onClick={() => {
-                          setPolicyTunnel(tunnel);
-                          setIsPolicyOpen(true);
-                        }}
-                        className="px-4 py-3 bg-white/5 border border-white/5 rounded-2xl text-white/50 hover:text-white hover:bg-white/10 transition-all duration-200 active:scale-95 text-xs font-black uppercase tracking-widest flex items-center gap-2"
-                        title="Security Policy"
+                        onClick={() => { setPolicyTunnel(tunnel); setIsPolicyOpen(true); }}
+                        variant="secondary"
+                        size="sm"
                       >
-                        <Shield className="w-4 h-4" /> Security
-                      </button>
+                        <Shield className="w-3.5 h-3.5" /> Policy
+                      </Button>
                       <button
                         type="button"
                         onClick={() => copyToClipboard(tunnel.publicUrl)}
-                        className="p-3 bg-white/5 border border-white/5 rounded-2xl text-white/40 hover:text-white hover:bg-white/10 transition-all duration-200 active:scale-95"
-                        title="Copy Public URL"
+                        className="p-2 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white/35 hover:text-white hover:bg-white/[0.07] transition-all"
+                        title="Copy URL"
                       >
-                        <Copy className="w-4 h-4" />
+                        <Copy className="w-3.5 h-3.5" />
                       </button>
                       <a
                         href={tunnel.publicUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="p-3 bg-white/5 border border-white/5 rounded-2xl text-white/40 hover:text-primary hover:border-primary/20 hover:bg-primary/10 transition-all duration-200 active:scale-95"
+                        className="p-2 bg-white/[0.04] border border-white/[0.06] rounded-lg text-white/35 hover:text-emerald-400 hover:border-emerald-500/15 hover:bg-emerald-500/[0.06] transition-all"
                       >
-                        <ExternalLink className="w-4 h-4" />
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-white/5 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-white/10">
-                  <span>Session ID: {tunnel.id}</span>
+                <div className="mt-4 pt-3 border-t border-white/[0.04] flex items-center justify-between text-[10px] text-white/15">
+                  <span>ID: {tunnel.id}</span>
                   <span>Started {formatDistanceToNow(new Date(tunnel.startedAt), { addSuffix: true })}</span>
                 </div>
               </div>
@@ -226,36 +213,36 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
       </div>
 
       {historySessions.length > 0 && (
-        <div className="pt-4 border-t border-white/5 mt-8">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-4">
-            <h4 className="text-sm font-black uppercase tracking-widest text-white/40">Recent Session History</h4>
-            <span className="text-[10px] text-white/30 font-semibold tabular-nums">{historySessions.length} records</span>
+        <div className="pt-4 border-t border-white/[0.04] mt-6">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-medium text-white/40">Recent sessions</h4>
+            <span className="text-[11px] text-white/20 tabular-nums">{historySessions.length} records</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
             {historySessions.slice(0, 6).map((session) => (
               <div
                 key={session.id}
-                className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 transition-all duration-200 hover:border-white/10 hover:bg-white/[0.035]"
+                className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 hover:border-white/[0.1] hover:bg-white/[0.03] transition-all duration-200"
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-white">{session.subdomain}.gorenel.site</span>
-                  <span className="text-[10px] uppercase tracking-widest text-white/40">{session.tunnel_type || 'http'}</span>
+                  <span className="font-medium text-sm text-white">{session.subdomain}.gorenel.site</span>
+                  <span className="text-[10px] text-white/30">{session.tunnel_type || 'http'}</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   <div>
-                    <div className="text-white/30">Requests</div>
-                    <div className="text-white font-semibold">{session.request_count.toLocaleString()}</div>
+                    <div className="text-white/25 mb-0.5">Requests</div>
+                    <div className="text-white/70 font-medium tabular-nums">{session.request_count.toLocaleString()}</div>
                   </div>
                   <div>
-                    <div className="text-white/30">Avg RPS</div>
-                    <div className="text-white font-semibold">{session.avg_rps.toFixed(2)}</div>
+                    <div className="text-white/25 mb-0.5">Avg RPS</div>
+                    <div className="text-white/70 font-medium tabular-nums">{session.avg_rps.toFixed(2)}</div>
                   </div>
                   <div>
-                    <div className="text-white/30">Traffic</div>
-                    <div className="text-white font-semibold">{formatBytes(session.bytes_out || 0)}</div>
+                    <div className="text-white/25 mb-0.5">Traffic</div>
+                    <div className="text-white/70 font-medium tabular-nums">{formatBytes(session.bytes_out || 0)}</div>
                   </div>
                 </div>
-                <div className="mt-2 text-[10px] text-white/30">
+                <div className="mt-2 text-[10px] text-white/20">
                   Started {formatDistanceToNow(new Date(session.started_at), { addSuffix: true })}
                 </div>
               </div>

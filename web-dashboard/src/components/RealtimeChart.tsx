@@ -17,13 +17,11 @@ interface RealtimeChartProps {
 }
 
 export const RealtimeChart: React.FC<RealtimeChartProps> = ({ data, metric, title, color }) => {
-  // Format timestamp for display
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Format value based on metric type
   const formatValue = (value: number) => {
     if (metric === 'avg_latency_ms') {
       return `${value.toFixed(2)}ms`;
@@ -35,61 +33,61 @@ export const RealtimeChart: React.FC<RealtimeChartProps> = ({ data, metric, titl
   };
 
   return (
-    <div className="h-full min-h-[300px] flex flex-col justify-center">
-      <div className="flex items-center gap-2 mb-6 px-2">
-        {/* Minimal Header */}
-        <div className={`w-2 h-8 rounded-full`} style={{ backgroundColor: color }} />
+    <div className="h-full min-h-[280px] flex flex-col justify-center">
+      <div className="flex items-center gap-3 mb-5 px-1">
+        <div className="w-1.5 h-7 rounded-full" style={{ backgroundColor: color, opacity: 0.7 }} />
         <div>
-          <h3 className="text-sm font-bold text-white/50 uppercase tracking-widest">{title}</h3>
+          <h3 className="text-xs font-medium text-white/40 uppercase tracking-wider">{title}</h3>
           {data.length > 0 && (
-            <div className="text-2xl font-light text-white">
+            <div className="text-xl font-semibold text-white mt-0.5 tabular-nums">
               {formatValue(data[data.length - 1][metric] as number)}
             </div>
           )}
         </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={200}>
+      <ResponsiveContainer width="100%" height={180}>
         <LineChart data={data}>
           <defs>
             <linearGradient id={`gradient-${metric}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+              <stop offset="5%" stopColor={color} stopOpacity={0.15} />
               <stop offset="95%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis
             dataKey="timestamp"
             tickFormatter={formatTime}
-            stroke="rgba(255,255,255,0.1)"
+            stroke="rgba(255,255,255,0.06)"
             style={{ fontSize: '10px', fontFamily: 'inherit' }}
             tickLine={false}
             axisLine={false}
-            dy={10}
-            minTickGap={30}
+            dy={8}
+            minTickGap={40}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'rgba(10,12,16,0.8)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.05)',
-              borderRadius: '1rem',
-              boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.5)',
+              backgroundColor: 'rgba(12,14,20,0.95)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              borderRadius: '0.75rem',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
               color: '#fff',
-              padding: '12px 16px'
+              padding: '10px 14px',
+              fontSize: '12px',
             }}
-            itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 600 }}
-            labelStyle={{ color: 'rgba(255,255,255,0.4)', marginBottom: '8px', fontSize: '10px' }}
+            itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 500 }}
+            labelStyle={{ color: 'rgba(255,255,255,0.35)', marginBottom: '6px', fontSize: '10px' }}
             formatter={(value: number | undefined) => [formatValue(value ?? 0), title]}
             labelFormatter={(label) => formatTime(String(label))}
-            cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1, strokeDasharray: '4 4' }}
+            cursor={{ stroke: 'rgba(255,255,255,0.06)', strokeWidth: 1, strokeDasharray: '3 3' }}
           />
           <Line
             type="monotone"
             dataKey={metric}
             stroke={color}
-            strokeWidth={2}
+            strokeWidth={1.5}
             dot={false}
-            activeDot={{ r: 4, fill: '#000', stroke: color, strokeWidth: 2 }}
+            activeDot={{ r: 3, fill: '#080a10', stroke: color, strokeWidth: 2 }}
             fill={`url(#gradient-${metric})`}
           />
         </LineChart>

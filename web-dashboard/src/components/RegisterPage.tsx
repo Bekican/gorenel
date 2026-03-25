@@ -20,7 +20,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -30,8 +30,6 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
       if (data.user) {
         onRegisterSuccess(data.user);
       } else {
-        // After manual register, usually we might need to login
-        // or the server might return user object directly
         onSwitchToLogin();
       }
     } catch (err: any) {
@@ -69,27 +67,28 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
       topRight={
         <button
           onClick={toggleLanguage}
-          className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold hover:bg-white/10 transition-all uppercase"
+          className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-[11px] font-medium hover:bg-white/[0.07] transition-all"
           type="button"
         >
-          <Languages size={12} className="text-emerald-400" />
+          <Languages size={12} className="text-emerald-400/70" />
           {i18n.language.toUpperCase()}
         </button>
       }
     >
-      <div className="space-y-7 animate-in fade-in duration-500">
-        <div className="space-y-2">
-          <div className="text-2xl font-black tracking-tight text-white">Create account</div>
-          <div className="text-sm text-white/45">Get access to the dashboard, API keys, and reserved URLs.</div>
+      <div className="space-y-6">
+        <div className="space-y-1.5">
+          <h2 className="text-xl font-semibold tracking-tight text-white">Create account</h2>
+          <p className="text-sm text-white/40">Get started with API keys, tunnels, and reserved URLs.</p>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
+
+        <form onSubmit={handleSubmit} className="space-y-5">
           {error && (
             <Alert variant="error" title="Registration failed">{error}</Alert>
           )}
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-white/35 uppercase tracking-[0.28em] ml-2">
+          <div className="space-y-3.5">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-white/40 ml-0.5">
                 {t('auth.name')}
               </label>
               <Input
@@ -102,8 +101,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-white/35 uppercase tracking-[0.28em] ml-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-white/40 ml-0.5">
                 {t('auth.email')}
               </label>
               <Input
@@ -111,13 +110,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="operator@gorenel.site"
+                placeholder="you@example.com"
                 leftIcon={<Mail className="w-4 h-4" />}
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-white/35 uppercase tracking-[0.28em] ml-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-white/40 ml-0.5">
                 {t('auth.password')}
               </label>
               <Input
@@ -139,10 +138,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
             className="w-full"
           >
             {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <>
-                <span className="text-xs font-black uppercase tracking-[0.24em]">{t('landing.cta')}</span>
+                {t('landing.cta')}
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -151,14 +150,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/5"></div>
+            <div className="w-full border-t border-white/[0.06]"></div>
           </div>
-          <div className="relative flex justify-center text-[10px] font-bold uppercase tracking-[0.3em]">
-            <span className="bg-[#101217] px-4 text-white/20">Authorized Protocols</span>
+          <div className="relative flex justify-center text-xs">
+            <span className="bg-[#0d0f14] px-3 text-white/25 font-medium">or continue with</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <Button
             onClick={() => handleSocialLogin('google')}
             disabled={loading}
@@ -167,10 +166,10 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
             type="button"
             className="w-full justify-center"
           >
-            <svg className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-white/40" viewBox="0 0 24 24">
               <path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.9 3.24-2.04 4.38-1.26 1.26-3.26 2.4-6.48 2.4-5.06 0-9.14-4.12-9.14-9.18s4.08-9.18 9.14-9.18c2.82 0 4.92 1.1 6.36 2.4l2.4-2.4C18.54 1.08 15.72 0 12.48 0 5.61 0 0 5.61 0 12.48s5.61 12.48 12.48 12.48c3.75 0 6.6-1.23 8.79-3.54 2.19-2.31 2.88-5.52 2.88-8.19 0-.63-.06-1.26-.15-1.89H12.48z"/>
             </svg>
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/60">Google</span>
+            Google
           </Button>
           <Button
             onClick={() => handleSocialLogin('github')}
@@ -180,19 +179,19 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
             type="button"
             className="w-full justify-center"
           >
-            <Github className="w-4 h-4 text-white/40 group-hover:text-white transition-colors" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-white/60">GitHub</span>
+            <Github className="w-4 h-4 text-white/40" />
+            GitHub
           </Button>
         </div>
 
-        <p className="text-center text-[12px] text-white/45 font-semibold">
-          Already verified?{' '}
+        <p className="text-center text-[13px] text-white/40">
+          Already have an account?{' '}
           <button 
             onClick={onSwitchToLogin}
             type="button"
-            className="text-emerald-300 hover:text-emerald-200 font-black underline-offset-4 hover:underline transition-all"
+            className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
           >
-            Log in to Gateway
+            Sign in
           </button>
         </p>
       </div>

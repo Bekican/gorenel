@@ -6,7 +6,6 @@ type TooltipProps = {
   side?: 'top' | 'bottom';
 };
 
-/** Native `title` yerine tema ile uyumlu, yumuşak geçişli ipucu */
 export const Tooltip: React.FC<TooltipProps> = ({ label, children, side = 'top' }) => {
   const pos =
     side === 'top'
@@ -18,7 +17,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ label, children, side = 'top' 
       {children}
       <span
         role="tooltip"
-        className={`pointer-events-none absolute ${pos} z-[60] min-w-max max-w-[240px] rounded-xl border border-white/10 bg-[#0c0f14]/95 px-3 py-2 text-center text-[11px] font-medium leading-snug text-white/90 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-md transition-all duration-200 ease-out opacity-0 scale-95 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:scale-100 group-hover/tooltip:visible group-focus-within/tooltip:opacity-100 group-focus-within/tooltip:scale-100 group-focus-within/tooltip:visible`}
+        className={`pointer-events-none absolute ${pos} z-[60] min-w-max max-w-[220px] rounded-lg border border-white/[0.08] bg-[#141619]/95 px-3 py-1.5 text-center text-xs font-medium leading-snug text-white/85 shadow-elevated backdrop-blur-lg transition-all duration-150 ease-out opacity-0 scale-95 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:scale-100 group-hover/tooltip:visible group-focus-within/tooltip:opacity-100 group-focus-within/tooltip:scale-100 group-focus-within/tooltip:visible`}
       >
         {label}
       </span>

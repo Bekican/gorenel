@@ -15,31 +15,31 @@ interface MetricCardProps {
 const colorStyles = {
   emerald: {
     text: "text-emerald-400",
-    bg: "bg-emerald-500/5",
-    border: "border-emerald-500/10",
-    glow: "shadow-[0_0_30px_-10px_rgba(16,185,129,0.2)]"
+    bg: "bg-emerald-500/[0.08]",
+    border: "border-emerald-500/[0.12]",
+    glow: "hover:shadow-glow-emerald"
   },
   violet: {
     text: "text-violet-400",
-    bg: "bg-violet-500/5",
-    border: "border-violet-500/10",
-    glow: "shadow-[0_0_30px_-10px_rgba(139,92,246,0.2)]"
+    bg: "bg-violet-500/[0.08]",
+    border: "border-violet-500/[0.12]",
+    glow: "hover:shadow-glow-blue"
   },
   blue: {
     text: "text-blue-400",
-    bg: "bg-blue-500/5",
-    border: "border-blue-500/10",
-    glow: "shadow-[0_0_30px_-10px_rgba(59,130,246,0.2)]"
+    bg: "bg-blue-500/[0.08]",
+    border: "border-blue-500/[0.12]",
+    glow: "hover:shadow-glow-blue"
   },
   rose: {
     text: "text-rose-400",
-    bg: "bg-rose-500/5",
-    border: "border-rose-500/10",
-    glow: "shadow-[0_0_30px_-10px_rgba(244,63,94,0.2)]"
+    bg: "bg-rose-500/[0.08]",
+    border: "border-rose-500/[0.12]",
+    glow: "hover:shadow-glow-rose"
   },
 };
 
-const useCountUp = (end: number | string, duration = 1500) => {
+const useCountUp = (end: number | string, duration = 1200) => {
   const [displayValue, setDisplayValue] = React.useState(end);
 
   React.useEffect(() => {
@@ -104,27 +104,26 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   const style = colorStyles[color];
 
   return (
-    <div className={`metric-card relative group hover:-translate-y-1 ${style.glow}`}>
+    <div className={`metric-card group ${style.glow}`}>
       <div className="relative z-10">
-        <div className="flex justify-between items-start mb-6">
-          <div className={`p-3 rounded-xl ${style.bg} ${style.border} border`}>
-            <Icon className={`w-5 h-5 ${style.text}`} />
+        <div className="flex justify-between items-start mb-5">
+          <div className={`p-2.5 rounded-xl ${style.bg} ${style.border} border`}>
+            <Icon className={`w-4 h-4 ${style.text}`} />
           </div>
           {trend && (
-            <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg ${trend.isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+            <div className={`flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md ${trend.isPositive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
               {trend.isPositive ? "↑" : "↓"} {Math.abs(trend.value)}%
             </div>
           )}
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-white/40 text-xs font-medium uppercase tracking-wider">{title}</h3>
-          <div className="text-4xl font-light tracking-tight text-white">{animatedValue}</div>
+          <h3 className="text-white/35 text-xs font-medium">{title}</h3>
+          <div className="text-2xl md:text-3xl font-semibold tracking-tight text-white tabular-nums">{animatedValue}</div>
         </div>
       </div>
 
-      {/* Dynamic Background Gradient */}
-      <div className={`absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
+      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded-2xl" />
     </div>
   );
 };

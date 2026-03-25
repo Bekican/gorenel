@@ -20,7 +20,6 @@ import { api, AUTH_EVENTS, type Metrics, type AnalyticsSnapshot, type AnomalyRec
 import './index.css';
 import { Button } from './components/ui/Button';
 
-// Lazy load components
 const MetricCard = React.lazy(() => import('./components/MetricCard').then(module => ({ default: module.MetricCard })));
 const RealtimeChart = React.lazy(() => import('./components/RealtimeChart').then(module => ({ default: module.RealtimeChart })));
 const TunnelsList = React.lazy(() => import('./components/TunnelsList').then(module => ({ default: module.TunnelsList })));
@@ -62,7 +61,7 @@ function App() {
   const clearLocalSession = useCallback(() => {
     localStorage.removeItem('gorenel_user');
     setUser(null);
-    setIsAuthStarted(true); // keep user in auth flow (login/register)
+    setIsAuthStarted(true);
     setAuthMode('login');
   }, []);
 
@@ -135,7 +134,6 @@ function App() {
       if (r.status === 'rejected') console.warn('API partial failure:', r.reason);
     });
 
-    // If auth expired (cookie cleared) but localStorage still has a user, reset session.
     const anyUnauthorized = failed.some((r: any) => r?.reason?.response?.status === 401);
     if (anyUnauthorized) {
       clearLocalSession();
@@ -168,7 +166,6 @@ function App() {
     setIsAuthStarted(false);
   }, []);
 
-  // Handle public share links
   const path = window.location.pathname;
   if (path.startsWith('/share/')) {
     const shareId = path.split('/')[2];
@@ -201,12 +198,13 @@ function App() {
       />
     );
   }
+
   if (loading) return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen bg-[#080a10] flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
-        <Activity className="w-12 h-12 text-primary animate-pulse" />
-        <div className="h-1 w-32 bg-white/10 rounded-full overflow-hidden">
-          <div className="h-full bg-primary animate-progress origin-left"></div>
+        <Activity className="w-8 h-8 text-emerald-500/70 animate-pulse" />
+        <div className="h-1 w-24 bg-white/[0.06] rounded-full overflow-hidden">
+          <div className="h-full w-1/2 bg-emerald-500/50 rounded-full animate-shimmer" />
         </div>
       </div>
     </div>
@@ -218,79 +216,78 @@ function App() {
         setActiveTab(id);
         setIsMobileMenuOpen(false);
       }}
-      className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 group active:scale-[0.99] ${activeTab === id
-        ? 'bg-emerald-500/10 text-emerald-400'
-        : 'text-white/40 hover:text-white hover:bg-white/5'
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${activeTab === id
+        ? 'bg-white/[0.06] text-white'
+        : 'text-white/40 hover:text-white/70 hover:bg-white/[0.03]'
         }`}
     >
-      <div className={`p-2 rounded-xl transition-colors ${activeTab === id ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/5 text-white/40 group-hover:text-white'}`}>
-        <Icon size={18} />
+      <div className={`p-1.5 rounded-lg transition-colors ${activeTab === id ? 'bg-emerald-500/15 text-emerald-400' : 'text-white/30 group-hover:text-white/50'}`}>
+        <Icon size={16} />
       </div>
       <div className="flex flex-col items-start overflow-hidden text-left">
-        <span className="font-bold text-sm tracking-tight">{t(`common.${id}`, label)}</span>
-        <span className={`text-[10px] truncate w-full transition-opacity duration-300 ${activeTab === id ? 'text-emerald-500/60 opacity-100' : 'text-white/20 opacity-0 group-hover:opacity-100'}`}>
-          {t(`common.${id}_sub`)}
-        </span>
+        <span className="font-medium text-[13px] leading-tight">{t(`common.${id}`, label)}</span>
       </div>
-      {activeTab === id && <ChevronRight className="w-3 h-3 ml-auto opacity-50 shrink-0" />}
+      {activeTab === id && <ChevronRight className="w-3 h-3 ml-auto opacity-40 shrink-0" />}
     </button>
   );
 
-  return (
-    <div className="min-h-screen flex text-white selection:bg-emerald-500/30 font-sans">
+  const navSections = (
+    <>
+      <div className="space-y-0.5">
+        <div className="px-3 mb-2">
+          <span className="text-[11px] font-medium text-white/20 uppercase tracking-wider">Platform</span>
+        </div>
+        <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
+        <NavItem id="tunnels" icon={Globe} label="Tunnels" />
+        <NavItem id="ai_gateway" icon={Cpu} label="AI Gateway" />
+      </div>
+      <div className="space-y-0.5">
+        <div className="px-3 mb-2">
+          <span className="text-[11px] font-medium text-white/20 uppercase tracking-wider">Developers</span>
+        </div>
+        <NavItem id="traffic" icon={Microscope} label="Inspector" />
+        <NavItem id="api_keys" icon={ShieldCheck} label="API Keys" />
+        <NavItem id="reservations" icon={Globe} label="Reservations" />
+        <NavItem id="settings" icon={Settings} label="Rules" />
+      </div>
+    </>
+  );
 
-      {/* Background Mesh Gradients (Fixed) */}
+  return (
+    <div className="min-h-screen flex text-white font-sans">
+      {/* Ambient gradients */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[20%] left-[10%] w-[30%] h-[30%] bg-emerald-500/5 rounded-full blur-[100px] animate-pulse-slow" />
-        <div className="absolute bottom-[20%] right-[10%] w-[30%] h-[30%] bg-blue-600/5 rounded-full blur-[100px] animate-pulse-slow delay-1000" />
+        <div className="absolute top-0 left-[15%] w-[400px] h-[400px] bg-emerald-500/[0.03] rounded-full blur-[120px] animate-pulse-slow" />
+        <div className="absolute bottom-0 right-[15%] w-[400px] h-[400px] bg-blue-500/[0.02] rounded-full blur-[120px] animate-pulse-slow" />
       </div>
 
-      {/* Floating Sidebar - Sticky */}
-      <aside className="w-64 z-20 p-4 hidden md:block shrink-0">
-        <div className="sticky top-4 h-[calc(100vh-2rem)]">
-          <div className="h-full bg-[#0A0C10]/60 backdrop-blur-xl border border-white/5 rounded-3xl flex flex-col p-6 shadow-2xl">
-            <div className="flex items-center gap-3 mb-10">
-              <div className="w-10 h-10 rounded-xl overflow-hidden border border-white/10 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+      {/* Desktop Sidebar */}
+      <aside className="w-60 z-20 p-3 hidden md:block shrink-0">
+        <div className="sticky top-3 h-[calc(100vh-1.5rem)]">
+          <div className="h-full bg-[#0c0e14]/80 backdrop-blur-xl border border-white/[0.04] rounded-2xl flex flex-col p-4">
+            <div className="flex items-center gap-2.5 mb-8 px-1">
+              <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/[0.08] shadow-glow-emerald">
                 <img src="/logo.png" alt="Gorenel Logo" className="w-full h-full object-cover" />
               </div>
-              <div className="flex flex-col">
-                <span className="font-bold text-lg tracking-tight">GORENEL</span>
-              </div>
+              <span className="font-semibold text-[15px] tracking-tight">GORENEL</span>
             </div>
 
-            <nav className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
-              <div className="space-y-1">
-                <div className="px-4 mb-2">
-                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Platform</span>
-                </div>
-                <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
-                <NavItem id="tunnels" icon={Globe} label="Tunnels" />
-                <NavItem id="ai_gateway" icon={Cpu} label="AI Gateway" />
-              </div>
-
-              <div className="space-y-1">
-                <div className="px-4 mb-2">
-                  <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Developers</span>
-                </div>
-                <NavItem id="traffic" icon={Microscope} label="Inspector" />
-                <NavItem id="api_keys" icon={ShieldCheck} label="API Keys" />
-                <NavItem id="reservations" icon={Globe} label="Reservations" />
-                <NavItem id="settings" icon={Settings} label="Rules" />
-              </div>
+            <nav className="flex-1 space-y-6 overflow-y-auto">
+              {navSections}
             </nav>
 
-            <div className="mt-6 pt-6 border-t border-white/5 space-y-4 shrink-0">
-              <div className="flex items-center gap-2 text-xs text-white/40 px-2">
+            <div className="mt-4 pt-4 border-t border-white/[0.04] space-y-3 shrink-0">
+              <div className="flex items-center gap-2 text-[11px] text-white/25 px-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                EU-Central-1 • v1.0.0
+                EU-Central-1 &middot; v1.0.0
               </div>
 
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-bold bg-white/[0.02] border border-white/5 shadow-lg group"
+                className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-white/35 hover:text-white/70 hover:bg-white/[0.04] transition-all duration-200 text-sm group"
               >
-                <div className="p-2 rounded-lg bg-white/5 group-hover:bg-rose-500/10 group-hover:text-rose-400 transition-colors">
-                  <LogOut className="w-4 h-4" />
+                <div className="p-1.5 rounded-lg bg-white/[0.03] group-hover:bg-rose-500/10 group-hover:text-rose-400 transition-colors">
+                  <LogOut className="w-3.5 h-3.5" />
                 </div>
                 {t('common.sign_out')}
               </button>
@@ -299,65 +296,48 @@ function App() {
         </div>
       </aside>
       
-      {/* Mobile Menu Overlay */}
+      {/* Mobile overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden animate-fade-in"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      {/* Mobile Sidebar (Slide-over) */}
+      {/* Mobile sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0A0C10] border-r border-white/5 p-6 transition-transform duration-300 md:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#0c0e14] border-r border-white/[0.04] p-5 transition-transform duration-300 ease-out md:hidden ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}
         role="dialog"
         aria-modal="true"
         aria-label={t('common.mobile_navigation', 'Mobile navigation')}
       >
-        <div className="flex items-center justify-between mb-10">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/10 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg overflow-hidden border border-white/[0.08]">
               <img src="/logo.png" alt="Gorenel Logo" className="w-full h-full object-cover" />
             </div>
-            <span className="font-bold text-lg tracking-tight">GORENEL</span>
+            <span className="font-semibold tracking-tight">GORENEL</span>
           </div>
           <button 
             onClick={() => setIsMobileMenuOpen(false)}
-            className="p-2 hover:bg-white/5 rounded-lg text-white/40 hover:text-white transition-colors"
+            className="p-1.5 hover:bg-white/[0.05] rounded-lg text-white/40 hover:text-white transition-colors"
             aria-label={t('common.close_menu', 'Close menu')}
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar my-6">
-          <div className="space-y-1">
-            <div className="px-4 mb-2">
-              <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Platform</span>
-            </div>
-            <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
-            <NavItem id="tunnels" icon={Globe} label="Tunnels" />
-            <NavItem id="ai_gateway" icon={Cpu} label="AI Gateway" />
-          </div>
-
-          <div className="space-y-1">
-            <div className="px-4 mb-2">
-              <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Developers</span>
-            </div>
-            <NavItem id="traffic" icon={Microscope} label="Inspector" />
-            <NavItem id="api_keys" icon={ShieldCheck} label="API Keys" />
-            <NavItem id="reservations" icon={Globe} label="Reservations" />
-            <NavItem id="settings" icon={Settings} label="Rules" />
-          </div>
+        <nav className="flex-1 space-y-6 overflow-y-auto my-4">
+          {navSections}
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-white/5 space-y-4 shrink-0">
+        <div className="mt-auto pt-4 border-t border-white/[0.04]">
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-white/40 hover:text-white hover:bg-white/5 transition-all text-sm font-bold bg-white/[0.02] border border-white/5 group"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-white/35 hover:text-white/70 hover:bg-white/[0.04] transition-all text-sm group"
           >
-            <div className="p-2 rounded-lg bg-white/5 group-hover:bg-rose-500/10 group-hover:text-rose-400 transition-colors">
-              <LogOut className="w-4 h-4" />
+            <div className="p-1.5 rounded-lg bg-white/[0.03] group-hover:bg-rose-500/10 group-hover:text-rose-400 transition-colors">
+              <LogOut className="w-3.5 h-3.5" />
             </div>
             {t('common.sign_out')}
           </button>
@@ -366,15 +346,13 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-1 relative z-10 min-w-0">
-        <div className="p-6 md:p-8 lg:p-12 max-w-[1600px] mx-auto space-y-10">
+        <div className="p-5 md:p-8 lg:p-10 max-w-[1440px] mx-auto space-y-8">
 
-          <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4">
+          {/* Header */}
+          <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center justify-between gap-4">
-              <div className="animate-in slide-in-from-bottom-2 duration-500 min-w-0">
-                <div className="text-[11px] font-black uppercase tracking-[0.28em] text-white/30">
-                  {t('dashboard.command_center', 'Command Center')}
-                </div>
-                <h2 className="text-2xl md:text-4xl font-black tracking-tight text-white mt-2 mb-2 truncate">
+              <div className="min-w-0">
+                <h2 className="text-xl md:text-2xl font-semibold tracking-tight text-white">
                   {activeTab === 'overview' && t('dashboard.command_center')}
                   {activeTab === 'tunnels' && t('dashboard.active_tunnels')}
                   {activeTab === 'ai_gateway' && t('dashboard.ai_gateway')}
@@ -383,7 +361,7 @@ function App() {
                   {activeTab === 'reservations' && t('dashboard.reservations', 'Reservations')}
                   {activeTab === 'settings' && t('dashboard.global_rules')}
                 </h2>
-                <p className="text-sm md:text-lg text-white/50 font-normal max-w-2xl hidden sm:block">
+                <p className="text-sm text-white/35 mt-0.5 hidden sm:block">
                   {activeTab === 'overview' && t('dashboard.overview_desc')}
                   {activeTab === 'tunnels' && t('dashboard.tunnels_desc')}
                   {activeTab === 'ai_gateway' && t('dashboard.ai_desc')}
@@ -396,14 +374,14 @@ function App() {
 
               <button 
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="md:hidden p-2 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all text-emerald-400"
+                className="md:hidden p-2 bg-white/[0.04] border border-white/[0.08] rounded-lg hover:bg-white/[0.07] transition-all text-white/60"
                 aria-label={t('common.open_menu', 'Open menu')}
               >
-                <Menu size={20} />
+                <Menu size={18} />
               </button>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2.5">
               <Button
                 type="button"
                 variant="secondary"
@@ -413,83 +391,87 @@ function App() {
                   i18n.changeLanguage(newLang);
                 }}
               >
-                <Languages size={14} className="text-emerald-400" />
+                <Languages size={13} className="text-emerald-400/70" />
                 {i18n.language.toUpperCase()}
               </Button>
               
-              <Button type="button" variant="primary" size="md" onClick={() => setIsConnectOpen(true)}>
-                <span className="text-lg -mt-0.5">+</span> {t('common.connect')}
+              <Button type="button" variant="primary" size="sm" onClick={() => setIsConnectOpen(true)}>
+                <Zap size={14} />
+                {t('common.connect')}
               </Button>
             </div>
           </header>
+
           {apiError && (
-            <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-300" role="alert">
+            <div className="rounded-xl border border-rose-500/20 bg-rose-500/[0.06] px-4 py-3 text-sm text-rose-300 flex items-center gap-2" role="alert">
+              <div className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
               {apiError}
             </div>
           )}
 
-          <Suspense fallback={<div className="h-96 flex items-center justify-center"><Activity className="w-8 h-8 text-emerald-500 animate-spin" /></div>}>
+          <Suspense fallback={<div className="h-64 flex items-center justify-center"><Activity className="w-6 h-6 text-emerald-500/50 animate-spin" /></div>}>
             {activeTab === 'overview' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-
-                {/* Metrics Grid - Airy */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="space-y-6 animate-fade-in-up">
+                {/* Metrics */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <MetricCard title={t('dashboard.active_tunnels_metric', 'Active Tunnels')} value={metrics?.tunnels.active_count || 0} icon={Globe} color="emerald" />
                   <MetricCard title={t('dashboard.total_requests_metric', 'Total Requests')} value={analytics?.total_requests || 0} icon={TrendingUp} color="blue" />
                   <MetricCard title={t('dashboard.system_load_metric', 'System Load')} value={`${metrics?.system.goroutines || 0}`} icon={Activity} color="violet" />
                   <MetricCard title={t('dashboard.avg_latency_metric', 'Avg Latency')} value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(0)} ms`} icon={Activity} color="rose" />
                 </div>
 
-                {/* Quick Start Onboarding Section */}
-                <div className="p-1 rounded-[2.5rem] bg-gradient-to-r from-emerald-500/20 via-blue-500/20 to-violet-500/20">
-                  <div className="bg-[#0A0C10] rounded-[2.4rem] p-8 md:p-10 relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-1000">
-                      <Zap className="w-64 h-64 text-emerald-500" />
+                {/* Quick Start */}
+                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 md:p-8 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+                    <Zap className="w-48 h-48 text-emerald-500" />
+                  </div>
+                  
+                  <div className="relative z-10 space-y-6">
+                    <div>
+                      <h3 className="text-lg md:text-xl font-semibold mb-1.5">{t('dashboard.quick_start')}</h3>
+                      <p className="text-sm text-white/40 max-w-xl">{t('landing.description')}</p>
                     </div>
-                    
-                    <div className="relative z-10 space-y-8">
-                      <div>
-                        <h3 className="text-2xl md:text-3xl font-black mb-3">{t('dashboard.quick_start')}</h3>
-                        <p className="text-white/50 max-w-2xl text-lg font-medium">{t('landing.description')}</p>
-                      </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {[1, 2, 3].map((step) => (
-                          <div key={step} className="space-y-4">
-                            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-xl text-emerald-400 shadow-xl group-hover:border-emerald-500/30 transition-colors">
-                              {step}
-                            </div>
-                            <div>
-                              <h4 className="font-bold text-white mb-1">{t(`dashboard.step_${step}`)}</h4>
-                              <p className="text-sm text-white/40 leading-relaxed font-medium">{t(`dashboard.step_${step}_desc`)}</p>
-                            </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                      {[1, 2, 3].map((step) => (
+                        <div key={step} className="space-y-3">
+                          <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center font-semibold text-sm text-emerald-400">
+                            {step}
                           </div>
-                        ))}
-                      </div>
+                          <div>
+                            <h4 className="font-medium text-white/90 text-sm mb-0.5">{t(`dashboard.step_${step}`)}</h4>
+                            <p className="text-xs text-white/35 leading-relaxed">{t(`dashboard.step_${step}_desc`)}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
 
-                {/* Charts - Floating */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <RealtimeChart data={analytics?.time_series || []} metric="requests" title={t('dashboard.global_requests_chart', 'Global Requests / Sec')} color="#10b981" />
-                  <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title={t('dashboard.latency_chart', 'P95 Latency (ms)')} color="#eff6ff" />
+                {/* Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+                    <RealtimeChart data={analytics?.time_series || []} metric="requests" title={t('dashboard.global_requests_chart', 'Global Requests / Sec')} color="#10b981" />
+                  </div>
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+                    <RealtimeChart data={analytics?.time_series || []} metric="avg_latency_ms" title={t('dashboard.latency_chart', 'P95 Latency (ms)')} color="#60a5fa" />
+                  </div>
                 </div>
 
                 {/* Bottom Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                   <div className="lg:col-span-2">
                     <GeoMap data={analytics?.top_countries || []} />
                   </div>
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     <AnomalyAlerts anomalies={anomalies} />
 
-                    <div className="p-6 rounded-3xl bg-emerald-500/5 border border-emerald-500/10 flex flex-col justify-center h-full relative overflow-hidden">
-                      <div className="absolute inset-0 bg-emerald-500/5 blur-3xl" />
+                    <div className="p-5 rounded-2xl bg-emerald-500/[0.04] border border-emerald-500/[0.08] relative overflow-hidden">
+                      <div className="absolute inset-0 bg-emerald-500/[0.02] blur-2xl" />
                       <div className="relative z-10">
-                        <ShieldCheck className="w-10 h-10 text-emerald-400 mb-4" />
-                        <h3 className="text-xl font-bold text-white mb-2">{t('dashboard.system_secure')}</h3>
-                        <p className="text-white/50 leading-relaxed">
+                        <ShieldCheck className="w-8 h-8 text-emerald-400/70 mb-3" />
+                        <h3 className="text-base font-semibold text-white mb-1">{t('dashboard.system_secure')}</h3>
+                        <p className="text-sm text-white/40 leading-relaxed">
                           {t('dashboard.no_threats')}
                         </p>
                       </div>
@@ -500,7 +482,7 @@ function App() {
             )}
 
             {activeTab === 'tunnels' && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="animate-fade-in-up">
                 <TunnelsList
                   tunnels={tunnels}
                   historySessions={tunnelHistory}
@@ -511,8 +493,8 @@ function App() {
             )}
 
             {activeTab === 'ai_gateway' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="space-y-6 animate-fade-in-up">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                   <div className="lg:col-span-2">
                     <ModelComparison ml={mlStats} />
                   </div>
@@ -524,15 +506,15 @@ function App() {
                     )}
                   </div>
                 </div>
-                <div className="p-8 rounded-3xl bg-[#0A0C10]/40 border border-white/5 backdrop-blur-md">
-                  <h3 className="font-bold text-lg mb-6">{t('common.provider_status', 'Provider Status')}</h3>
-                  <div className="space-y-4">
+                <div className="p-6 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+                  <h3 className="font-semibold text-sm mb-4">{t('common.provider_status', 'Provider Status')}</h3>
+                  <div className="space-y-2">
                     {['OpenAI', 'Anthropic', 'Local-Llama'].map(p => (
-                      <div key={p} className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] border border-white/[0.02]">
-                        <span className="font-medium">{p}</span>
+                      <div key={p} className="flex items-center justify-between p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.04] hover:border-white/[0.08] transition-colors">
+                        <span className="text-sm font-medium text-white/80">{p}</span>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">{t('common.operational')}</span>
-                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                          <span className="text-[11px] text-emerald-400/80 font-medium">{t('common.operational')}</span>
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.6)]" />
                         </div>
                       </div>
                     ))}
@@ -542,25 +524,25 @@ function App() {
             )}
 
             {activeTab === 'traffic' && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 bg-[#0A0C10]/40 backdrop-blur-md rounded-3xl border border-white/5 overflow-hidden">
+              <div className="animate-fade-in-up rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
                 <TrafficInspector history={history} />
               </div>
             )}
 
             {activeTab === 'api_keys' && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="animate-fade-in-up">
                 <ApiKeyManager />
               </div>
             )}
 
             {activeTab === 'reservations' && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="animate-fade-in-up">
                 <Reservations />
               </div>
             )}
 
             {activeTab === 'settings' && (
-              <div className="max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="max-w-4xl animate-fade-in-up">
                 <ModificationRules rules={rules} onRulesChange={fetchData} />
               </div>
             )}
@@ -569,7 +551,7 @@ function App() {
       </main>
 
       <ConnectModal isOpen={isConnectOpen} onClose={() => setIsConnectOpen(false)} apiKey={user?.api_key} />
-    </div >
+    </div>
   );
 }
 

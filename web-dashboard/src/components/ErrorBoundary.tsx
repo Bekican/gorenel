@@ -14,16 +14,6 @@ interface State {
   errorInfo: ErrorInfo | null;
 }
 
-/**
- * ErrorBoundary catches JavaScript errors anywhere in its child component
- * tree, logs the error, and displays a fallback UI instead of a blank screen.
- *
- * Why this is critical:
- * Without this, a single thrown error in any React component (e.g. a null
- * reference in AnomalyAlerts) would crash the ENTIRE dashboard, showing
- * a white screen. With ErrorBoundary, only the broken section fails
- * while the rest of the dashboard stays interactive.
- */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -36,7 +26,6 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ errorInfo });
-    // In production, send this to Sentry/Datadog
     console.error('[ErrorBoundary] Caught error:', error, errorInfo);
   }
 
@@ -51,51 +40,25 @@ export class ErrorBoundary extends Component<Props, State> {
       }
 
       return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '2rem',
-          minHeight: '200px',
-          background: 'linear-gradient(135deg, #fef2f2, #fff)',
-          border: '1px solid #fecaca',
-          borderRadius: '16px',
-          margin: '1rem',
-        }}>
-          <AlertTriangle style={{ width: 48, height: 48, color: '#ef4444', marginBottom: '1rem' }} />
-          <h3 style={{ fontSize: '1.125rem', fontWeight: 600, color: '#991b1b', marginBottom: '0.5rem' }}>
-            Bir şeyler yanlış gitti
+        <div className="flex flex-col items-center justify-center p-8 min-h-[200px] bg-rose-500/[0.04] border border-rose-500/15 rounded-2xl m-4">
+          <AlertTriangle className="w-10 h-10 text-rose-400/60 mb-4" />
+          <h3 className="text-base font-semibold text-white mb-1.5">
+            Something went wrong
           </h3>
-          <p style={{ fontSize: '0.875rem', color: '#b91c1c', marginBottom: '1rem', textAlign: 'center', maxWidth: '400px' }}>
-            Bu bileşen beklenmeyen bir hata ile karşılaştı.
+          <p className="text-sm text-white/40 mb-4 text-center max-w-sm">
+            This component encountered an unexpected error.
             {this.state.error && (
-              <span style={{ display: 'block', marginTop: '0.5rem', fontFamily: 'monospace', fontSize: '0.75rem', color: '#dc2626' }}>
+              <span className="block mt-1.5 font-mono text-xs text-rose-400/70">
                 {this.state.error.message}
               </span>
             )}
           </p>
           <button
             onClick={this.handleRetry}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.5rem 1rem',
-              background: '#ef4444',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              transition: 'background 0.2s',
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.background = '#dc2626')}
-            onMouseOut={(e) => (e.currentTarget.style.background = '#ef4444')}
+            className="flex items-center gap-2 px-4 py-2.5 bg-rose-500 text-white rounded-xl text-sm font-medium transition-colors hover:bg-rose-400"
           >
-            <RefreshCw style={{ width: 16, height: 16 }} />
-            Tekrar Dene
+            <RefreshCw className="w-4 h-4" />
+            Try again
           </button>
         </div>
       );

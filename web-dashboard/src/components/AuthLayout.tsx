@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Zap, Globe } from 'lucide-react';
 import { Button } from './ui/Button';
 
 interface AuthLayoutProps {
@@ -11,81 +11,81 @@ interface AuthLayoutProps {
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitle, topRight }) => {
   return (
-    <div className="min-h-screen bg-[#020408] grid lg:grid-cols-2">
-      <div className="relative hidden lg:block border-r border-white/5 overflow-hidden">
+    <div className="min-h-screen bg-[#080a10] grid lg:grid-cols-[1.1fr_1fr]">
+      {/* Left - Brand Panel */}
+      <div className="relative hidden lg:block overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0a0e18] to-[#080a10]" />
         <div className="absolute inset-0">
-          <div className="absolute -top-24 -left-24 w-[520px] h-[520px] bg-emerald-500/10 rounded-full blur-[120px]" />
-          <div className="absolute -bottom-24 -right-24 w-[520px] h-[520px] bg-blue-600/10 rounded-full blur-[140px]" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/40 to-black/80" />
+          <div className="absolute top-[10%] left-[10%] w-[400px] h-[400px] bg-emerald-500/[0.06] rounded-full blur-[120px]" />
+          <div className="absolute bottom-[10%] right-[10%] w-[300px] h-[300px] bg-blue-500/[0.04] rounded-full blur-[100px]" />
         </div>
-        <div className="relative z-10 p-10 h-full flex flex-col">
+
+        <div className="relative z-10 p-10 lg:p-12 h-full flex flex-col">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+              <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] overflow-hidden flex items-center justify-center">
                 <img src="/logo.png" alt="Gorenel" className="w-full h-full object-cover" />
               </div>
-              <div className="text-sm font-black tracking-tight text-white">Gorenel</div>
+              <span className="font-semibold text-white tracking-tight">Gorenel</span>
             </div>
             <div className="opacity-80">{topRight}</div>
           </div>
 
-          <div className="mt-16 space-y-6 max-w-md">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] font-black tracking-widest text-white/60">
-              <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-              SECURE TUNNELS, RESERVED URLS, POLICY ENGINE
+          <div className="mt-auto mb-auto space-y-8 max-w-md">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-wide text-white/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              Secure tunnels &middot; Reserved URLs &middot; Policy engine
             </div>
-            <h1 className="text-4xl font-black tracking-tight text-white leading-tight">
+
+            <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight text-white leading-tight">
               {title}
             </h1>
-            <p className="text-sm text-white/45 leading-relaxed">{subtitle}</p>
+            <p className="text-sm text-white/40 leading-relaxed max-w-sm">{subtitle}</p>
 
-            <div className="grid grid-cols-2 gap-3 pt-6">
-              <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-4">
-                <div className="text-[10px] font-black uppercase tracking-widest text-white/40">Reserved URLs</div>
-                <div className="mt-2 text-xs text-white/60 font-semibold">Stable subdomains per device/customer</div>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-2">
+                <Globe className="w-4 h-4 text-emerald-400/70" />
+                <div className="text-xs font-medium text-white/70">Reserved URLs</div>
+                <div className="text-[11px] text-white/35 leading-relaxed">Stable subdomains per device</div>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-4">
-                <div className="text-[10px] font-black uppercase tracking-widest text-white/40">Per-tunnel Policies</div>
-                <div className="mt-2 text-xs text-white/60 font-semibold">Auth, allowlist, rate limit, rewrite</div>
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-2">
+                <ShieldCheck className="w-4 h-4 text-blue-400/70" />
+                <div className="text-xs font-medium text-white/70">Per-tunnel policies</div>
+                <div className="text-[11px] text-white/35 leading-relaxed">Auth, allowlist, rate limit</div>
               </div>
             </div>
 
-            <div className="pt-6">
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-4 font-mono text-[12px] text-white/65">
-                gorenel start --subdomain my-device-01 --key-auth &lt;TOKEN&gt;
-              </div>
-              <div className="pt-2 text-[11px] text-white/35">
-                Install always-on: <span className="font-mono text-white/60">gorenel service install</span>
-              </div>
+            <div className="rounded-xl border border-white/[0.06] bg-black/30 p-4 font-mono text-xs text-white/50">
+              <span className="text-emerald-400/60">$</span> gorenel start --subdomain my-device-01 --key-auth &lt;TOKEN&gt;
             </div>
           </div>
 
-          <div className="mt-auto pt-10 flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-white/25">
-            <span className="inline-flex items-center gap-2"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Encrypted</span>
-            <span className="w-1 h-1 rounded-full bg-white/10" />
-            <span className="inline-flex items-center gap-2"><ShieldCheck className="w-3.5 h-3.5 text-blue-500" /> Edge-ready</span>
+          <div className="flex items-center gap-6 text-[11px] font-medium text-white/20">
+            <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500/50" /> Encrypted</span>
+            <span className="inline-flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-blue-500/50" /> Edge-ready</span>
           </div>
         </div>
       </div>
 
-      <div className="relative flex items-center justify-center p-6">
+      {/* Right - Form Panel */}
+      <div className="relative flex items-center justify-center p-6 lg:p-12">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/6 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/6 rounded-full blur-[120px]" />
+          <div className="absolute top-[10%] right-[20%] w-[300px] h-[300px] bg-emerald-500/[0.03] rounded-full blur-[100px]" />
         </div>
-        <div className="relative z-10 max-w-md w-full">
-          <div className="lg:hidden flex items-center justify-between mb-6">
+
+        <div className="relative z-10 max-w-[420px] w-full">
+          <div className="lg:hidden flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 overflow-hidden">
+              <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] overflow-hidden">
                 <img src="/logo.png" alt="Gorenel" className="w-full h-full object-cover" />
               </div>
-              <div className="text-sm font-black tracking-tight text-white">Gorenel</div>
+              <span className="font-semibold text-white tracking-tight">Gorenel</span>
             </div>
             {topRight ? <Button variant="ghost" size="sm" type="button">{topRight}</Button> : null}
           </div>
 
-          <div className="glass rounded-[2.5rem] p-8 md:p-10 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-8 shadow-elevated relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
             {children}
           </div>
         </div>

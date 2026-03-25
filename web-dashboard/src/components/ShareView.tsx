@@ -27,143 +27,125 @@ export const ShareView: React.FC<ShareViewProps> = ({ shareId }) => {
     }, [shareId]);
 
     if (loading) return (
-        <div className="min-h-screen bg-black flex items-center justify-center">
-            <Zap className="w-8 h-8 text-violet-500 animate-pulse" />
+        <div className="min-h-screen bg-[#080a10] flex items-center justify-center">
+            <Zap className="w-6 h-6 text-violet-400 animate-pulse" />
         </div>
     );
 
     if (error || !trace) return (
-        <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
-            <Shield className="w-12 h-12 text-rose-500/20" />
-            <p className="text-white/40 font-black uppercase text-[10px] tracking-widest">{error}</p>
+        <div className="min-h-screen bg-[#080a10] flex flex-col items-center justify-center gap-3">
+            <Shield className="w-10 h-10 text-rose-500/20" />
+            <p className="text-sm text-white/30">{error}</p>
         </div>
     );
 
     return (
-        <div className="min-h-screen bg-black p-8 lg:p-12 selection:bg-violet-500/30">
-            <div className="max-w-[1200px] mx-auto space-y-12">
-                <header className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 bg-violet-500/10 rounded-2xl border border-violet-500/20">
-                            <Activity className="w-6 h-6 text-violet-400" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-black">Shared Packet Trace</h1>
-                            <p className="text-sm text-white/40 font-medium">Temporary secure link • Expires in 24h</p>
-                        </div>
+        <div className="min-h-screen bg-[#080a10] p-6 md:p-10">
+            <div className="max-w-[1100px] mx-auto space-y-8">
+                <header className="flex items-center gap-3">
+                    <div className="p-2.5 bg-violet-500/10 rounded-xl border border-violet-500/15">
+                        <Activity className="w-5 h-5 text-violet-400" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl font-semibold">Shared Packet Trace</h1>
+                        <p className="text-sm text-white/35">Temporary link &middot; Expires in 24h</p>
                     </div>
                 </header>
 
-                <div className="bg-[#0A0C10]/60 backdrop-blur-xl border border-white/5 rounded-[3rem] p-8 lg:p-12 shadow-2xl space-y-12">
-                    {/* Header Info */}
-                    <div className="flex flex-wrap items-center gap-8 pb-8 border-b border-white/5">
-                        <div className="px-4 py-2 bg-white/5 border border-white/5 rounded-full">
-                            <span className="text-xs font-mono text-violet-400 font-black">{trace.method}</span>
-                        </div>
-                        <div className={`px-4 py-2 rounded-full border ${trace.status_code >= 400 ? 'border-rose-500/20 text-rose-400' : 'border-emerald-500/20 text-emerald-400'}`}>
-                            <span className="text-xs font-black">HTTP {trace.status_code}</span>
-                        </div>
-                        <div className="text-sm font-mono text-white/40 truncate flex-1">
+                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 md:p-10 space-y-8">
+                    <div className="flex flex-wrap items-center gap-4 pb-5 border-b border-white/[0.04]">
+                        <span className="px-3 py-1.5 bg-white/[0.04] border border-white/[0.06] rounded-lg text-xs font-mono text-violet-400 font-medium">{trace.method}</span>
+                        <span className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${trace.status_code >= 400 ? 'border-rose-500/15 text-rose-400 bg-rose-500/[0.06]' : 'border-emerald-500/15 text-emerald-400 bg-emerald-500/[0.06]'}`}>
+                            HTTP {trace.status_code}
+                        </span>
+                        <span className="text-sm font-mono text-white/35 truncate flex-1">
                             {trace.subdomain}.gorenel.site{trace.path}
-                        </div>
+                        </span>
                     </div>
 
-                    {/* AI Inspector if available */}
                     {trace.ai_metadata && (
-                        <div className="p-8 bg-violet-500/5 border border-violet-500/10 rounded-[2.5rem] space-y-8">
-                            <div className="flex items-center gap-4">
-                                <Bot className="w-6 h-6 text-violet-400" />
+                        <div className="p-6 bg-violet-500/[0.04] border border-violet-500/10 rounded-2xl space-y-6">
+                            <div className="flex items-center gap-3">
+                                <Bot className="w-5 h-5 text-violet-400" />
                                 <div>
-                                    <h4 className="font-black text-violet-100">AI Protocol Intelligence</h4>
-                                    <p className="text-xs text-violet-400/60 font-mono">{trace.ai_metadata.model}</p>
+                                    <h4 className="font-semibold text-violet-100">AI Protocol Intelligence</h4>
+                                    <p className="text-xs text-violet-400/50 font-mono">{trace.ai_metadata.model}</p>
                                 </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-4">
-                                    <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <Cpu className="w-3.5 h-3.5" /> Context Prompt
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-medium text-white/25 flex items-center gap-1.5">
+                                        <Cpu className="w-3 h-3" /> Context Prompt
                                     </label>
-                                    <div className="p-6 bg-black/40 border border-white/5 rounded-3xl text-sm text-white/70 leading-relaxed font-medium">
+                                    <div className="p-4 bg-black/30 border border-white/[0.04] rounded-xl text-sm text-white/60 leading-relaxed">
                                         {trace.ai_metadata.prompt}
                                     </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <label className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em] flex items-center gap-2">
-                                        <Bot className="w-3.5 h-3.5 text-violet-400" /> Model Insight
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-medium text-white/25 flex items-center gap-1.5">
+                                        <Bot className="w-3 h-3 text-violet-400" /> Model Output
                                     </label>
-                                    <div className="p-6 bg-violet-400/5 border border-violet-400/10 rounded-3xl text-sm text-violet-100/70 leading-relaxed font-medium italic">
+                                    <div className="p-4 bg-violet-400/[0.04] border border-violet-400/10 rounded-xl text-sm text-violet-100/60 leading-relaxed italic">
                                         {trace.ai_metadata.completion}
                                     </div>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-8 pt-6 border-t border-violet-500/10">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Input</span>
-                                    <span className="text-sm font-black text-white/60">{trace.ai_metadata.tokens.prompt} tokens</span>
-                                </div>
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Output</span>
-                                    <span className="text-sm font-black text-white/60">{trace.ai_metadata.tokens.completion} tokens</span>
-                                </div>
-                                <div className="ml-auto px-4 py-1.5 bg-violet-500/20 rounded-full text-[10px] font-black uppercase text-violet-400">
-                                    {trace.ai_metadata.provider} Protocol
+                            <div className="flex items-center gap-6 pt-4 border-t border-violet-500/10 text-xs">
+                                <div><span className="text-white/20">Input:</span> <span className="text-white/50 font-medium">{trace.ai_metadata.tokens.prompt} tokens</span></div>
+                                <div><span className="text-white/20">Output:</span> <span className="text-white/50 font-medium">{trace.ai_metadata.tokens.completion} tokens</span></div>
+                                <div className="ml-auto px-2.5 py-1 bg-violet-500/15 rounded-md text-[10px] font-medium text-violet-400">
+                                    {trace.ai_metadata.provider}
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                        <section className="space-y-6">
-                            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white/20 flex items-center gap-3">
-                                <ArrowRight className="w-4 h-4 text-emerald-400" /> Request Payload
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <section className="space-y-3">
+                            <h3 className="text-xs font-medium text-white/25 flex items-center gap-2">
+                                <ArrowRight className="w-3.5 h-3.5 text-emerald-400" /> Request
                             </h3>
-                            <div className="p-6 bg-black/40 border border-white/5 rounded-3xl space-y-4 font-mono text-xs overflow-auto max-h-[400px]">
+                            <div className="p-5 bg-black/20 border border-white/[0.04] rounded-xl space-y-3 font-mono text-xs overflow-auto max-h-[360px]">
                                 {Object.entries(trace.req_headers).map(([k, v]) => (
-                                    <div key={k} className="flex gap-4">
-                                        <span className="text-emerald-400/60 font-bold shrink-0">{k}:</span>
-                                        <span className="text-white/40">{v.join(', ')}</span>
+                                    <div key={k} className="flex gap-3">
+                                        <span className="text-emerald-400/50 shrink-0">{k}:</span>
+                                        <span className="text-white/35">{v.join(', ')}</span>
                                     </div>
                                 ))}
                                 {trace.req_body && (
-                                    <div className="mt-8 pt-8 border-t border-white/5 text-white/60">
-                                        <pre>{atob(trace.req_body)}</pre>
+                                    <div className="mt-4 pt-4 border-t border-white/[0.04] text-white/50">
+                                        <pre className="whitespace-pre-wrap">{atob(trace.req_body)}</pre>
                                     </div>
                                 )}
                             </div>
                         </section>
 
-                        <section className="space-y-6">
-                            <h3 className="text-xs font-black uppercase tracking-[0.3em] text-white/20 flex items-center gap-3">
-                                <Shield className="w-4 h-4 text-blue-400" /> Response Stack
+                        <section className="space-y-3">
+                            <h3 className="text-xs font-medium text-white/25 flex items-center gap-2">
+                                <Shield className="w-3.5 h-3.5 text-blue-400" /> Response
                             </h3>
-                            <div className="p-6 bg-black/40 border border-white/5 rounded-3xl space-y-4 font-mono text-xs overflow-auto max-h-[400px]">
+                            <div className="p-5 bg-black/20 border border-white/[0.04] rounded-xl space-y-3 font-mono text-xs overflow-auto max-h-[360px]">
                                 {Object.entries(trace.resp_headers).map(([k, v]) => (
-                                    <div key={k} className="flex gap-4">
-                                        <span className="text-blue-400/60 font-bold shrink-0">{k}:</span>
-                                        <span className="text-white/40">{v.join(', ')}</span>
+                                    <div key={k} className="flex gap-3">
+                                        <span className="text-blue-400/50 shrink-0">{k}:</span>
+                                        <span className="text-white/35">{v.join(', ')}</span>
                                     </div>
                                 ))}
                                 {trace.resp_body && (
-                                    <div className="mt-8 pt-8 border-t border-white/5 text-white/60">
-                                        <pre>{atob(trace.resp_body)}</pre>
+                                    <div className="mt-4 pt-4 border-t border-white/[0.04] text-white/50">
+                                        <pre className="whitespace-pre-wrap">{atob(trace.resp_body)}</pre>
                                     </div>
                                 )}
                             </div>
                         </section>
                     </div>
 
-                    <footer className="pt-8 border-t border-white/5 flex items-center justify-between text-[10px] font-black text-white/10 uppercase tracking-widest">
-                        <div className="flex items-center gap-8">
-                            <div className="flex items-center gap-2">
-                                <Clock className="w-3.5 h-3.5" />
-                                {format(new Date(trace.timestamp), 'yyyy-MM-dd HH:mm:ss.SSS')}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Zap className="w-3.5 h-3.5" />
-                                {(trace.duration / 1000000).toFixed(2)}ms Processing
-                            </div>
+                    <footer className="pt-5 border-t border-white/[0.04] flex items-center justify-between text-[11px] text-white/15">
+                        <div className="flex items-center gap-5">
+                            <span className="flex items-center gap-1.5"><Clock className="w-3 h-3" /> {format(new Date(trace.timestamp), 'yyyy-MM-dd HH:mm:ss.SSS')}</span>
+                            <span className="flex items-center gap-1.5"><Zap className="w-3 h-3" /> {(trace.duration / 1000000).toFixed(2)}ms</span>
                         </div>
-                        <div>Generated by Gorenel Intelligent Tunnel</div>
+                        <span>Gorenel Tunnel</span>
                     </footer>
                 </div>
             </div>

@@ -8,21 +8,22 @@ export const Input: React.FC<Props> = ({ leftIcon, className = '', ...rest }) =>
   return (
     <div className="relative group">
       {leftIcon ? (
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/25 group-focus-within:text-emerald-400 transition-colors">
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25 group-focus-within:text-emerald-400/80 transition-colors duration-200">
           {leftIcon}
         </div>
       ) : null}
       <input
         {...rest}
         className={[
-          'w-full bg-black/40 border border-white/10 rounded-2xl py-3.5',
-          leftIcon ? 'pl-11 pr-4' : 'px-4',
-          'text-sm font-semibold text-white/85 placeholder:text-white/15 outline-none',
-          'focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500/40 transition',
+          'w-full bg-white/[0.03] border border-white/[0.08] rounded-xl py-3',
+          leftIcon ? 'pl-10 pr-4' : 'px-4',
+          'text-sm font-medium text-white/90 placeholder:text-white/20 outline-none',
+          'hover:border-white/[0.12] focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20',
+          'transition-all duration-200',
+          'disabled:opacity-40 disabled:pointer-events-none',
           className,
         ].join(' ')}
       />
     </div>
   );
 };
-
