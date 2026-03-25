@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, BarChart3, ArrowRight, Command, Globe, Zap, CheckCircle2, Play, Languages } from 'lucide-react';
+import React from 'react';
+import { ArrowRight, CheckCircle2, Command, Globe, Languages, Lock, Shield, TerminalSquare, Zap } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Button } from './ui/Button';
 
 interface LandingPageProps {
     onLogin: () => void;
@@ -10,225 +11,207 @@ interface LandingPageProps {
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, onGoToDashboard }) => {
     const { t, i18n } = useTranslation();
-    const [typedText, setTypedText] = useState('');
-    const fullText = "gorenel connect";
 
     const toggleLanguage = () => {
         const newLang = i18n.language === 'en' ? 'tr' : 'en';
         i18n.changeLanguage(newLang);
     };
 
-    useEffect(() => {
-        let i = 0;
-        const interval = setInterval(() => {
-            setTypedText(fullText.slice(0, i + 1));
-            i++;
-            if (i > fullText.length) clearInterval(interval);
-        }, 100);
-        return () => clearInterval(interval);
-    }, []);
-
     return (
-        <div className="min-h-screen bg-[#020408] text-white selection:bg-emerald-500/30 overflow-hidden font-sans">
-            {/* Background Mesh Gradients */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/5 rounded-full blur-[120px] animate-pulse-slow" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/5 rounded-full blur-[120px] animate-pulse-slow delay-1000" />
+        <div className="min-h-screen bg-[#020408] text-white selection:bg-emerald-500/30 font-sans">
+            <div className="fixed inset-0 pointer-events-none">
+                <div className="absolute -top-24 -left-24 w-[520px] h-[520px] bg-emerald-500/10 rounded-full blur-[140px]" />
+                <div className="absolute -bottom-24 -right-24 w-[520px] h-[520px] bg-blue-600/10 rounded-full blur-[160px]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/35 to-black/85" />
+                <div className="absolute inset-0 opacity-[0.25] [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.06)_1px,transparent_0)] [background-size:22px_22px]" />
             </div>
 
-            {/* Navigation */}
-            <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 md:px-12 backdrop-blur-md border-b border-white/5 bg-[#020408]/50">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-lg flex items-center justify-center shadow-[0_0_15px_rgba(52,211,153,0.3)]">
-                        <Zap className="w-5 h-5 text-black fill-current" />
+            <nav className="sticky top-0 z-50 border-b border-white/5 bg-[#020408]/70 backdrop-blur-xl">
+                <div className="max-w-7xl mx-auto px-6 md:px-12 py-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-2xl bg-white/5 border border-white/10 overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.15)]">
+                            <img src="/logo.png" alt="Gorenel" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="font-black tracking-tight text-white">Gorenel</div>
                     </div>
-                    <span className="font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">Gorenel</span>
-                </div>
-
-                <div className="flex items-center gap-6">
-                    <button
-                        onClick={toggleLanguage}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-xs font-bold hover:bg-white/10 transition-all"
-                    >
-                        <Languages size={14} className="text-emerald-400" />
-                        {i18n.language.toUpperCase()}
-                    </button>
-                    <a href="#" className="hidden md:block text-sm text-white/60 hover:text-white transition-colors">{t('common.documentation', 'Docs')}</a>
-                    <button
-                        onClick={isLoggedIn ? onGoToDashboard : onLogin}
-                        className="px-5 py-2 bg-white text-black text-sm font-semibold rounded-full hover:bg-neutral-200 transition-all active:scale-95 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
-                    >
-                        {isLoggedIn ? t('common.to_dashboard', 'Dashboard ->') : `${t('common.login')} ->`}
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={toggleLanguage}
+                            className="flex items-center gap-2 px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-[11px] font-black hover:bg-white/10 transition-all uppercase"
+                            type="button"
+                        >
+                            <Languages size={14} className="text-emerald-400" />
+                            {i18n.language.toUpperCase()}
+                        </button>
+                        <Button variant="outline" size="sm" type="button" onClick={onLogin}>
+                            {t('common.login')}
+                        </Button>
+                        <Button variant="light" size="sm" type="button" onClick={isLoggedIn ? onGoToDashboard : onLogin}>
+                            {isLoggedIn ? 'Open dashboard' : 'Start building'}
+                            <ArrowRight size={14} />
+                        </Button>
+                    </div>
                 </div>
             </nav>
 
-            {/* Hero Section */}
-            <main className="relative z-10 pt-32 pb-20 px-6 md:px-12 max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
-
-                {/* Left: Content */}
-                <div className="flex-1 space-y-8 animate-fade-in-up">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 text-emerald-400 text-xs font-medium">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        v2.0 is now live
-                    </div>
-
-                    <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.1]">
-                        {t('landing.title')} <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 animate-gradient-x">
-                            {i18n.language === 'tr' ? 'her şey için.' : 'everything.'}
-                        </span>
-                    </h1>
-
-                    <p className="text-lg text-white/50 max-w-xl leading-relaxed">
-                        {t('landing.description')}
-                    </p>
-
-                    <div className="flex items-center gap-4 pt-4">
-                        <button
-                            onClick={isLoggedIn ? onGoToDashboard : onLogin}
-                            className="group px-8 py-3.5 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl transition-all shadow-[0_0_40px_-10px_rgba(16,185,129,0.4)] flex items-center gap-2"
-                        >
-                            {isLoggedIn ? t('common.to_dashboard', 'Dashboard') : t('landing.cta')}
-                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                        </button>
-                        <button className="px-8 py-3.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-medium rounded-xl transition-all flex items-center gap-2">
-                            <Play className="w-4 h-4 fill-current" /> Watch Demo
-                        </button>
-                    </div>
-
-                    <div className="pt-8 flex items-center gap-8 text-white/30 text-sm font-medium">
-                        <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Free for developers</span>
-                        <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> No credit card</span>
-                    </div>
-                </div>
-
-                {/* Right: Interactive Terminal */}
-                <div className="flex-1 w-full max-w-lg relative animate-fade-in-up delay-100 group perspective-1000">
-                    {/* Glow backing */}
-                    <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 rounded-3xl blur-2xl opacity-50 group-hover:opacity-70 transition-opacity duration-500" />
-
-                    <div className="relative bg-[#0A0C10] border border-white/10 rounded-2xl shadow-2xl overflow-hidden transform transition-transform duration-500 hover:rotate-y-2 hover:rotate-x-2">
-                        {/* Window Controls */}
-                        <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between bg-white/5">
-                            <div className="flex items-center gap-2">
-                                <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50" />
-                                <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50" />
-                                <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50" />
+            <main className="relative z-10">
+                <section className="max-w-7xl mx-auto px-6 md:px-12 pt-16 md:pt-24 pb-14">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                        <div className="space-y-8">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-3 py-1 text-[11px] font-black tracking-[0.22em] text-white/60">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_16px_rgba(16,185,129,0.65)]" />
+                                SECURE TUNNELS · RESERVED URLS · TRAFFIC POLICY
                             </div>
-                            <div className="text-xs text-white/30 font-mono">bash — 80x24</div>
+
+                            <h1 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.05]">
+                                {i18n.language === 'tr' ? 'Güvenli tüneller.' : 'Secure tunnels.'}
+                                <span className="block text-white/65">
+                                    {i18n.language === 'tr' ? 'Rezervasyonlu URL ve traffic policy ile.' : 'With reserved URLs and traffic policy.'}
+                                </span>
+                            </h1>
+
+                            <p className="text-base md:text-lg text-white/45 leading-relaxed max-w-xl">
+                                {t('landing.description')}
+                            </p>
+
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <Button
+                                    variant="light"
+                                    size="lg"
+                                    type="button"
+                                    onClick={isLoggedIn ? onGoToDashboard : onLogin}
+                                >
+                                    {isLoggedIn ? 'Open dashboard' : (i18n.language === 'tr' ? 'Başlayın' : 'Get started')}
+                                    <ArrowRight size={16} />
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    type="button"
+                                    onClick={onLogin}
+                                >
+                                    {i18n.language === 'tr' ? 'Demo / Giriş' : 'View demo'}
+                                </Button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                                {[
+                                    { icon: <Globe className="w-4 h-4 text-white/70" />, title: 'Reserved URLs', desc: 'Stable subdomains per device/customer.' },
+                                    { icon: <Shield className="w-4 h-4 text-white/70" />, title: 'Traffic policy', desc: 'Auth, allowlist, rate limit, rewrite.' },
+                                    { icon: <Lock className="w-4 h-4 text-white/70" />, title: 'Edge security', desc: 'BasicAuth + KeyAuth before your origin.' },
+                                    { icon: <TerminalSquare className="w-4 h-4 text-white/70" />, title: 'Always-on', desc: 'Service mode with auto-reconnect.' },
+                                ].map((f) => (
+                                    <div key={f.title} className="rounded-3xl border border-white/10 bg-white/[0.015] p-4 hover:bg-white/[0.03] transition-colors">
+                                        <div className="flex items-center gap-2 text-sm font-black text-white">
+                                            {f.icon}
+                                            {f.title}
+                                        </div>
+                                        <div className="mt-1 text-[12px] text-white/45 font-semibold leading-relaxed">{f.desc}</div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Terminal Content */}
-                        <div className="p-6 font-mono text-sm space-y-4 min-h-[300px]">
-                            <div className="flex items-center gap-2 text-white/50">
-                                <span className="text-emerald-400">➜</span>
-                                <span>~</span>
-                                <span className="text-white">{typedText}<span className="animate-pulse">_</span></span>
-                            </div>
+                        <div className="relative">
+                            <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 rounded-[2.5rem] blur-2xl opacity-60" />
+                            <div className="relative rounded-[2.5rem] border border-white/10 bg-[#0A0C10]/70 backdrop-blur-xl shadow-2xl overflow-hidden">
+                                <div className="p-5 border-b border-white/10 flex items-center justify-between">
+                                    <div className="text-[11px] font-black uppercase tracking-[0.28em] text-white/40">Traffic policy</div>
+                                    <div className="text-[11px] font-black text-white/30">Flow</div>
+                                </div>
+                                <div className="p-6 space-y-4">
+                                    <div className="rounded-3xl border border-white/10 bg-black/35 p-5">
+                                        <div className="grid grid-cols-3 gap-4 text-[11px] font-black uppercase tracking-[0.24em] text-white/35">
+                                            <div className="flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-white/15" /> Internet</div>
+                                            <div className="flex items-center gap-2 justify-center"><span className="w-2 h-2 rounded-full bg-emerald-400/70 shadow-[0_0_12px_rgba(16,185,129,0.45)]" /> Gorenel edge</div>
+                                            <div className="flex items-center gap-2 justify-end"><span className="w-2 h-2 rounded-full bg-white/15" /> Your service</div>
+                                        </div>
 
-                            {typedText === fullText && (
-                                <>
-                                    <div className="space-y-1 animate-fade-in-up">
-                                        <div className="text-white/70">Tunnel Status: <span className="text-emerald-400 font-bold">Online</span></div>
-                                        <div className="text-white/70">Version: <span className="text-white">2.0.0</span></div>
-                                        <div className="text-white/70">Region: <span className="text-white">eu-central-1</span></div>
-                                        <div className="text-white/70">Latency: <span className="text-white">24ms</span></div>
-                                    </div>
-
-                                    <div className="p-3 bg-white/5 border border-white/10 rounded-lg animate-fade-in-up delay-100">
-                                        <div className="text-xs text-white/40 uppercase tracking-wider mb-1">Public URL</div>
-                                        <div className="text-emerald-400 font-bold hover:underline cursor-pointer">
-                                            https://random-name.gorenel.site
+                                        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                                            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                                                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/35">Request</div>
+                                                <div className="mt-2 font-mono text-[12px] text-white/70">GET /api/users</div>
+                                            </div>
+                                            <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                                                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-emerald-100/70">Policies</div>
+                                                <ul className="mt-2 space-y-1 text-[12px] font-semibold text-emerald-50/80">
+                                                    <li className="flex items-center justify-between"><span>KeyAuth / BasicAuth</span><span className="text-emerald-200/70">✓</span></li>
+                                                    <li className="flex items-center justify-between"><span>IP allowlist</span><span className="text-emerald-200/70">✓</span></li>
+                                                    <li className="flex items-center justify-between"><span>Rate limit</span><span className="text-emerald-200/70">✓</span></li>
+                                                    <li className="flex items-center justify-between"><span>Rewrite / headers</span><span className="text-emerald-200/70">✓</span></li>
+                                                </ul>
+                                            </div>
+                                            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                                                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/35">Forward</div>
+                                                <div className="mt-2 font-mono text-[12px] text-white/70">localhost:3000</div>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="pt-2 text-white/30 text-xs animate-fade-in-up delay-200">
-                                        Ctrl+C to stop
+                                    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                                        <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/35">Quick start</div>
+                                        <div className="mt-2 font-mono text-[12px] text-white/70">
+                                            <span className="text-white/50">$</span> gorenel config set api_key gk_********
+                                            <br />
+                                            <span className="text-white/50">$</span> gorenel start --port 3000 --subdomain my-device-01
+                                        </div>
                                     </div>
-                                </>
-                            )}
+                                </div>
+                            </div>
+                            <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.015] p-5">
+                                <div className="flex items-center gap-2 text-sm font-black">
+                                    <Command className="w-4 h-4 text-white/70" />
+                                    Built-in capabilities
+                                </div>
+                                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[12px] text-white/45 font-semibold">
+                                    <div className="inline-flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Reserved URLs</div>
+                                    <div className="inline-flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Inspector + replay</div>
+                                    <div className="inline-flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> ML anomaly signals</div>
+                                    <div className="inline-flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Per-tunnel traffic policy</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
+
+                <section className="border-t border-white/5 bg-white/[0.015]">
+                    <div className="max-w-7xl mx-auto px-6 md:px-12 py-16 space-y-10">
+                        <div className="text-center space-y-3">
+                            <div className="text-3xl md:text-4xl font-black tracking-tight">Built for production tunnels</div>
+                            <div className="text-sm md:text-base text-white/45 font-semibold max-w-2xl mx-auto">
+                                Secure, observable, and fast by default — with knobs to go deep when debugging.
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {[
+                                { icon: Shield, title: 'Edge security', desc: 'KeyAuth, BasicAuth, allowlists, redirect, limits.' },
+                                { icon: Command, title: 'Developer workflow', desc: 'CLI-first, reserved URLs, service mode.' },
+                                { icon: Globe, title: 'Operations', desc: 'Region preference + runbooks + hardened timeouts.' },
+                            ].map((c) => (
+                                <div key={c.title} className="rounded-[2.5rem] border border-white/10 bg-[#0A0C10]/60 backdrop-blur-xl p-8">
+                                    <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                                        <c.icon className="w-6 h-6 text-primary" />
+                                    </div>
+                                    <div className="mt-4 text-lg font-black">{c.title}</div>
+                                    <div className="mt-2 text-sm text-white/45 font-semibold leading-relaxed">{c.desc}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                <footer className="border-t border-white/5">
+                    <div className="max-w-7xl mx-auto px-6 md:px-12 py-10 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-white/30">
+                        <div className="font-semibold">&copy; 2026 Gorenel</div>
+                        <div className="flex items-center gap-3 text-[12px] font-semibold">
+                            <span className="text-white/35">Edge-ready</span>
+                            <span className="w-1 h-1 rounded-full bg-white/10" />
+                            <span className="text-white/35">Secure by default</span>
+                        </div>
+                    </div>
+                </footer>
             </main>
-
-            {/* Features Bento Grid */}
-            <section className="relative z-10 py-20 px-6 md:px-12 border-t border-white/5 bg-white/[0.02]">
-                <div className="max-w-7xl mx-auto space-y-12">
-                    <div className="text-center space-y-4">
-                        <h2 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-white to-white/60">Everything you need to ship.</h2>
-                        <p className="text-white/50 max-w-2xl mx-auto">
-                            Built for modern engineering teams who care about speed, security, and developer experience.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {/* Card 1: Traffic */}
-                        <div className="col-span-1 md:col-span-2 bg-[#0A0C10] border border-white/5 rounded-3xl p-8 hover:border-white/10 transition-all group overflow-hidden relative">
-                            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-                                <Globe className="w-48 h-48 text-emerald-500" />
-                            </div>
-                            <div className="relative z-10 space-y-4">
-                                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
-                                    <Command className="w-6 h-6 text-emerald-400" />
-                                </div>
-                                <h3 className="text-xl font-bold">Global Traffic Routing</h3>
-                                <p className="text-white/50 max-w-md">
-                                    Instantly route traffic to any local service. Load balance between multiple regions with zero configuration throughout our edge network.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Card 2: Security */}
-                        <div className="bg-[#0A0C10] border border-white/5 rounded-3xl p-8 hover:border-white/10 transition-all group overflow-hidden relative">
-                            <div className="relative z-10 space-y-4">
-                                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
-                                    <Shield className="w-6 h-6 text-blue-400" />
-                                </div>
-                                <h3 className="text-xl font-bold">Zero Trust Security</h3>
-                                <p className="text-white/50">
-                                    Built-in authentication (SSO, OAuth) and IP allowlisting. Secure your endpoints before they even reach your server.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Card 3: Observability */}
-                        <div className="bg-[#0A0C10] border border-white/5 rounded-3xl p-8 hover:border-white/10 transition-all group overflow-hidden relative">
-                            <div className="relative z-10 space-y-4">
-                                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
-                                    <BarChart3 className="w-6 h-6 text-purple-400" />
-                                </div>
-                                <h3 className="text-xl font-bold">Real-time Metrics</h3>
-                                <p className="text-white/50">
-                                    Monitor latency, error rates, and traffic volume in real-time. Debug requests with built-in traffic inspector.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Card 4: AI Gateway */}
-                        <div className="col-span-1 md:col-span-2 bg-[#0A0C10] border border-white/5 rounded-3xl p-8 hover:border-white/10 transition-all group overflow-hidden relative">
-                            <div className="relative z-10 space-y-4">
-                                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
-                                    <Zap className="w-6 h-6 text-yellow-400" />
-                                </div>
-                                <h3 className="text-xl font-bold">AI Gateway Included</h3>
-                                <p className="text-white/50 max-w-md">
-                                    Unified API for OpenAI, Anthropic, and Local LLMs. Cache responses, rate limit users, and track token usage automatically.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Footer */}
-            <footer className="py-12 px-6 md:px-12 border-t border-white/5 text-center text-white/30 text-sm">
-                <p>&copy; 2026 Gorenel Cloud Gateway. Designed for builders.</p>
-            </footer>
         </div>
     );
 };

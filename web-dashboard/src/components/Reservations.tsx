@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Plus, Trash2, Link2, Unlink2, RefreshCcw } from 'lucide-react';
 import { api, type ReservedSubdomain } from '../api/client';
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { Alert } from './ui/Alert';
 
 export const Reservations: React.FC = () => {
   const [items, setItems] = useState<ReservedSubdomain[]>([]);
@@ -73,28 +76,30 @@ export const Reservations: React.FC = () => {
               Reserve stable subdomains for devices/customers. Use them via CLI <span className="font-mono text-white/60">--subdomain</span>.
             </p>
           </div>
-          <button type="button" onClick={refresh} className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-xs font-bold text-white/60 hover:bg-white/[0.06]">
-            <span className="inline-flex items-center gap-2"><RefreshCcw size={14} /> Refresh</span>
-          </button>
+          <Button type="button" variant="secondary" size="sm" onClick={refresh}>
+            <RefreshCcw size={14} /> Refresh
+          </Button>
         </div>
 
         <div className="flex flex-col md:flex-row gap-3">
-          <input
+          <Input
             value={newSub}
             onChange={(e) => setNewSub(e.target.value)}
             placeholder="my-device-01"
-            className="flex-1 rounded-2xl border border-white/10 bg-black/40 px-4 py-3 text-sm text-white/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+            className="flex-1"
           />
-          <button onClick={reserve} className="btn-primary-premium inline-flex items-center justify-center gap-2 px-5 py-3 text-sm font-black">
+          <Button onClick={reserve} variant="primary" size="lg" type="button" className="md:w-auto w-full">
             <Plus size={18} /> Reserve
-          </button>
+          </Button>
         </div>
 
         {error && (
-          <div className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
-            {error}
-          </div>
+          <Alert variant="error" title="Action failed">{error}</Alert>
         )}
+
+        <Alert variant="info" title="How it works">
+          Reserve a subdomain here, then start your tunnel with <span className="font-mono text-white/80">--subdomain</span>. If you assign it to an API key, only that key can use it.
+        </Alert>
       </div>
 
       <div className="card p-6 md:p-8">
@@ -114,33 +119,36 @@ export const Reservations: React.FC = () => {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                    <input
+                    <Input
                       value={assignKey[r.subdomain] ?? ''}
                       onChange={(e) => setAssignKey((p) => ({ ...p, [r.subdomain]: e.target.value }))}
                       placeholder="Assign to API key (optional)"
-                      className="w-full sm:w-[320px] rounded-2xl border border-white/10 bg-black/40 px-4 py-2.5 text-xs text-white/80 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      className="w-full sm:w-[320px] text-xs"
                     />
-                    <button
+                    <Button
                       type="button"
                       onClick={() => assign(r.subdomain, (assignKey[r.subdomain] ?? '').trim() || null)}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-500/25 bg-emerald-500/10 px-4 py-2.5 text-xs font-black text-emerald-200 hover:bg-emerald-500/15"
+                      variant="secondary"
+                      size="sm"
                     >
                       <Link2 size={14} /> Assign
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => assign(r.subdomain, null)}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-xs font-black text-white/60 hover:bg-white/[0.06]"
+                      variant="ghost"
+                      size="sm"
                     >
                       <Unlink2 size={14} /> Unassign
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => release(r.subdomain)}
-                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-2.5 text-xs font-black text-rose-200 hover:bg-rose-500/15"
+                      variant="danger"
+                      size="sm"
                     >
                       <Trash2 size={14} /> Release
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>

@@ -18,6 +18,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { api, AUTH_EVENTS, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type MLStatsEnvelope, type CapturedRequest, type ModificationRule, type TunnelSessionHistory } from './api/client';
 import './index.css';
+import { Button } from './components/ui/Button';
 
 // Lazy load components
 const MetricCard = React.lazy(() => import('./components/MetricCard').then(module => ({ default: module.MetricCard })));
@@ -345,6 +346,7 @@ function App() {
             </div>
             <NavItem id="traffic" icon={Microscope} label="Inspector" />
             <NavItem id="api_keys" icon={ShieldCheck} label="API Keys" />
+            <NavItem id="reservations" icon={Globe} label="Reservations" />
             <NavItem id="settings" icon={Settings} label="Rules" />
           </div>
         </nav>
@@ -367,14 +369,18 @@ function App() {
         <div className="p-6 md:p-8 lg:p-12 max-w-[1600px] mx-auto space-y-10">
 
           <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4">
-            <div className="flex items-center justify-between">
-              <div className="animate-in slide-in-from-bottom-2 duration-500">
-                <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-white mb-2">
+            <div className="flex items-center justify-between gap-4">
+              <div className="animate-in slide-in-from-bottom-2 duration-500 min-w-0">
+                <div className="text-[11px] font-black uppercase tracking-[0.28em] text-white/30">
+                  {t('dashboard.command_center', 'Command Center')}
+                </div>
+                <h2 className="text-2xl md:text-4xl font-black tracking-tight text-white mt-2 mb-2 truncate">
                   {activeTab === 'overview' && t('dashboard.command_center')}
                   {activeTab === 'tunnels' && t('dashboard.active_tunnels')}
                   {activeTab === 'ai_gateway' && t('dashboard.ai_gateway')}
                   {activeTab === 'traffic' && t('dashboard.traffic_inspector')}
                   {activeTab === 'api_keys' && t('dashboard.api_keys')}
+                  {activeTab === 'reservations' && t('dashboard.reservations', 'Reservations')}
                   {activeTab === 'settings' && t('dashboard.global_rules')}
                 </h2>
                 <p className="text-sm md:text-lg text-white/50 font-normal max-w-2xl hidden sm:block">
@@ -383,6 +389,7 @@ function App() {
                   {activeTab === 'ai_gateway' && t('dashboard.ai_desc')}
                   {activeTab === 'traffic' && t('dashboard.traffic_desc')}
                   {activeTab === 'api_keys' && t('dashboard.keys_desc')}
+                  {activeTab === 'reservations' && t('dashboard.reservations_desc', 'Reserve stable subdomains and bind them to API keys.')}
                   {activeTab === 'settings' && t('dashboard.rules_desc')}
                 </p>
               </div>
@@ -397,23 +404,22 @@ function App() {
             </div>
 
             <div className="flex items-center gap-4">
-              <button
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   const newLang = i18n.language === 'en' ? 'tr' : 'en';
                   i18n.changeLanguage(newLang);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold hover:bg-white/10 transition-all uppercase"
               >
                 <Languages size={14} className="text-emerald-400" />
                 {i18n.language.toUpperCase()}
-              </button>
+              </Button>
               
-              <button
-                onClick={() => setIsConnectOpen(true)}
-                className="btn-primary-premium"
-              >
-                <span className="text-lg mr-1">+</span> {t('common.connect')}
-              </button>
+              <Button type="button" variant="primary" size="md" onClick={() => setIsConnectOpen(true)}>
+                <span className="text-lg -mt-0.5">+</span> {t('common.connect')}
+              </Button>
             </div>
           </header>
           {apiError && (
