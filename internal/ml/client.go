@@ -14,9 +14,9 @@ import (
 )
 
 type Client struct {
-	baseUrl    string
-	httpClient *http.Client
-	logger     *zap.Logger
+	baseUrl                string
+	httpClient             *http.Client
+	logger                 *zap.Logger
 	lastPredictionUnixNano atomic.Int64
 }
 

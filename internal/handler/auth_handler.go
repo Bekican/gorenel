@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Bekican/gorenel/internal/middleware"
 	"github.com/Bekican/gorenel/internal/authmgr"
+	"github.com/Bekican/gorenel/internal/middleware"
 	"github.com/Bekican/gorenel/pkg/auth"
 	"github.com/Bekican/gorenel/pkg/errors"
 	"github.com/Bekican/gorenel/pkg/logger"
@@ -70,7 +70,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		}
 
 		logger.Info("Manual login successful", zap.String("email", user.Email))
-		
+
 		// Generate Token
 		tokenString, err := h.tokenSvc.GenerateToken(user)
 		if err != nil {
@@ -337,7 +337,7 @@ func (h *AuthHandler) setAuthCookie(w http.ResponseWriter, r *http.Request, toke
 		if idx := strings.Index(host, ":"); idx != -1 {
 			host = host[:idx]
 		}
-		
+
 		if host != "localhost" && host != "127.0.0.1" {
 			// If it's a subdomain like app.gorenel.site, set domain for .gorenel.site
 			// This allows the cookie to be shared among subdomains

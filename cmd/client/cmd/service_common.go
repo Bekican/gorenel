@@ -94,7 +94,7 @@ func launchctl(args ...string) error {
 	return c.Run()
 }
 
-func unitName(name string) string { return name + ".service" }
+func unitName(name string) string   { return name + ".service" }
 func plistLabel(name string) string { return "com.gorenel." + name }
 
 func persistServiceConfigFromFlags(cmd *cobra.Command) error {
@@ -146,4 +146,3 @@ func exePath() (string, error) {
 	exe, _ = filepath.Abs(exe)
 	return exe, nil
 }
-

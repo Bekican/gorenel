@@ -244,15 +244,15 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 
 	// Prepare register request with type
 	regReq := protocol.RegisterRequest{
-		ClientID:     clientID,
-		Version:      rootCmd.Version,
-		APIKey:       apiKey,
+		ClientID:        clientID,
+		Version:         rootCmd.Version,
+		APIKey:          apiKey,
 		CustomSubdomain: strings.TrimSpace(customSubdomain),
-		CustomDomain: domain,
-		TunnelType:   tType,
-		LocalPort:    localPort,
-		KeyAuthToken: strings.TrimSpace(keyAuthToken),
-		IPWhitelist:  ipWhitelist,
+		CustomDomain:    domain,
+		TunnelType:      tType,
+		LocalPort:       localPort,
+		KeyAuthToken:    strings.TrimSpace(keyAuthToken),
+		IPWhitelist:     ipWhitelist,
 	}
 	reqPayload, err := json.Marshal(regReq)
 	if err != nil {

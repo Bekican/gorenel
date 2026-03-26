@@ -35,7 +35,7 @@ type BandwidthInfo struct {
 
 type TunnelPolicy struct {
 	// KeyAuthToken is secret; never expose it via API.
-	KeyAuthEnabled bool `json:"key_auth_enabled,omitempty"`
+	KeyAuthEnabled bool   `json:"key_auth_enabled,omitempty"`
 	KeyAuthToken   string `json:"-"`
 
 	IPAllowlistEnabled bool     `json:"ip_allowlist_enabled,omitempty"`
@@ -55,10 +55,10 @@ type TunnelPolicy struct {
 	RateLimitWindowS  int64 `json:"rate_limit_window_s,omitempty"`
 
 	// Header edits
-	AddRequestHeaders    map[string]string `json:"add_request_headers,omitempty"`
-	RemoveRequestHeaders []string          `json:"remove_request_headers,omitempty"`
-	AddResponseHeaders   map[string]string `json:"add_response_headers,omitempty"`
-	RemoveResponseHeaders []string         `json:"remove_response_headers,omitempty"`
+	AddRequestHeaders     map[string]string `json:"add_request_headers,omitempty"`
+	RemoveRequestHeaders  []string          `json:"remove_request_headers,omitempty"`
+	AddResponseHeaders    map[string]string `json:"add_response_headers,omitempty"`
+	RemoveResponseHeaders []string          `json:"remove_response_headers,omitempty"`
 
 	// Path rewrite
 	PathPrefix      string `json:"path_prefix,omitempty"`

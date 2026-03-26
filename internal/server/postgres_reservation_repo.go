@@ -8,11 +8,11 @@ import (
 )
 
 type ReservedSubdomain struct {
-	Subdomain         string     `json:"subdomain"`
-	UserID            string     `json:"user_id"`
-	AssignedAPIKeyHash *string   `json:"assigned_api_key_hash,omitempty"`
-	CreatedAt         time.Time  `json:"created_at"`
-	LastUsedAt        *time.Time `json:"last_used_at,omitempty"`
+	Subdomain          string     `json:"subdomain"`
+	UserID             string     `json:"user_id"`
+	AssignedAPIKeyHash *string    `json:"assigned_api_key_hash,omitempty"`
+	CreatedAt          time.Time  `json:"created_at"`
+	LastUsedAt         *time.Time `json:"last_used_at,omitempty"`
 }
 
 type PostgresReservationRepository struct {
@@ -144,4 +144,3 @@ func (r *PostgresReservationRepository) TouchLastUsed(subdomain string) {
 	}
 	_, _ = r.db.Exec(`UPDATE reserved_subdomains SET last_used_at=NOW() WHERE subdomain=$1`, norm)
 }
-

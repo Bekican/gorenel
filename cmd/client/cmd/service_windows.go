@@ -134,4 +134,3 @@ func init() {
 	serviceInstallCmd.Flags().String("key-auth", "", "X-TOKEN key auth")
 	serviceInstallCmd.Flags().StringArray("ip-whitelist", []string{}, "Allowed IP/CIDR")
 }
-

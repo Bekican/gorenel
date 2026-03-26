@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 
-	_ "github.com/lib/pq"
 	"github.com/Bekican/gorenel/internal/authmgr"
 	"github.com/Bekican/gorenel/pkg/auth"
+	_ "github.com/lib/pq"
 )
 
 type PostgresAPIKeyRepository struct {

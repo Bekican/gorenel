@@ -8,9 +8,9 @@ import (
 
 type ResponseCaptureWriter struct {
 	http.ResponseWriter
-	StatusCode int
-	Body       *bytes.Buffer
-	maxBodyBytes int64
+	StatusCode    int
+	Body          *bytes.Buffer
+	maxBodyBytes  int64
 	capturedBytes int64
 }
 
