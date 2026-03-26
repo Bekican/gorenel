@@ -9,7 +9,7 @@ primary_region = "fra"
   destination = "/var/lib/docker"
 
 [http_service]
-  internal_port = 4001 # Intercepted by socat
+  internal_port = 4000
   force_https = true
   auto_stop_machines = false
   auto_start_machines = true

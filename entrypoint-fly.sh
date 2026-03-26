@@ -5,7 +5,7 @@ set -e
 echo "Cleaning up potential stale Docker socket or port bindings..."
 rm -f /var/run/docker.sock
 # Kill any processes on common ports to avoid "port already allocated"
-for port in 4000 4001 7000 7005 8123 5000 6379 5432 9091 8085; do
+for port in 4000 7000 7005 8123 5000 6379 5432 9091 8085; do
   fuser -k ${port}/tcp || true
 done
 
@@ -47,14 +47,6 @@ if ! command -v docker-compose &> /dev/null; then
         exit 1
     fi
 fi
-
-# Start socat IPv6 to IPv4 proxy with a resilient restart loop
-echo "Starting resilient socat proxies to bridge Fly.io IPv6 to Docker IPv4..."
-while true; do
-  # Bridge external IPv6:4001 to internal Dashboard IPv4:4000
-  socat TCP6-LISTEN:4001,fork,reuseaddr,bind=[::] TCP4:127.0.0.1:4000
-  sleep 1
-done &
 
 # Control Port: Fly.io routes external:7000 -> internal_port:7005 (set in fly.toml)
 # Docker maps 7005 -> container:7000 (set in docker-compose.yml)
