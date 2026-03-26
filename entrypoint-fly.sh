@@ -48,6 +48,17 @@ if ! command -v docker-compose &> /dev/null; then
     fi
 fi
 
+echo "Configuring dashboard bridge ports for Fly..."
+export DASHBOARD_PORT=4002
+
+# Keep an explicit IPv4 listener on 0.0.0.0:4000 for Fly's socket checks,
+# and forward traffic to the dashboard container host port (4002).
+echo "Starting IPv4 dashboard bridge 0.0.0.0:4000 -> 127.0.0.1:4002 ..."
+while true; do
+  socat TCP4-LISTEN:4000,fork,reuseaddr,bind=0.0.0.0 TCP4:127.0.0.1:4002
+  sleep 1
+done &
+
 # Control Port: Fly.io routes external:7000 -> internal_port:7005 (set in fly.toml)
 # Docker maps 7005 -> container:7000 (set in docker-compose.yml)
 # No socat needed for control port

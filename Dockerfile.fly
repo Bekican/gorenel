@@ -1,7 +1,7 @@
 FROM docker:dind
 
 # Install docker-compose and runtime tools
-RUN apk add --no-cache docker-compose bash curl psmisc
+RUN apk add --no-cache docker-compose bash curl psmisc socat
 
 WORKDIR /app
 

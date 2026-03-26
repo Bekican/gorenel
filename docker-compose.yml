@@ -41,7 +41,7 @@ services:
       context: ./web-dashboard
       dockerfile: Dockerfile
     ports:
-      - "4000:80"
+      - "${DASHBOARD_PORT:-4000}:80"
     environment:
       - API_URL=https://${BASE_DOMAIN}/api
     depends_on:
