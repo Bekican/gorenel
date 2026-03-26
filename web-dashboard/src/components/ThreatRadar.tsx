@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldAlert, Cpu, Brain, Zap, Fingerprint, ShieldCheck } from 'lucide-react';
+import { ShieldAlert, Cpu, Brain, Fingerprint, ShieldCheck } from 'lucide-react';
 import type { AnomalyRecord } from '../api/client';
 
 interface ThreatRadarProps {

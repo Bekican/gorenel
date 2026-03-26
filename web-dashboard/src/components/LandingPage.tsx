@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, CheckCircle2, Command, Globe, Languages, Lock, Shield, TerminalSquare, Zap, Activity } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Command, Globe, Languages, Lock, Shield, TerminalSquare, Activity } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './ui/Button';
 

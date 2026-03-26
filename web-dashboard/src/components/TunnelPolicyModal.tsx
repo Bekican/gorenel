@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Shield, KeyRound, Copy, RotateCcw, X, Lock, Gauge, ArrowRightLeft, CornerDownRight, Plus } from 'lucide-react';
+import { Shield, KeyRound, Copy, RotateCcw, X, Lock, Gauge, ArrowRightLeft, CornerDownRight } from 'lucide-react';
 import { api, type Tunnel } from '../api/client';
 import { Tooltip } from './ui/Tooltip';
 import { Tabs } from './ui/Tabs';
