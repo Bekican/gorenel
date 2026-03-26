@@ -114,8 +114,10 @@ func Load() (*Config, error) {
 		if config.JWTSecret == "SUPER_SECRET_KEY_CHANGE_THIS_IN_PROD" {
 			return nil, errors.New("JWT_SECRET must be set to a secure random string in production environment")
 		}
-		if config.GoogleClientID == "" || config.GoogleClientSecret == "" {
-			return nil, errors.New("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set in production environment")
+		googleOK := config.GoogleClientID != "" && config.GoogleClientSecret != "" && config.GoogleRedirectURL != ""
+		githubOK := config.GithubClientID != "" && config.GithubClientSecret != "" && config.GithubRedirectURL != ""
+		if !googleOK && !githubOK {
+			return nil, errors.New("At least one OAuth provider must be configured in production: Google (GOOGLE_CLIENT_ID/SECRET/REDIRECT_URL) or GitHub (GITHUB_CLIENT_ID/SECRET/REDIRECT_URL)")
 		}
 		if config.ClickHouseAddr == "" || config.ClickHouseUser == "" {
 			return nil, errors.New("CLICKHOUSE_ADDR and CLICKHOUSE_USER must be set in production environment")
