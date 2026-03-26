@@ -122,11 +122,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
               <Input
                 type="password"
                 required
+                minLength={8}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 leftIcon={<Lock className="w-4 h-4" />}
               />
+              <p className="text-[10px] text-white/20 mt-0.5 ml-0.5">Minimum 8 characters</p>
             </div>
           </div>
 

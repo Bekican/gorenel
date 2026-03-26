@@ -63,10 +63,19 @@ class AutoencoderAnomalyDetector:
         return predictions, mse
     
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        """Anomali olasılıklarını [0, 1] aralığında döndür.
+
+        Eski lineer ölçekleme (mse / threshold*2) tek-örnek tahminlerde ve
+        farklı veri dağılımlarında tutarsız sonuçlar veriyordu.
+        Sigmoid dönüşüm, eşik etrafında yumuşak geçiş sağlar ve
+        Isolation Forest ile tutarlı bir skor üretir.
+        """
         _, mse = self.predict(X)
-        # Normalize et
-        proba = np.clip(mse / (self.threshold * 2), 0, 1)
-        return proba
+        # Sigmoid: threshold etrafında ortalanmış, scale=threshold*0.5
+        scale = max(self.threshold * 0.5, 1e-9)
+        z = (mse - self.threshold) / scale
+        proba = 1.0 / (1.0 + np.exp(-z))
+        return np.clip(proba, 0.0, 1.0)
     
     def save(self, filepath: str):
         Path(filepath).parent.mkdir(parents=True, exist_ok=True)

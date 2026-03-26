@@ -52,22 +52,34 @@ WARMUP_DELAY_SEC = float(os.environ.get('ML_WARMUP_DELAY_SEC', '2'))
 RETRAIN_INTERVAL_HOURS = float(os.environ.get('ML_RETRAIN_INTERVAL_HOURS', '24'))
 
 
-def _generate_bootstrap_dataset(n_samples=320):
-    np.random.seed(42)
+def _generate_bootstrap_dataset(n_samples=320, deterministic=False):
+    """Generate synthetic training data.
+    
+    deterministic=True uses a fixed seed (for initial warmup reproducibility).
+    deterministic=False uses a time-based seed so periodic retrains see varied data.
+    """
+    if deterministic:
+        rng = np.random.RandomState(42)
+    else:
+        rng = np.random.RandomState(int(time.time()) % (2**31))
+    
     sample_data = {
-        'method': np.random.choice(['GET', 'POST', 'PUT', 'DELETE'], n_samples, p=[0.65, 0.2, 0.1, 0.05]),
+        'method': rng.choice(['GET', 'POST', 'PUT', 'DELETE'], n_samples, p=[0.65, 0.2, 0.1, 0.05]),
         'path': [f'/api/resource/{i % 120}' for i in range(n_samples)],
-        'response_time': np.random.exponential(110, n_samples),
-        'status_code': np.random.choice([200, 201, 204, 400, 500], n_samples, p=[0.72, 0.1, 0.08, 0.06, 0.04]),
-        'request_size': np.random.randint(120, 9000, n_samples),
-        'response_size': np.random.randint(200, 60000, n_samples),
+        'response_time': rng.exponential(110, n_samples),
+        'status_code': rng.choice([200, 201, 204, 400, 500], n_samples, p=[0.72, 0.1, 0.08, 0.06, 0.04]),
+        'request_size': rng.randint(120, 9000, n_samples),
+        'response_size': rng.randint(200, 60000, n_samples),
     }
     return pd.DataFrame(sample_data)
 
 
-def _prepare_X(n_samples: int):
-    df = _generate_bootstrap_dataset(n_samples=n_samples)
+def _prepare_X(n_samples: int, deterministic: bool = False, refit_scaler: bool = False):
+    df = _generate_bootstrap_dataset(n_samples=n_samples, deterministic=deterministic)
     features = feature_engineer.extract_features(df)
+    if refit_scaler:
+        # Force re-fit the scaler on fresh data during periodic retraining
+        feature_engineer.refit(features)
     X = feature_engineer.transform(features)
     return X, feature_engineer.feature_names
 
@@ -97,7 +109,9 @@ def run_training_job(
 
     try:
         os.makedirs('trained_models', exist_ok=True)
-        X, feat_names = _prepare_X(n_samples)
+        # Warmup uses deterministic data for reproducibility; periodic retrain uses varied data & re-fits scaler
+        is_warmup = reason in ('warmup', 'ensure')
+        X, feat_names = _prepare_X(n_samples, deterministic=is_warmup, refit_scaler=force)
         results = {}
         stats_before = registry.get_stats()
 

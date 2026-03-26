@@ -64,7 +64,12 @@ func (ti *TrafficInspector) Record(req *CapturedRequest) {
 	defer ti.mu.Unlock()
 
 	if len(ti.history) >= ti.maxSize {
-		ti.history = ti.history[1:]
+		// Use copy instead of ti.history[1:] to avoid leaking the old backing array.
+		// The simple slice shift (ti.history = ti.history[1:]) keeps the old first element
+		// in the underlying array, preventing the GC from reclaiming it.
+		copy(ti.history, ti.history[1:])
+		ti.history[len(ti.history)-1] = nil // release pointer for GC
+		ti.history = ti.history[:len(ti.history)-1]
 	}
 	ti.history = append(ti.history, req)
 }

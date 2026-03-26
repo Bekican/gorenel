@@ -1,16 +1,22 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import RobustScaler
+import joblib
 import hashlib
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+SCALER_PATH = 'trained_models/feature_scaler.pkl'
 
 class FeatureEngineer:
     def __init__(self):
         self.scaler = RobustScaler() 
         self.feature_names = []
         self.is_fitted = False
+        # Try to load a previously saved scaler from disk
+        self._load_scaler()
 
     def extract_features(self, df: pd.DataFrame) -> pd.DataFrame:
         if df.empty: return df
@@ -78,7 +84,40 @@ class FeatureEngineer:
         if not self.is_fitted:
             self.scaler.fit(features_df)
             self.is_fitted = True
+            self._save_scaler()
         return self.scaler.transform(features_df)
+
+    def _save_scaler(self):
+        """Persist the fitted scaler to disk so it survives service restarts."""
+        try:
+            Path(SCALER_PATH).parent.mkdir(parents=True, exist_ok=True)
+            joblib.dump({
+                'scaler': self.scaler,
+                'feature_names': self.feature_names,
+                'is_fitted': self.is_fitted,
+            }, SCALER_PATH)
+            logger.info(f"Scaler kaydedildi: {SCALER_PATH}")
+        except Exception as e:
+            logger.warning(f"Scaler kaydedilemedi: {e}")
+
+    def _load_scaler(self):
+        """Load a previously saved scaler from disk."""
+        try:
+            import os
+            if os.path.exists(SCALER_PATH):
+                data = joblib.load(SCALER_PATH)
+                self.scaler = data['scaler']
+                self.feature_names = data.get('feature_names', [])
+                self.is_fitted = data.get('is_fitted', True)
+                logger.info(f"Scaler diskten yüklendi: {SCALER_PATH}")
+        except Exception as e:
+            logger.warning(f"Scaler yüklenemedi (yeniden fit edilecek): {e}")
+
+    def refit(self, features_df: pd.DataFrame):
+        """Force re-fit the scaler (used during periodic retraining)."""
+        self.scaler.fit(features_df)
+        self.is_fitted = True
+        self._save_scaler()
 
 if __name__ == '__main__':
     print("Feature Engineer sınıfı hazır.")

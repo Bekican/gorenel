@@ -38,7 +38,37 @@ func NewRateLimiter(rdb *redis.Client, defaultLimit int, defaultWindow time.Dura
 	rl.tiers["premium"] = Quota{Limit: 1000, WindowSize: 1 * time.Minute}
 	rl.tiers["enterprise"] = Quota{Limit: 10000, WindowSize: 24 * time.Hour}
 
+	// Periodic cleanup of stale in-memory keys to prevent unbounded growth
+	// when Redis is unavailable.
+	go rl.memStoreCleanupLoop()
+
 	return rl
+}
+
+// memStoreCleanupLoop periodically removes expired entries from the in-memory fallback store.
+func (rl *RateLimiter) memStoreCleanupLoop() {
+	ticker := time.NewTicker(2 * time.Minute)
+	defer ticker.Stop()
+	for range ticker.C {
+		rl.mu.Lock()
+		now := time.Now()
+		// The maximum window in the system is 24h (enterprise). Use that as the expiry horizon.
+		maxWindow := 24 * time.Hour
+		for key, timestamps := range rl.memStore {
+			var valid []time.Time
+			for _, t := range timestamps {
+				if now.Sub(t) < maxWindow {
+					valid = append(valid, t)
+				}
+			}
+			if len(valid) == 0 {
+				delete(rl.memStore, key)
+			} else {
+				rl.memStore[key] = valid
+			}
+		}
+		rl.mu.Unlock()
+	}
 }
 
 func (rl *RateLimiter) Allow(identifier string, n int) bool {

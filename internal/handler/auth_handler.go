@@ -271,8 +271,18 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) error {
 	if body.Email == "" || !strings.Contains(body.Email, "@") || !strings.Contains(body.Email, ".") {
 		return errors.BadRequest("Geçersiz e-posta adresi", nil)
 	}
-	if len(body.Password) < 6 {
-		return errors.BadRequest("Şifre en az 6 karakter olmalıdır", nil)
+	body.Name = strings.TrimSpace(body.Name)
+	if body.Name == "" {
+		return errors.BadRequest("İsim gereklidir", nil)
+	}
+	if len(body.Password) < 8 {
+		return errors.BadRequest("Şifre en az 8 karakter olmalıdır", nil)
+	}
+
+	// Check if a user with this email already exists
+	existingUser, _ := h.userRepo.GetByEmail(body.Email)
+	if existingUser != nil {
+		return errors.BadRequest("Bu e-posta adresi zaten kayıtlı", nil)
 	}
 
 	// Hash password

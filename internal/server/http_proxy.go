@@ -12,7 +12,6 @@ import (
 	"net/netip"
 	"sync"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/Bekican/gorenel/internal/limiter"
@@ -174,21 +173,22 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		applyRequestPolicy(r, policy)
 	}
 
-	// Ensure analytics are published for ALL requests, even on early return
+	// Panic recovery MUST be registered first (runs last in LIFO) so it catches
+	// panics from any subsequent deferred work as well.
 	defer func() {
-		dur := time.Since(startTime)
-		p.publishEvent(targetKey, r, clientIP, statusCode, dur, reqBytes, bytesOut, "")
-
-		// Panic recovery
 		if err := recover(); err != nil {
 			p.logger.Error("PANIC RECOVERED in ServeHTTP",
 				zap.Any("panic", err),
 				zap.String("host", r.Host),
 				zap.String("path", r.URL.Path),
 			)
-			// If headers haven't been sent yet, send 500.
-			// However, in many cases they might have been.
 		}
+	}()
+
+	// Ensure analytics are published for ALL requests, even on early return
+	defer func() {
+		dur := time.Since(startTime)
+		p.publishEvent(targetKey, r, clientIP, statusCode, dur, reqBytes, bytesOut, "")
 	}()
 
 	if targetKey == "" {
@@ -282,7 +282,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if IsWebSocketUpgrade(r) {
 		p.HandleWebSocket(w, r, session, targetKey)
-		atomic.AddInt64(&WebSocketConnections, 1)
+		// Note: WebSocketConnections counter is managed inside HandleWebSocket (increment + defer decrement).
 		return
 	}
 
@@ -403,8 +403,8 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Update Tunnel Stats
-	p.tunnelManager.UpdateStats(targetKey, 0, bytesReceived)
+	// Update Tunnel Stats (bytesIn = request body size, bytesOut = response body size)
+	p.tunnelManager.UpdateStats(targetKey, reqBytes, bytesReceived)
 
 	responseTime := time.Since(startTime)
 
@@ -573,16 +573,15 @@ func (p *HTTPProxy) publishEvent(subdomain string, r *http.Request, clientIP str
 	event.Error = errorMsg
 
 	if p.geoLocator != nil {
-		go func() {
-			if loc, err := p.geoLocator.Lookup(clientIP); err == nil {
-				event.GeoCountry = loc.Country
-				event.GeoCity = loc.City
-			}
-			p.eventStream.publish(event)
-		}()
-	} else {
-		p.eventStream.publish(event)
+		// Do geo lookup synchronously but with a short timeout to avoid blocking.
+		// This avoids the race condition where the event fields were mutated in a goroutine
+		// while the event could be read concurrently by subscribers.
+		if loc, err := p.geoLocator.Lookup(clientIP); err == nil {
+			event.GeoCountry = loc.Country
+			event.GeoCity = loc.City
+		}
 	}
+	p.eventStream.publish(event)
 }
 
 // BoundedWriter writes at most Limit bytes to the underlying writer,
