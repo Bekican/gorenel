@@ -90,7 +90,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                     <div className="hidden md:flex items-center gap-6 text-sm text-white/50">
                         <a href="#features" className="hover:text-white transition-colors">{isTr ? 'Özellikler' : 'Features'}</a>
                         <a href="#how-it-works" className="hover:text-white transition-colors">{isTr ? 'Nasıl Çalışır' : 'How it works'}</a>
-                        <a href="#pricing" className="hover:text-white transition-colors">{isTr ? 'Fiyatlandırma' : 'Pricing'}</a>
+                        <a href="#pricing" className="hover:text-white transition-colors">{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</a>
                         <a href="#comparison" className="hover:text-white transition-colors">{isTr ? 'Karşılaştırma' : 'Compare'}</a>
                     </div>
                     <div className="flex items-center gap-2.5">
@@ -685,107 +685,90 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                     </div>
                 </section>
 
-                {/* ═══════════════════════  PRICING  ═══════════════════════ */}
+                {/* ═══════════════════════  FREE & OPEN SOURCE  ═══════════════════════ */}
                 <section id="pricing" className="border-t border-white/[0.04]">
                     <div className="max-w-6xl mx-auto px-6 md:px-10 py-24 space-y-14">
                         <div className="text-center space-y-3 max-w-2xl mx-auto">
                             <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400/60 mb-2">
-                                <Zap className="w-3.5 h-3.5" />
-                                {isTr ? 'FİYATLANDIRMA' : 'PRICING'}
+                                <Sparkles className="w-3.5 h-3.5" />
+                                {isTr ? 'TAMAMEN ÜCRETSİZ' : 'COMPLETELY FREE'}
                             </div>
                             <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
-                                {isTr ? 'Basit ve şeffaf fiyatlandırma' : 'Simple, transparent pricing'}
+                                {isTr ? 'Her şey ücretsiz. Gerçekten.' : 'Everything is free. Really.'}
                             </h2>
                             <p className="text-sm md:text-base text-white/40 leading-relaxed max-w-lg mx-auto">
                                 {isTr
-                                    ? 'Ücretsiz başlayın, büyüdükçe ölçeklendirin. Gizli ücret yok.'
-                                    : 'Start free, scale as you grow. No hidden fees.'
+                                    ? 'Gizli ücret yok, premium duvarı yok. Tüm özellikler — AI anomali tespiti, trafik politikaları, sabit URL\'ler — herkese açık.'
+                                    : 'No hidden fees, no paywall. Every feature — AI anomaly detection, traffic policies, reserved URLs — is available to everyone.'
                                 }
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-                            {/* Free */}
-                            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 hover:border-white/[0.1] transition-all duration-300 flex flex-col">
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-bold text-white mb-1">{isTr ? 'Ücretsiz' : 'Free'}</h3>
-                                    <p className="text-xs text-white/35">{isTr ? 'Bireysel geliştiriciler için' : 'For individual developers'}</p>
-                                </div>
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-white">$0</span>
-                                    <span className="text-sm text-white/30 ml-1">/{isTr ? 'ay' : 'mo'}</span>
-                                </div>
-                                <ul className="space-y-2.5 flex-1 mb-6">
-                                    {(isTr
-                                        ? ['1 eş zamanlı tünel', '1 GB/ay bant genişliği', 'Rastgele subdomain', 'Topluluk desteği', 'Temel metrikler']
-                                        : ['1 concurrent tunnel', '1 GB/mo bandwidth', 'Random subdomain', 'Community support', 'Basic metrics']
-                                    ).map((f) => (
-                                        <li key={f} className="flex items-center gap-2.5 text-sm text-white/50">
-                                            <Check className="w-4 h-4 text-emerald-400/60 shrink-0" />
-                                            {f}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <Button variant="outline" size="md" type="button" onClick={handleCTA} className="w-full">
-                                    {isTr ? 'Ücretsiz Başla' : 'Get Started'}
-                                </Button>
-                            </div>
-
-                            {/* Pro — Highlighted */}
-                            <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/[0.04] p-7 relative flex flex-col shadow-[0_0_40px_-12px_rgba(16,185,129,0.2)]">
+                        <div className="max-w-3xl mx-auto">
+                            <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/[0.04] p-8 md:p-10 relative shadow-[0_0_40px_-12px_rgba(16,185,129,0.2)]">
                                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                                     <span className="px-3 py-1 text-[11px] font-bold bg-emerald-500 text-[#080a10] rounded-full">
-                                        {isTr ? 'EN POPÜLER' : 'MOST POPULAR'}
+                                        {isTr ? '100% ÜCRETSİZ' : '100% FREE'}
                                     </span>
                                 </div>
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-bold text-white mb-1">Pro</h3>
-                                    <p className="text-xs text-white/35">{isTr ? 'Büyüyen ekipler için' : 'For growing teams'}</p>
+                                <div className="text-center mb-8">
+                                    <div className="mb-3">
+                                        <span className="text-5xl md:text-6xl font-bold text-white">$0</span>
+                                        <span className="text-lg text-white/30 ml-2">{isTr ? 'sonsuza dek' : 'forever'}</span>
+                                    </div>
+                                    <p className="text-sm text-white/40">
+                                        {isTr
+                                            ? 'Açık kaynak proje. Tüm özellikler dahil, sınırsız kullanım.'
+                                            : 'Open-source project. All features included, unlimited usage.'
+                                        }
+                                    </p>
                                 </div>
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-white">$19</span>
-                                    <span className="text-sm text-white/30 ml-1">/{isTr ? 'ay' : 'mo'}</span>
-                                </div>
-                                <ul className="space-y-2.5 flex-1 mb-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-8">
                                     {(isTr
-                                        ? ['10 eş zamanlı tünel', '100 GB/ay bant genişliği', 'Sabit subdomain\'ler', 'AI anomali tespiti', 'Trafik politikaları', 'Öncelikli destek', 'Paylaşılabilir trace\'ler']
-                                        : ['10 concurrent tunnels', '100 GB/mo bandwidth', 'Reserved subdomains', 'AI anomaly detection', 'Traffic policies', 'Priority support', 'Shareable traces']
+                                        ? [
+                                            'Sınırsız tünel',
+                                            'Sabit subdomain\'ler',
+                                            'AI anomali tespiti',
+                                            'Trafik politikaları',
+                                            'Trafik izleyici',
+                                            'Gerçek zamanlı metrikler',
+                                            'Çift ML modeli',
+                                            'Otomatik SSL',
+                                            'Self-hosted seçeneği',
+                                            'Rate limiting',
+                                            'GeoLocation',
+                                            'Açık kaynak CLI',
+                                        ]
+                                        : [
+                                            'Unlimited tunnels',
+                                            'Reserved subdomains',
+                                            'AI anomaly detection',
+                                            'Traffic policies',
+                                            'Traffic inspector',
+                                            'Real-time metrics',
+                                            'Dual ML models',
+                                            'Auto SSL',
+                                            'Self-hosted option',
+                                            'Rate limiting',
+                                            'GeoLocation',
+                                            'Open-source CLI',
+                                        ]
                                     ).map((f) => (
-                                        <li key={f} className="flex items-center gap-2.5 text-sm text-white/60">
+                                        <div key={f} className="flex items-center gap-2.5 text-sm text-white/60">
                                             <Check className="w-4 h-4 text-emerald-400 shrink-0" />
                                             {f}
-                                        </li>
+                                        </div>
                                     ))}
-                                </ul>
-                                <Button variant="primary" size="md" type="button" onClick={handleCTA} className="w-full">
-                                    {isTr ? 'Pro\'ya Geç' : 'Upgrade to Pro'}
-                                    <ArrowRight size={14} />
-                                </Button>
-                            </div>
-
-                            {/* Enterprise */}
-                            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 hover:border-white/[0.1] transition-all duration-300 flex flex-col">
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-bold text-white mb-1">Enterprise</h3>
-                                    <p className="text-xs text-white/35">{isTr ? 'Büyük organizasyonlar için' : 'For large organizations'}</p>
                                 </div>
-                                <div className="mb-6">
-                                    <span className="text-4xl font-bold text-white">{isTr ? 'Özel' : 'Custom'}</span>
+                                <div className="flex justify-center">
+                                    <Button variant="primary" size="lg" type="button" onClick={handleCTA} className="px-10">
+                                        {isLoggedIn
+                                            ? (isTr ? 'Dashboard\'a Git' : 'Open Dashboard')
+                                            : (isTr ? 'Hemen Başla — Ücretsiz' : 'Get Started — It\'s Free')
+                                        }
+                                        <ArrowRight size={16} />
+                                    </Button>
                                 </div>
-                                <ul className="space-y-2.5 flex-1 mb-6">
-                                    {(isTr
-                                        ? ['Sınırsız tünel', 'Sınırsız bant genişliği', 'Self-hosted seçeneği', 'SSO & SAML', 'SLA garantisi', 'Özel entegrasyonlar', '7/24 destek']
-                                        : ['Unlimited tunnels', 'Unlimited bandwidth', 'Self-hosted option', 'SSO & SAML', 'SLA guarantee', 'Custom integrations', '24/7 support']
-                                    ).map((f) => (
-                                        <li key={f} className="flex items-center gap-2.5 text-sm text-white/50">
-                                            <Check className="w-4 h-4 text-emerald-400/60 shrink-0" />
-                                            {f}
-                                        </li>
-                                    ))}
-                                </ul>
-                                <Button variant="outline" size="md" type="button" onClick={handleCTA} className="w-full">
-                                    {isTr ? 'İletişime Geç' : 'Contact Sales'}
-                                </Button>
                             </div>
                         </div>
                     </div>
@@ -863,8 +846,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 </div>
                                 <p className="text-xs text-white/20 pt-2">
                                     {isTr
-                                        ? '✦ 30 günlük Pro deneme süresi dahil — kart gerekmez'
-                                        : '✦ Includes 30-day Pro trial — no card required'
+                                        ? '✦ Tüm özellikler ücretsiz — açık kaynak proje'
+                                        : '✦ All features free — open-source project'
                                     }
                                 </p>
                             </div>
@@ -894,7 +877,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider">{isTr ? 'Ürün' : 'Product'}</h4>
                                 <div className="space-y-2 text-xs text-white/25">
                                     <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Özellikler' : 'Features'}</div>
-                                    <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Fiyatlandırma' : 'Pricing'}</div>
+                                    <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</div>
                                     <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Değişiklik Günlüğü' : 'Changelog'}</div>
                                 </div>
                             </div>
