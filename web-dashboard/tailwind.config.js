@@ -52,6 +52,8 @@ export default {
         'scale-in': 'scaleIn 0.2s ease-out forwards',
         'slide-in-right': 'slideInRight 0.3s ease-out forwards',
         'shimmer': 'shimmer 2s linear infinite',
+        'float-up': 'floatUp 0.6s ease-out forwards',
+        'gradient-shift': 'gradientShift 6s ease infinite',
       },
       keyframes: {
         fadeIn: {
