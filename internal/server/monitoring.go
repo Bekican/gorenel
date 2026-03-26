@@ -12,11 +12,11 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Bekican/gorenel/internal/authmgr"
 	"github.com/Bekican/gorenel/internal/handler"
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/middleware"
 	"github.com/Bekican/gorenel/internal/ml"
-	"github.com/Bekican/gorenel/internal/authmgr"
 	"github.com/Bekican/gorenel/internal/utils"
 	"github.com/Bekican/gorenel/pkg/auth"
 	serverErrors "github.com/Bekican/gorenel/pkg/errors"
@@ -134,25 +134,48 @@ func (m *MonitoringServer) Start(port string) error {
 
 	// Register Inspector Endpoints
 	if m.inspector != nil {
-		mux.HandleFunc("/api/inspector/history", m.corsMiddleware(rl(m.inspectorHistoryHandler)))
-		mux.HandleFunc("/api/inspector/replay", m.corsMiddleware(rl(m.inspectorReplayHandler)))
-		mux.HandleFunc("/api/inspector/rules", m.corsMiddleware(rl(m.inspectorRulesHandler)))
+		// Inspector data is sensitive; require auth if available.
+		inspectorHandler := func(h http.HandlerFunc) http.HandlerFunc { return h }
+		if m.tokenSvc != nil && m.authHandler != nil {
+			inspectorHandler = middleware.RequireAuth(m.tokenSvc)
+		}
+		mux.HandleFunc("/api/inspector/history", m.corsMiddleware(inspectorHandler(rl(m.inspectorHistoryHandler))))
+		mux.HandleFunc("/api/inspector/replay", m.corsMiddleware(inspectorHandler(rl(m.inspectorReplayHandler))))
+		mux.HandleFunc("/api/inspector/rules", m.corsMiddleware(inspectorHandler(rl(m.inspectorRulesHandler))))
 
-		// Trace Sharing
-		mux.HandleFunc("/api/shares", m.corsMiddleware(rl(m.shareTraceHandler)))
+		// Trace Sharing:
+		// - POST /api/shares (create) => auth required (contains inspector content)
+		// - GET  /api/shares/{id} (view) => public (so share links work)
+		shareCreateHandler := func(h http.HandlerFunc) http.HandlerFunc { return h }
+		if m.tokenSvc != nil && m.authHandler != nil {
+			shareCreateHandler = middleware.RequireAuth(m.tokenSvc)
+		}
+		mux.HandleFunc("/api/shares", m.corsMiddleware(shareCreateHandler(rl(m.shareTraceHandler))))
 		mux.HandleFunc("/api/shares/", m.corsMiddleware(rl(m.getSharedTraceHandler)))
 	}
 
 	// Tunnels endpoint
-	mux.HandleFunc("/api/tunnels", m.corsMiddleware(rl(m.tunnelsHandlerFunc)))
-	mux.HandleFunc("/api/tunnels/", m.corsMiddleware(rl(m.tunnelsHandlerFunc)))
-	mux.HandleFunc("/api/tunnels/history", m.corsMiddleware(rl(m.tunnelHistoryHandler)))
+	tunnelsHandler := func(h http.HandlerFunc) http.HandlerFunc { return h }
+	if m.tokenSvc != nil && m.authHandler != nil {
+		tunnelsHandler = middleware.RequireAuth(m.tokenSvc)
+	}
+	mux.HandleFunc("/api/tunnels", m.corsMiddleware(tunnelsHandler(rl(m.tunnelsHandlerFunc))))
+	mux.HandleFunc("/api/tunnels/", m.corsMiddleware(tunnelsHandler(rl(m.tunnelsHandlerFunc))))
+	mux.HandleFunc("/api/tunnels/history", m.corsMiddleware(tunnelsHandler(rl(m.tunnelHistoryHandler))))
 
 	// Anomaly endpoint
-	mux.HandleFunc("/api/anomalies", m.corsMiddleware(rl(m.anomaliesHandler)))
+	anomalyHandler := func(h http.HandlerFunc) http.HandlerFunc { return h }
+	if m.tokenSvc != nil && m.authHandler != nil {
+		anomalyHandler = middleware.RequireAuth(m.tokenSvc)
+	}
+	mux.HandleFunc("/api/anomalies", m.corsMiddleware(anomalyHandler(rl(m.anomaliesHandler))))
 
 	// ML Stats endpoint
-	mux.HandleFunc("/api/ml/stats", m.corsMiddleware(rl(m.mlStatsHandler)))
+	mlHandler := func(h http.HandlerFunc) http.HandlerFunc { return h }
+	if m.tokenSvc != nil && m.authHandler != nil {
+		mlHandler = middleware.RequireAuth(m.tokenSvc)
+	}
+	mux.HandleFunc("/api/ml/stats", m.corsMiddleware(mlHandler(rl(m.mlStatsHandler))))
 
 	// CLI Download & Install endpoints
 	mux.HandleFunc("/downloads/", m.corsMiddleware(m.handleDownload))
@@ -287,11 +310,11 @@ func (m *MonitoringServer) reservationsHandler(w http.ResponseWriter, r *http.Re
 }
 
 type tunnelPolicyUpdateRequest struct {
-	KeyAuthEnabled      *bool    `json:"key_auth_enabled,omitempty"`
-	IPAllowlistEnabled  *bool    `json:"ip_allowlist_enabled,omitempty"`
-	IPAllowlist         []string `json:"ip_allowlist,omitempty"`
+	KeyAuthEnabled     *bool    `json:"key_auth_enabled,omitempty"`
+	IPAllowlistEnabled *bool    `json:"ip_allowlist_enabled,omitempty"`
+	IPAllowlist        []string `json:"ip_allowlist,omitempty"`
 
-	BasicAuthEnabled  *bool  `json:"basic_auth_enabled,omitempty"`
+	BasicAuthEnabled  *bool   `json:"basic_auth_enabled,omitempty"`
 	BasicAuthUsername *string `json:"basic_auth_username,omitempty"`
 	BasicAuthPassword *string `json:"basic_auth_password,omitempty"`
 
@@ -301,10 +324,10 @@ type tunnelPolicyUpdateRequest struct {
 	RateLimitRequests *int   `json:"rate_limit_requests,omitempty"`
 	RateLimitWindowS  *int64 `json:"rate_limit_window_s,omitempty"`
 
-	AddRequestHeaders    map[string]string `json:"add_request_headers,omitempty"`
-	RemoveRequestHeaders []string          `json:"remove_request_headers,omitempty"`
-	AddResponseHeaders   map[string]string `json:"add_response_headers,omitempty"`
-	RemoveResponseHeaders []string         `json:"remove_response_headers,omitempty"`
+	AddRequestHeaders     map[string]string `json:"add_request_headers,omitempty"`
+	RemoveRequestHeaders  []string          `json:"remove_request_headers,omitempty"`
+	AddResponseHeaders    map[string]string `json:"add_response_headers,omitempty"`
+	RemoveResponseHeaders []string          `json:"remove_response_headers,omitempty"`
 
 	PathPrefix      *string `json:"path_prefix,omitempty"`
 	ReplacePathFrom *string `json:"replace_path_from,omitempty"`
