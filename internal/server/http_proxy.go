@@ -10,8 +10,8 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
-	"sync"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Bekican/gorenel/internal/limiter"
@@ -22,43 +22,47 @@ import (
 )
 
 type HTTPProxy struct {
-	tunnelManager  *TunnelManager
-	advancedRL     *limiter.RateLimiter
-	eventStream    *EventStream
-	geoLocator     *GeoLocator
-	inspector      *TrafficInspector
-	mlClient       *ml.Client
-	logger         *zap.Logger
-	redisPublisher *RedisPublisher
-	anomalyStore   *AnomalyStore
-	baseDomain     string
-	acmeEmail      string
-	env            string
-	aiAnalyzer     *AIAnalyzer
+	tunnelManager         *TunnelManager
+	advancedRL            *limiter.RateLimiter
+	eventStream           *EventStream
+	geoLocator            *GeoLocator
+	inspector             *TrafficInspector
+	mlClient              *ml.Client
+	logger                *zap.Logger
+	redisPublisher        *RedisPublisher
+	anomalyStore          *AnomalyStore
+	baseDomain            string
+	acmeEmail             string
+	env                   string
+	aiAnalyzer            *AIAnalyzer
 	inspectorMaxBodyBytes int64
 	inspectorSamplingRate float64
-	fullCaptureUntil sync.Map // subdomain -> unixnano expiry
-	inspectQueue      chan *CapturedRequest
+	fullCaptureUntil      sync.Map // subdomain -> unixnano expiry
+	inspectQueue          chan *CapturedRequest
+	rngMu                 sync.Mutex
+	rng                   *rand.Rand
 }
 
 func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, acmeEmail, env string, inspectorMaxBodyBytes int64, inspectorSamplingRate float64) *HTTPProxy {
 	p := &HTTPProxy{
-		tunnelManager:  tm,
-		advancedRL:     rl,
-		eventStream:    es,
-		geoLocator:     gl,
-		inspector:      ti,
-		mlClient:       mlc,
-		logger:         logger,
-		redisPublisher: NewRedisPublisher(redisAddr),
-		anomalyStore:   as,
-		baseDomain:     baseDomain,
-		acmeEmail:      acmeEmail,
-		env:            env,
-		aiAnalyzer:     NewAIAnalyzer(),
+		tunnelManager:         tm,
+		advancedRL:            rl,
+		eventStream:           es,
+		geoLocator:            gl,
+		inspector:             ti,
+		mlClient:              mlc,
+		logger:                logger,
+		redisPublisher:        NewRedisPublisher(redisAddr),
+		anomalyStore:          as,
+		baseDomain:            baseDomain,
+		acmeEmail:             acmeEmail,
+		env:                   env,
+		aiAnalyzer:            NewAIAnalyzer(),
 		inspectorMaxBodyBytes: inspectorMaxBodyBytes,
 		inspectorSamplingRate: inspectorSamplingRate,
-		inspectQueue:   make(chan *CapturedRequest, 512),
+		inspectQueue:          make(chan *CapturedRequest, 512),
+		// Use a per-proxy RNG; seeded to avoid deterministic sampling across restarts.
+		rng: rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 
 	// Async worker: move inspector/AI analysis off request path
@@ -131,7 +135,9 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if p.inspectorSamplingRate >= 1 {
 			captureEnabled = true
 		} else if p.inspectorSamplingRate > 0 {
-			captureEnabled = rand.Float64() < p.inspectorSamplingRate
+			p.rngMu.Lock()
+			captureEnabled = p.rng.Float64() < p.inspectorSamplingRate
+			p.rngMu.Unlock()
 		}
 	}
 	// If an anomaly was detected recently for this tunnel, temporarily force full capture.
