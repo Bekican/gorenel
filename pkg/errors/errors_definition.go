@@ -75,7 +75,7 @@ func NotFound(message string, cause error) *AppError {
 }
 
 func BadRequest(message string, cause error) *AppError {
-	return New(TypeNotFound, http.StatusBadRequest, message, cause)
+	return New(TypeValidation, http.StatusBadRequest, message, cause)
 }
 
 func Internal(cause error) *AppError {
