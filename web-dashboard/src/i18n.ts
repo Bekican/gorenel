@@ -145,10 +145,10 @@ const resources = {
         "delete_btn": "Delete"
       },
       "landing": {
-        "title": "Establish Session.",
-        "subtitle": "Secure Tunneling Interface",
-        "cta": "Connect to Gateway",
-        "description": "Expose your localhost securely with built-in AI routing and monitoring."
+        "title": "Ship localhost to the world in seconds.",
+        "subtitle": "AI-powered tunnel infrastructure",
+        "cta": "Get Started — it's free",
+        "description": "Secure tunnels, stable URLs, traffic policies and AI-powered anomaly detection — with a single CLI command. For dev, demos and production."
       },
       "auth": {
         "no_account": "Don't have an account?",
@@ -330,10 +330,10 @@ const resources = {
         "delete_btn": "Sil"
       },
       "landing": {
-        "title": "Oturum Açın.",
-        "subtitle": "Güvenli Tünel Arayüzü",
-        "cta": "Geçide Bağlan",
-        "description": "Localhost'unuzu yerleşik AI yönlendirme ve izleme ile güvenli bir şekilde dünyaya açın."
+        "title": "Localhost'unuzu saniyeler içinde dünyaya açın.",
+        "subtitle": "Yapay zeka destekli tünel altyapısı",
+        "cta": "Ücretsiz Başlayın",
+        "description": "Güvenli tüneller, sabit URL'ler, trafik politikaları ve yapay zeka ile anomali tespiti — tek bir CLI komutuyla. Geliştirme, demo ve prodüksiyon için."
       },
       "auth": {
         "no_account": "Hesabınız yok mu?",
