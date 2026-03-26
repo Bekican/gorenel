@@ -478,16 +478,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 	logger.Info("Aktif tünel sayısı", zap.Int("count", tm.Count()))
 
 	// 6. Session kapanana kadar bekle
-	for {
-		if session.IsClosed() {
-			<-session.CloseChan()
-			logger.Info("Session kapandı", zap.String("subdomain", subdomain))
-			return
-		}
-		_, err := session.AcceptStream()
-		if err != nil {
-			logger.Info("Client bağlantısı kesildi", zap.String("subdomain", subdomain))
-			return
-		}
-	}
+	// CloseChan() is closed when the session shuts down, so a single select is sufficient.
+	<-session.CloseChan()
+	logger.Info("Session kapandı", zap.String("subdomain", subdomain))
 }

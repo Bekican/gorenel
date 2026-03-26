@@ -19,12 +19,18 @@ type GeoLocation struct {
 	ISP         string  `json:"isp"`
 }
 
+type geoEntry struct {
+	loc       *GeoLocation
+	expiresAt time.Time
+}
+
 type GeoLocator struct {
 	//cache
-	cache   map[string]*GeoLocation
-	cacheMu sync.RWMutex
+	cache    map[string]*geoEntry
+	cacheMu  sync.RWMutex
+	maxCache int
 
-	//rate limtiing
+	//rate limiting
 	lastCall time.Time
 	callMu   sync.Mutex
 
@@ -35,10 +41,31 @@ type GeoLocator struct {
 
 // yeni geolocator oluşturuyoruz
 func NewGeoLocator(useCache bool) *GeoLocator {
-	return &GeoLocator{
-		cache:    make(map[string]*GeoLocation),
+	gl := &GeoLocator{
+		cache:    make(map[string]*geoEntry),
+		maxCache: 10000, // max 10k IP cache
 		useCache: useCache,
 		apiUrl:   "http://ip-api.com/json/",
+	}
+	// Background cache eviction every 10 minutes
+	go func() {
+		ticker := time.NewTicker(10 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			gl.evictExpired()
+		}
+	}()
+	return gl
+}
+
+func (g *GeoLocator) evictExpired() {
+	g.cacheMu.Lock()
+	defer g.cacheMu.Unlock()
+	now := time.Now()
+	for ip, entry := range g.cache {
+		if now.After(entry.expiresAt) {
+			delete(g.cache, ip)
+		}
 	}
 }
 
@@ -116,20 +143,39 @@ func (g *GeoLocator) fetchFromAPI(ip string) (*GeoLocation, error) {
 	}, nil
 }
 
-// get from cache
+// get from cache (TTL-aware)
 func (g *GeoLocator) getFromCache(ip string) *GeoLocation {
 	g.cacheMu.RLock()
 	defer g.cacheMu.RUnlock()
 
-	return g.cache[ip]
+	entry, ok := g.cache[ip]
+	if !ok || time.Now().After(entry.expiresAt) {
+		return nil
+	}
+	return entry.loc
 }
 
-// cache kaydet
+// cache kaydet (with 24h TTL, evict oldest if at capacity)
 func (g *GeoLocator) saveToCache(ip string, loc *GeoLocation) {
 	g.cacheMu.Lock()
 	defer g.cacheMu.Unlock()
 
-	g.cache[ip] = loc
+	// If at capacity, evict ~10% oldest entries
+	if len(g.cache) >= g.maxCache {
+		count := 0
+		for k := range g.cache {
+			delete(g.cache, k)
+			count++
+			if count >= g.maxCache/10 {
+				break
+			}
+		}
+	}
+
+	g.cache[ip] = &geoEntry{
+		loc:       loc,
+		expiresAt: time.Now().Add(24 * time.Hour),
+	}
 }
 
 // istatistik

@@ -370,6 +370,12 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			captureWriter.Header().Add(k, v)
 		}
 	}
+
+	// Apply per-tunnel response header edits BEFORE WriteHeader so they reach the client.
+	if pol, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok {
+		applyResponsePolicy(captureWriter, pol)
+	}
+
 	captureWriter.WriteHeader(resp.StatusCode)
 
 	// Stream actual body to browser
@@ -386,10 +392,6 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	captured.StatusCode = captureWriter.StatusCode
 	captured.Duration = time.Since(startTime)
 
-	// Response header edits (policy)
-	if pol, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok {
-		applyResponsePolicy(captureWriter, pol)
-	}
 	if captureEnabled {
 		select {
 		case p.inspectQueue <- captured:

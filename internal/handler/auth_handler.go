@@ -108,6 +108,24 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	state := uuid.New().String()
+
+	// Derive cookie domain dynamically (same logic as setAuthCookie)
+	oauthCookieDomain := ""
+	if h.isProd {
+		host := r.Host
+		if idx := strings.Index(host, ":"); idx != -1 {
+			host = host[:idx]
+		}
+		if host != "localhost" && host != "127.0.0.1" {
+			parts := strings.Split(host, ".")
+			if len(parts) >= 2 {
+				oauthCookieDomain = "." + strings.Join(parts[len(parts)-2:], ".")
+			} else {
+				oauthCookieDomain = "." + host
+			}
+		}
+	}
+
 	// Store provider in state or cookie so callback knows which one to use
 	http.SetCookie(w, &http.Cookie{
 		Name:     "oauth_provider",
@@ -116,7 +134,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		HttpOnly: true,
 		Secure:   h.isProd,
 		Path:     "/",
-		Domain:   ".gorenel.site", 
+		Domain:   oauthCookieDomain,
 		SameSite: http.SameSiteLaxMode,
 	})
 
@@ -128,7 +146,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) error {
 		HttpOnly: true,
 		Secure:   h.isProd,
 		Path:     "/",
-		Domain:   ".gorenel.site", 
+		Domain:   oauthCookieDomain,
 		SameSite: http.SameSiteLaxMode,
 	})
 

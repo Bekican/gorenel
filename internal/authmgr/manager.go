@@ -1,6 +1,7 @@
 package authmgr
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
@@ -131,9 +132,12 @@ func HashKey(key string) string {
 	return hex.EncodeToString(hash[:])
 }
 
-// Yeni api keyi ürettik
+// Yeni api keyi ürettik — kriptografik rastgelelik kullanarak
 func GenerateAPIKey(prefix string) string {
-	timestamp := time.Now().UnixNano()
-	hash := sha256.Sum256([]byte(fmt.Sprintf("%s-%d", prefix, timestamp)))
-	return fmt.Sprintf("%s_%s", prefix, hex.EncodeToString(hash[:16]))
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		// Fallback: should never happen on modern OS
+		panic(fmt.Sprintf("crypto/rand failed: %v", err))
+	}
+	return fmt.Sprintf("%s_%s", prefix, hex.EncodeToString(b[:16]))
 }

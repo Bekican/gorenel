@@ -70,6 +70,7 @@ function App() {
       const storedUser = localStorage.getItem('gorenel_user');
       if (storedUser) {
         setUser(JSON.parse(storedUser));
+        setIsAuthStarted(true); // Skip landing page for returning users
         setLoading(false);
         return;
       }
@@ -78,6 +79,7 @@ function App() {
         if (data && data.user) {
           setUser(data.user);
           localStorage.setItem('gorenel_user', JSON.stringify(data.user));
+          setIsAuthStarted(true); // Skip landing page for cookie-based sessions
         }
       } catch (err) {
         console.log('No active session');
@@ -171,6 +173,23 @@ function App() {
     const shareId = path.split('/')[2];
     return <ShareView shareId={shareId} />;
   }
+
+  // Handle OAuth callback redirect (/dashboard?login=success)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('login') === 'success' && !user) {
+      // OAuth just completed, check session
+      api.getMe().then((data) => {
+        if (data?.user) {
+          setUser(data.user);
+          localStorage.setItem('gorenel_user', JSON.stringify(data.user));
+          setIsAuthStarted(true);
+          // Clean URL
+          window.history.replaceState({}, '', '/');
+        }
+      }).catch(() => {});
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user || !isAuthStarted) {
     if (!isAuthStarted) {
