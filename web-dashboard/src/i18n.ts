@@ -375,15 +375,17 @@ const resources = {
   }
 };
 
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: 'en',
-    interpolation: {
-      escapeValue: false
-    }
-  });
+// SSG/SSR safety: avoid browser-only language detector when `window` is unavailable.
+if (typeof window !== 'undefined') {
+  i18n.use(LanguageDetector);
+}
+
+i18n.use(initReactI18next).init({
+  resources,
+  fallbackLng: 'en',
+  interpolation: {
+    escapeValue: false,
+  },
+});
 
 export default i18n;

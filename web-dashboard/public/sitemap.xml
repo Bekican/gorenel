@@ -1,9 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://gorenel.site/</loc>
-    <lastmod>2026-03-21</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>1.0</priority>
+    <loc>https://gorenel.site</loc>
+  </url>
+  <url>
+    <loc>https://gorenel.site/tr/ngrok-alternatifi</loc>
+  </url>
+  <url>
+    <loc>https://gorenel.site/tr/localhost-disari-acma</loc>
+  </url>
+  <url>
+    <loc>https://gorenel.site/tr/webhook-local-test</loc>
+  </url>
+  <url>
+    <loc>https://gorenel.site/tr/docs/cli</loc>
   </url>
 </urlset>

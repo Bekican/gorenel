@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     react({
       babel: {
@@ -11,17 +11,19 @@ export default defineConfig({
     }),
   ],
   build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
-          charts: ['recharts'],
-          maps: ['leaflet', 'react-leaflet'],
+    rollupOptions: isSsrBuild
+      ? undefined
+      : {
+          output: {
+            manualChunks: {
+              'vendor-react': ['react', 'react-dom'],
+              charts: ['recharts'],
+              maps: ['leaflet', 'react-leaflet'],
+            },
+          },
         },
-      },
-    },
   },
-  // TODO [K8S]: Local dev proxy'si burasıdır. 
+  // TODO [K8S]: Local dev proxy'si burasıdır.
   // Production için (K8s) bu yönlendirmeleri nginx.conf içinde yapmalısınız.
   server: {
     port: 5176,
@@ -34,4 +36,10 @@ export default defineConfig({
       '/api': 'http://127.0.0.1:9091',
     },
   },
-})
+  ssgOptions: {
+    crittersOptions: {
+      // Inline critical CSS and keep CSS preloads efficient.
+      preload: 'swap',
+    },
+  },
+}))

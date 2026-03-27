@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Minimal prose styles for markdown docs (used in SSG docs/blog pages) */
+.prose pre {
+  overflow-x: auto;
+}
+
 @layer base {
   :root {
     --background: 228 14% 4%;
