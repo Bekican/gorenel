@@ -217,6 +217,8 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 	if strings.HasPrefix(serverAddr, "ws://") || strings.HasPrefix(serverAddr, "wss://") {
 		// WebSocket bağlantısı (Fly.io shared IP için)
 		header := http.Header{}
+		// Provide API key at handshake time so the server can reject unauthenticated WS early.
+		header.Set("X-API-Key", strings.TrimSpace(apiKey))
 		if strings.TrimSpace(preferRegion) != "" {
 			header.Set("Fly-Prefer-Region", strings.TrimSpace(preferRegion))
 		}

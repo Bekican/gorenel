@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/netip"
+	"net/url"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -185,7 +186,7 @@ func (m *MonitoringServer) Start(port string) error {
 
 	// WebSocket Tunnel endpoint (replaces raw TCP control port for Fly.io shared IP)
 	if m.tunnelHandler != nil {
-		mux.HandleFunc("/tunnel/connect", m.handleTunnelWebSocket)
+		mux.HandleFunc("/tunnel/connect", rl(m.handleTunnelWebSocket))
 	}
 
 	l, _ := zap.NewProduction()
@@ -711,6 +712,11 @@ func (m *MonitoringServer) metricsHandler(w http.ResponseWriter, r *http.Request
 			"connections": atomic.LoadInt64(&WebSocketConnections),
 			"messages":    atomic.LoadInt64(&WebSocketMessages),
 		},
+		"capture_pipeline": map[string]interface{}{
+			"inspector_queue_dropped": atomic.LoadInt64(&InspectorQueueDropped),
+			"ml_concurrency_dropped":  atomic.LoadInt64(&MLConcurrencyDropped),
+			"ml_in_flight":            atomic.LoadInt64(&MLInFlight),
+		},
 		"system": map[string]interface{}{
 			"goroutines":   runtime.NumGoroutine(),
 			"memory_alloc": formatBytes(int64(memStats.Alloc)),
@@ -1097,7 +1103,18 @@ var tunnelUpgrader = websocket.Upgrader{
 	ReadBufferSize:  16384,
 	WriteBufferSize: 16384,
 	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins for CLI clients
+		origin := strings.TrimSpace(r.Header.Get("Origin"))
+		if origin == "" {
+			return true // CLI typically doesn't send Origin
+		}
+		u, err := url.Parse(origin)
+		if err != nil {
+			return false
+		}
+		oh := strings.ToLower(u.Hostname())
+		h := strings.ToLower(r.Host)
+		// Allow same-host origins and the apex (dashboard) host.
+		return oh == h || oh == "gorenel.site"
 	},
 }
 
@@ -1107,6 +1124,49 @@ func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.
 	if m.tunnelHandler == nil {
 		http.Error(w, "Tunnel handler not configured", http.StatusServiceUnavailable)
 		return
+	}
+
+	// Connection rate-limit to reduce abuse before any protocol-level auth happens.
+	clientIP := ""
+	if xff := strings.TrimSpace(r.Header.Get("X-Forwarded-For")); xff != "" {
+		// XFF may contain a chain: client, proxy1, proxy2...
+		parts := strings.Split(xff, ",")
+		if len(parts) > 0 {
+			clientIP = strings.TrimSpace(parts[0])
+		}
+	}
+	if clientIP == "" {
+		clientIP, _, _ = net.SplitHostPort(r.RemoteAddr)
+		if clientIP == "" {
+			clientIP = r.RemoteAddr
+		}
+	}
+	if m.advancedRL != nil {
+		q := limiter.Quota{Limit: 10, WindowSize: 1 * time.Minute}
+		if !m.advancedRL.AllowWithQuota("wsconnect:"+clientIP, 1, q) {
+			http.Error(w, "Too many tunnel connections", http.StatusTooManyRequests)
+			return
+		}
+	}
+
+	// Require API key early (header/query) to avoid unauthenticated long-lived WS handshakes.
+	apiKey := strings.TrimSpace(r.Header.Get("X-API-Key"))
+	if apiKey == "" {
+		apiKey = strings.TrimSpace(r.URL.Query().Get("api_key"))
+	}
+	if strings.HasPrefix(strings.ToLower(strings.TrimSpace(r.Header.Get("Authorization"))), "bearer ") && apiKey == "" {
+		apiKey = strings.TrimSpace(strings.TrimSpace(r.Header.Get("Authorization"))[7:])
+	}
+	if apiKey == "" {
+		http.Error(w, "API key required (send X-API-Key)", http.StatusUnauthorized)
+		return
+	}
+	if m.authManager != nil {
+		if _, err := m.authManager.ValidateKey(apiKey); err != nil {
+			http.Error(w, "Invalid API key", http.StatusUnauthorized)
+			return
+		}
+		m.authManager.IncrementUsage(apiKey)
 	}
 
 	ws, err := tunnelUpgrader.Upgrade(w, r, nil)

@@ -12,6 +12,7 @@ import (
 	"net/netip"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/Bekican/gorenel/internal/limiter"
@@ -19,6 +20,12 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	InspectorQueueDropped int64
+	MLConcurrencyDropped  int64
+	MLInFlight            int64
 )
 
 type HTTPProxy struct {
@@ -41,6 +48,7 @@ type HTTPProxy struct {
 	inspectQueue          chan *CapturedRequest
 	rngMu                 sync.Mutex
 	rng                   *rand.Rand
+	mlSem                 chan struct{}
 }
 
 func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limiter.RateLimiter, ti *TrafficInspector, logger *zap.Logger, as *AnomalyStore, mlc *ml.Client, redisAddr string, baseDomain, acmeEmail, env string, inspectorMaxBodyBytes int64, inspectorSamplingRate float64) *HTTPProxy {
@@ -63,26 +71,32 @@ func NewHTTPProxy(tm *TunnelManager, es *EventStream, gl *GeoLocator, rl *limite
 		inspectQueue:          make(chan *CapturedRequest, 512),
 		// Use a per-proxy RNG; seeded to avoid deterministic sampling across restarts.
 		rng: rand.New(rand.NewSource(time.Now().UnixNano())),
+		// Bound ML request concurrency to protect the proxy under load/spikes.
+		mlSem: make(chan struct{}, 32),
 	}
 
-	// Async worker: move inspector/AI analysis off request path
-	go func() {
-		for req := range p.inspectQueue {
-			if req == nil {
-				continue
-			}
-			if p.aiAnalyzer != nil {
-				aiMeta := p.aiAnalyzer.AnalyzeRequest(req.Subdomain, req.Path, req.ReqBody)
-				if aiMeta != nil {
-					p.aiAnalyzer.AnalyzeResponse(aiMeta, req.RespBody)
-					req.AIMetadata = aiMeta
+	// Async workers: move inspector/AI analysis off request path.
+	// Keep this small and bounded; drops are preferable to request latency.
+	const inspectorWorkers = 2
+	for i := 0; i < inspectorWorkers; i++ {
+		go func() {
+			for req := range p.inspectQueue {
+				if req == nil {
+					continue
+				}
+				if p.aiAnalyzer != nil {
+					aiMeta := p.aiAnalyzer.AnalyzeRequest(req.Subdomain, req.Path, req.ReqBody)
+					if aiMeta != nil {
+						p.aiAnalyzer.AnalyzeResponse(aiMeta, req.RespBody)
+						req.AIMetadata = aiMeta
+					}
+				}
+				if p.inspector != nil {
+					p.inspector.Record(req)
 				}
 			}
-			if p.inspector != nil {
-				p.inspector.Record(req)
-			}
-		}
-	}()
+		}()
+	}
 
 	return p
 }
@@ -402,10 +416,8 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		select {
 		case p.inspectQueue <- captured:
 		default:
-			// If queue is full, avoid blocking request; best-effort inline record.
-			if p.inspector != nil {
-				p.inspector.Record(captured)
-			}
+			// If queue is full, avoid blocking request path; drop capture.
+			atomic.AddInt64(&InspectorQueueDropped, 1)
 		}
 	}
 
@@ -452,6 +464,14 @@ func (p *HTTPProxy) triggerMLAnalysis(method, path, host string, requestSize int
 	if shouldIgnoreAnomalyTraffic(clientIP) {
 		return
 	}
+	// Protect the ML service (and us) with bounded concurrency.
+	select {
+	case p.mlSem <- struct{}{}:
+		atomic.AddInt64(&MLInFlight, 1)
+	default:
+		atomic.AddInt64(&MLConcurrencyDropped, 1)
+		return
+	}
 	if requestSize < 0 {
 		requestSize = 0
 	}
@@ -466,6 +486,11 @@ func (p *HTTPProxy) triggerMLAnalysis(method, path, host string, requestSize int
 	}
 
 	p.mlClient.PredictCompareAsync(requestData, func(resp *ml.ComparisonResponse, err error) {
+		defer func() {
+			<-p.mlSem
+			atomic.AddInt64(&MLInFlight, -1)
+		}()
+
 		isAnomaly := false
 		if err == nil && resp.Consensus.AnyAnomaly {
 			isAnomaly = true

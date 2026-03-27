@@ -32,7 +32,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
             <div
-                className="bg-[#0d0f14] border border-white/[0.08] w-full max-w-lg rounded-2xl shadow-modal overflow-hidden animate-scale-in relative"
+                className="bg-[#0d0f14] border border-white/[0.08] w-full max-w-lg rounded-2xl shadow-modal overflow-hidden animate-scale-in relative max-h-[90dvh] flex flex-col"
                 role="dialog"
                 aria-modal="true"
                 aria-label={t('connect_modal.title')}
@@ -45,7 +45,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
                     <X className="w-4 h-4" />
                 </button>
 
-                <div className="p-7 text-center space-y-7">
+                <div className="p-7 text-center space-y-7 overflow-y-auto">
                     <div className="space-y-2">
                         <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mx-auto border border-emerald-500/15">
                             <Terminal className="w-6 h-6 text-emerald-400" />

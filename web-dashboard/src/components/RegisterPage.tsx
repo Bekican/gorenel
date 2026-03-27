@@ -2,14 +2,40 @@ import React, { useState } from 'react';
 import { User, Mail, Lock, Loader2, ArrowRight, Github, Languages } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from './AuthLayout';
-import { api } from '../api/client';
+import { api, type UserSession } from '../api/client';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { Alert } from './ui/Alert';
 
 interface RegisterPageProps {
   onSwitchToLogin: () => void;
-  onRegisterSuccess: (user: any) => void;
+  onRegisterSuccess: (user: UserSession) => void;
+}
+
+function extractErrorMessage(err: unknown): string {
+  if (!err || typeof err !== 'object') return 'Registration failed. Please try again.';
+  const e = err as { response?: { data?: unknown } };
+  const data = e.response?.data;
+  const msg =
+    typeof data === 'string'
+      ? data
+      : (data && typeof data === 'object'
+        ? (() => {
+          const d = data as Record<string, unknown>;
+          const errObj = (d['error'] && typeof d['error'] === 'object') ? (d['error'] as Record<string, unknown>) : undefined;
+          const fromErr = errObj?.['message'] ?? errObj?.['Message'];
+          const direct = d['message'] ?? d['Message'];
+          const fallback = d['error'];
+          const candidate = fromErr ?? direct ?? fallback;
+          return typeof candidate === 'string' ? candidate : undefined;
+        })()
+        : undefined);
+  if (typeof msg === 'string' && msg.trim() !== '') return msg;
+  try {
+    return typeof msg === 'string' ? msg : JSON.stringify(msg);
+  } catch {
+    return 'Registration failed. Please try again.';
+  }
 }
 
 export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onRegisterSuccess }) => {
@@ -32,10 +58,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
       } else {
         onSwitchToLogin();
       }
-    } catch (err: any) {
-      const data = err.response?.data;
-      const errorMessage = data?.error?.message || data?.error?.Message || data?.message || data?.Message || data?.error || 'Registration failed. Please try again.';
-      setError(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
+    } catch (err: unknown) {
+      setError(extractErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -53,7 +77,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
       if (data.redirect_url) {
         window.location.href = data.redirect_url;
       }
-    } catch (err: any) {
+    } catch {
       setError('Social login failed. Please try again.');
     } finally {
       setLoading(false);

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 function defaultApiBaseUrl(): string {
   // VITE_API_URL is preferred (build-time).
-  const fromEnv = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
+  const fromEnv = import.meta.env?.VITE_API_URL;
   if (fromEnv && typeof fromEnv === 'string' && fromEnv.trim() !== '') return fromEnv.trim();
 
   // Runtime fallback: if the UI is opened on a tunnel subdomain, still call the apex API host.
@@ -45,6 +45,24 @@ export interface HealthStatus {
   status: string;
   uptime: string;
   time: string;
+}
+
+export interface UserSession {
+  id?: string;
+  email: string;
+  name?: string;
+  api_key?: string;
+}
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterPayload {
+  name: string;
+  email: string;
+  password: string;
 }
 
 export interface Metrics {
@@ -166,6 +184,13 @@ export interface AnomaliesResponse {
   count: number;
 }
 
+export interface APIKeyRecord {
+  key: string;
+  created_at: string;
+  usage_count: number;
+  rate_limit: number;
+}
+
 export interface ModelResult {
   model: string;
   is_anomaly: boolean;
@@ -282,23 +307,23 @@ export const api = {
   },
 
   // Auth Functions
-  login: async (credentials: any) => {
-    const { data } = await apiClient.post('/api/login', credentials);
+  login: async (credentials: LoginCredentials): Promise<{ user?: UserSession; redirect_url?: string }> => {
+    const { data } = await apiClient.post<{ user?: UserSession; redirect_url?: string }>('/api/login', credentials);
     return data;
   },
 
-  socialLogin: async (provider: string) => {
-    const { data } = await apiClient.get(`/api/login?provider=${provider}`);
+  socialLogin: async (provider: string): Promise<{ redirect_url?: string }> => {
+    const { data } = await apiClient.get<{ redirect_url?: string }>(`/api/login?provider=${provider}`);
     return data;
   },
 
-  register: async (userData: any) => {
-    const { data } = await apiClient.post('/api/register', userData);
+  register: async (userData: RegisterPayload): Promise<{ user?: UserSession }> => {
+    const { data } = await apiClient.post<{ user?: UserSession }>('/api/register', userData);
     return data;
   },
 
-  getMe: async () => {
-    const { data } = await apiClient.get('/api/me');
+  getMe: async (): Promise<{ user?: UserSession }> => {
+    const { data } = await apiClient.get<{ user?: UserSession }>('/api/me');
     return data;
   },
 
@@ -367,18 +392,18 @@ export const api = {
   getMLStats: async (): Promise<MLStatsEnvelope> => {
     const { data } = await apiClient.get<MLStatsEnvelope>('/api/ml/stats');
     // Back-compat: if server returns the old map shape, normalize to envelope.
-    const isEnvelope = data && typeof data === 'object' && 'stats' in (data as any);
+    const isEnvelope = !!(data && typeof data === 'object' && 'stats' in data);
     if (isEnvelope) return data;
     return {
-      stats: (data as any) || {},
+      stats: (data && typeof data === 'object' ? (data as Record<string, ModelStat>) : {}) || {},
       active_tunnels: 0,
       ml_up: true,
       last_prediction_at: null,
     };
   },
 
-  listAPIKeys: async () => {
-    const { data } = await apiClient.get<any[]>('/api/keys');
+  listAPIKeys: async (): Promise<APIKeyRecord[]> => {
+    const { data } = await apiClient.get<APIKeyRecord[]>('/api/keys');
     return data;
   },
 
@@ -403,8 +428,8 @@ export const api = {
     return data;
   },
 
-  replayRequest: async (id: string): Promise<any> => {
-    const { data } = await apiClient.post(`/api/inspector/replay?id=${id}`);
+  replayRequest: async (id: string): Promise<unknown> => {
+    const { data } = await apiClient.post<unknown>(`/api/inspector/replay?id=${encodeURIComponent(id)}`);
     return data;
   },
 

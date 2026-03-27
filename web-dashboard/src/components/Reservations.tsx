@@ -22,7 +22,7 @@ export const Reservations: React.FC = () => {
     try {
       const res = await api.listReservations();
       setItems(res.reservations || []);
-    } catch (e) {
+    } catch {
       setError('Failed to load reservations');
     } finally {
       setLoading(false);
@@ -41,8 +41,9 @@ export const Reservations: React.FC = () => {
       await api.reserveSubdomain(s);
       setNewSub('');
       await refresh();
-    } catch (e: any) {
-      setError(e?.response?.data || 'Reserve failed');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: unknown } };
+      setError((typeof err.response?.data === 'string' && err.response.data) || 'Reserve failed');
     }
   };
 
@@ -51,8 +52,9 @@ export const Reservations: React.FC = () => {
     try {
       await api.releaseSubdomain(subdomain);
       await refresh();
-    } catch (e: any) {
-      setError(e?.response?.data || 'Release failed');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: unknown } };
+      setError((typeof err.response?.data === 'string' && err.response.data) || 'Release failed');
     }
   };
 
@@ -61,8 +63,9 @@ export const Reservations: React.FC = () => {
     try {
       await api.assignReservationToKey(subdomain, apiKey);
       await refresh();
-    } catch (e: any) {
-      setError(e?.response?.data || 'Assign failed');
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: unknown } };
+      setError((typeof err.response?.data === 'string' && err.response.data) || 'Assign failed');
     }
   };
 

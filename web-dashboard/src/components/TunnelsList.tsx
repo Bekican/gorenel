@@ -118,7 +118,7 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, historySessio
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-base">{tunnel.subdomain}.gorenel.site</span>
+                        <span className="font-semibold text-base truncate max-w-[260px] sm:max-w-none">{tunnel.subdomain}.gorenel.site</span>
                         <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/[0.03] border border-white/[0.06] text-[10px] font-medium ${status.color}`}>
                           <div className={`w-1 h-1 rounded-full ${status.glow} ${status.pulse ? 'animate-pulse' : ''}`} />
                           {status.text}

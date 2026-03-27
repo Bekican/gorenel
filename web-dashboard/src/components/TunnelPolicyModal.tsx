@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Shield, KeyRound, Copy, RotateCcw, X, Lock, Gauge, ArrowRightLeft, CornerDownRight } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { api, type Tunnel } from '../api/client';
 import { Tooltip } from './ui/Tooltip';
 import { Tabs } from './ui/Tabs';
@@ -46,31 +47,32 @@ export const TunnelPolicyModal: React.FC<Props> = ({ open, onClose, tunnel, onUp
   const [removeRespHeadersText, setRemoveRespHeadersText] = useState('');
   const [tab, setTab] = useState<'access' | 'limits' | 'rewrite'>('access');
 
-  const currentPolicy = tunnel?.policy || {};
+  const policyKey = tunnel ? JSON.stringify(tunnel.policy ?? {}) : '';
 
   useEffect(() => {
     if (!open || !tunnel) return;
+    const p = tunnel.policy ?? {};
     setActionError(null);
     setFreshToken(null);
-    setIpEnabled(!!currentPolicy.ip_allowlist_enabled);
-    setKeyEnabled(!!currentPolicy.key_auth_enabled);
-    setBasicEnabled(!!currentPolicy.basic_auth_enabled);
-    setBasicUser(currentPolicy.basic_auth_username || '');
+    setIpEnabled(!!p.ip_allowlist_enabled);
+    setKeyEnabled(!!p.key_auth_enabled);
+    setBasicEnabled(!!p.basic_auth_enabled);
+    setBasicUser(p.basic_auth_username || '');
     setBasicPass('');
-    setHttpsRedirect(!!currentPolicy.https_redirect_enabled);
-    setRateEnabled(!!currentPolicy.rate_limit_enabled);
-    setRateReq(currentPolicy.rate_limit_requests || 60);
-    setRateWin(currentPolicy.rate_limit_window_s || 60);
-    setPathPrefix(currentPolicy.path_prefix || '');
-    setReplaceFrom(currentPolicy.replace_path_from || '');
-    setReplaceTo(currentPolicy.replace_path_to || '');
+    setHttpsRedirect(!!p.https_redirect_enabled);
+    setRateEnabled(!!p.rate_limit_enabled);
+    setRateReq(p.rate_limit_requests || 60);
+    setRateWin(p.rate_limit_window_s || 60);
+    setPathPrefix(p.path_prefix || '');
+    setReplaceFrom(p.replace_path_from || '');
+    setReplaceTo(p.replace_path_to || '');
     setIpText('');
     setAddReqHeadersText('');
     setRemoveReqHeadersText('');
     setAddRespHeadersText('');
     setRemoveRespHeadersText('');
     setTab('access');
-  }, [open, tunnel?.subdomain]);
+  }, [open, tunnel, policyKey]);
 
   useEffect(() => {
     if (!toast) return;
@@ -167,7 +169,7 @@ export const TunnelPolicyModal: React.FC<Props> = ({ open, onClose, tunnel, onUp
         ? `curl "${tunnel.publicUrl}" -H "X-TOKEN: <TOKEN>"`
         : '';
 
-  const ToggleRow = ({ label, desc, checked, onChange, icon: Icon }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void; icon: any }) => (
+  const ToggleRow = ({ label, desc, checked, onChange, icon: Icon }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void; icon: LucideIcon }) => (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">

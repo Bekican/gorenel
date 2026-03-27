@@ -42,7 +42,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
     };
 
     return (
-        <div className="flex flex-col h-[calc(100vh-220px)] min-h-[500px] overflow-hidden">
+        <div className="flex flex-col h-[calc(100dvh-220px)] sm:h-[calc(100vh-220px)] min-h-[520px] overflow-hidden">
             <div className="p-6 border-b border-white/[0.04] space-y-4 shrink-0">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -73,7 +73,117 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
             </div>
             
             <div className="flex-1 overflow-y-auto relative">
-                <div className="overflow-x-auto">
+                {/* Mobile: card list */}
+                <div className="sm:hidden divide-y divide-white/[0.03]">
+                    {filteredHistory.length === 0 ? (
+                        <div className="px-6 py-16 text-center">
+                            <div className="max-w-sm mx-auto space-y-4">
+                                <div className="w-14 h-14 bg-emerald-500/[0.06] border border-emerald-500/15 rounded-xl flex items-center justify-center mx-auto">
+                                    <Activity className="w-7 h-7 text-emerald-400/50" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <h4 className="text-base font-semibold text-white/60">
+                                        {hasActiveFilter ? t('traffic_inspector.no_results_title', 'No matching requests') : t('traffic_inspector.listening_title')}
+                                    </h4>
+                                    <p className="text-sm text-white/25">
+                                        {hasActiveFilter ? t('traffic_inspector.no_results_desc', 'Try a different search.') : t('traffic_inspector.listening_desc')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        filteredHistory.map((req) => {
+                            const open = selectedId === req.id;
+                            return (
+                                <div key={req.id} className="px-5 py-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedId(open ? null : req.id)}
+                                        className="w-full text-left rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.03] hover:border-white/[0.1] transition-colors p-4"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded border ${req.method === 'POST'
+                                                ? 'border-blue-500/20 text-blue-400 bg-blue-500/[0.06]'
+                                                : req.method === 'GET'
+                                                    ? 'border-emerald-500/20 text-emerald-400 bg-emerald-500/[0.06]'
+                                                    : 'border-white/[0.08] text-white/40 bg-white/[0.03]'
+                                                }`}>
+                                                {req.method}
+                                            </span>
+                                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md border ${getStatusStyles(req.status_code)}`}>
+                                                {req.status_code}
+                                            </span>
+                                        </div>
+
+                                        <div className="mt-2 flex items-center gap-2 min-w-0">
+                                            <span className="text-white/15 text-[11px] shrink-0">{req.subdomain}.</span>
+                                            <span className="text-sm font-mono text-white/55 truncate">{req.path}</span>
+                                            {req.ai_metadata && (
+                                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-violet-500/10 border border-violet-500/15 rounded text-[9px] font-medium text-violet-400 shrink-0">
+                                                    <Sparkles className="w-2.5 h-2.5" /> AI
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-3 flex items-center justify-between text-[11px] text-white/30">
+                                            <span className="tabular-nums">{format(new Date(req.timestamp), 'HH:mm:ss')}</span>
+                                            <button
+                                                onClick={(e) => handleReplay(req.id, e)}
+                                                disabled={replaying === req.id}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/[0.03] border border-white/[0.06] rounded-lg text-white/35 hover:text-emerald-400 hover:border-emerald-500/15 hover:bg-emerald-500/[0.06] transition-all disabled:opacity-30"
+                                                title="Replay"
+                                            >
+                                                <Play className={`w-3.5 h-3.5 ${replaying === req.id ? 'animate-spin' : ''}`} />
+                                                Replay
+                                            </button>
+                                        </div>
+                                    </button>
+
+                                    {open && (
+                                        <div className="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-3">
+                                            <div className="flex items-center justify-between text-[11px] text-white/35">
+                                                <span className="font-medium text-white/60">Details</span>
+                                                <span className="tabular-nums">{(req.duration / 1000000).toFixed(2)}ms</span>
+                                            </div>
+                                            <div className="space-y-1.5 font-mono text-[11px] text-white/45">
+                                                <div className="break-all"><span className="text-white/25">Host:</span> {req.subdomain}.gorenel.site</div>
+                                                <div className="break-all"><span className="text-white/25">Path:</span> {req.path}</div>
+                                            </div>
+                                            <div className="flex gap-2">
+                                                <button
+                                                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-violet-500/10 hover:bg-violet-500/15 text-violet-400 border border-violet-500/15 rounded-xl text-xs font-medium transition-all"
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation();
+                                                        try {
+                                                            const { share_id } = await api.shareTrace(req.id);
+                                                            const shareUrl = `${window.location.origin}/share/${share_id}`;
+                                                            await navigator.clipboard.writeText(shareUrl);
+                                                            alert('Share link copied to clipboard!');
+                                                        } catch (err) {
+                                                            console.error('Sharing failed:', err);
+                                                        }
+                                                    }}
+                                                >
+                                                    <Share2 className="w-3.5 h-3.5" />
+                                                    Share
+                                                </button>
+                                                <button
+                                                    className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-white/[0.04] hover:bg-white/[0.07] rounded-xl text-xs font-medium text-white/50 transition-all"
+                                                    onClick={() => setSelectedId(null)}
+                                                >
+                                                    {t('traffic_inspector.collapse')}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
+
+                {/* Desktop/tablet: table */}
+                <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full min-w-[720px] text-left border-separate border-spacing-0">
                     <thead className="sticky top-0 bg-[#0c0e14]/90 backdrop-blur-lg z-10">
                         <tr className="text-[10px] font-medium text-white/20 uppercase tracking-wider">

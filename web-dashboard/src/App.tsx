@@ -15,8 +15,9 @@ import {
   X,
   Zap
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { api, AUTH_EVENTS, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type MLStatsEnvelope, type CapturedRequest, type ModificationRule, type TunnelSessionHistory } from './api/client';
+import { api, AUTH_EVENTS, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type MLStatsEnvelope, type CapturedRequest, type ModificationRule, type TunnelSessionHistory, type Tunnel, type UserSession } from './api/client';
 import './index.css';
 import { Button } from './components/ui/Button';
 
@@ -39,16 +40,23 @@ const Reservations = React.lazy(() => import('./components/Reservations').then(m
 
 type NavTab = 'overview' | 'tunnels' | 'ai_gateway' | 'traffic' | 'settings' | 'api_keys' | 'reservations';
 
+function getAxiosStatus(err: unknown): number | undefined {
+  if (!err || typeof err !== 'object') return undefined;
+  const e = err as { response?: { status?: unknown } };
+  const s = e.response?.status;
+  return typeof s === 'number' ? s : undefined;
+}
+
 function App() {
   const { t, i18n } = useTranslation();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserSession | null>(null);
   const [isAuthStarted, setIsAuthStarted] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [activeTab, setActiveTab] = useState<NavTab>('overview');
   const [isConnectOpen, setIsConnectOpen] = useState(false);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsSnapshot | null>(null);
-  const [tunnels, setTunnels] = useState<any[]>([]);
+  const [tunnels, setTunnels] = useState<Tunnel[]>([]);
   const [anomalies, setAnomalies] = useState<AnomalyRecord[]>([]);
   const [mlStats, setMlStats] = useState<MLStatsEnvelope>({ stats: {}, active_tunnels: 0, ml_up: false, last_prediction_at: null });
   const [history, setHistory] = useState<CapturedRequest[]>([]);
@@ -57,6 +65,24 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // Handle OAuth callback redirect (/dashboard?login=success)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('login') === 'success' && !user) {
+      api.getMe()
+        .then((data) => {
+          if (data?.user) {
+            setUser(data.user);
+            localStorage.setItem('gorenel_user', JSON.stringify(data.user));
+            setIsAuthStarted(true);
+            window.history.replaceState({}, '', '/');
+          }
+        })
+        .catch(() => {});
+    }
+    // only depend on `user` to avoid conditional hook placement
+  }, [user]);
 
   const clearLocalSession = useCallback(() => {
     localStorage.removeItem('gorenel_user');
@@ -81,7 +107,7 @@ function App() {
           localStorage.setItem('gorenel_user', JSON.stringify(data.user));
           setIsAuthStarted(true); // Skip landing page for cookie-based sessions
         }
-      } catch (err) {
+      } catch {
         console.log('No active session');
         localStorage.removeItem('gorenel_user');
       } finally {
@@ -136,7 +162,7 @@ function App() {
       if (r.status === 'rejected') console.warn('API partial failure:', r.reason);
     });
 
-    const anyUnauthorized = failed.some((r: any) => r?.reason?.response?.status === 401);
+    const anyUnauthorized = failed.some((r) => r.status === 'rejected' && getAxiosStatus(r.reason) === 401);
     if (anyUnauthorized) {
       clearLocalSession();
       return;
@@ -173,23 +199,6 @@ function App() {
     const shareId = path.split('/')[2];
     return <ShareView shareId={shareId} />;
   }
-
-  // Handle OAuth callback redirect (/dashboard?login=success)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('login') === 'success' && !user) {
-      // OAuth just completed, check session
-      api.getMe().then((data) => {
-        if (data?.user) {
-          setUser(data.user);
-          localStorage.setItem('gorenel_user', JSON.stringify(data.user));
-          setIsAuthStarted(true);
-          // Clean URL
-          window.history.replaceState({}, '', '/');
-        }
-      }).catch(() => {});
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user || !isAuthStarted) {
     if (!isAuthStarted) {
@@ -229,7 +238,7 @@ function App() {
     </div>
   );
 
-  const NavItem = ({ id, icon: Icon, label }: { id: NavTab, icon: any, label: string }) => (
+  const NavItem = ({ id, icon: Icon, label }: { id: NavTab; icon: LucideIcon; label: string }) => (
     <button
       onClick={() => {
         setActiveTab(id);

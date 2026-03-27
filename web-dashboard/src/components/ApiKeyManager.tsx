@@ -33,11 +33,7 @@ export const ApiKeyManager: React.FC = () => {
     return () => window.clearTimeout(id);
   }, [toast]);
 
-  useEffect(() => {
-    fetchKeys();
-  }, []);
-
-  const fetchKeys = async () => {
+  const fetchKeys = useCallback(async () => {
     try {
       setLoading(true);
       const data = await api.listAPIKeys();
@@ -49,7 +45,11 @@ export const ApiKeyManager: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    fetchKeys();
+  }, [fetchKeys]);
 
   const handleCreateKey = async () => {
     setActionError(null);

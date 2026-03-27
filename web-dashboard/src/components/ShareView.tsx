@@ -17,7 +17,7 @@ export const ShareView: React.FC<ShareViewProps> = ({ shareId }) => {
             try {
                 const data = await api.getSharedTrace(shareId);
                 setTrace(data);
-            } catch (err) {
+            } catch {
                 setError('Shared trace not found or expired.');
             } finally {
                 setLoading(false);
