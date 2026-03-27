@@ -24,7 +24,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] overflow-hidden flex items-center justify-center">
-                <img src="/logo.png" alt="Gorenel" className="w-full h-full object-cover" />
+                <img src="/logo.png" alt="Gorenel" width="256" height="256" className="w-full h-full object-cover" />
               </div>
               <span className="font-semibold text-white tracking-tight">Gorenel</span>
             </div>
@@ -77,7 +77,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
           <div className="lg:hidden flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/[0.08] overflow-hidden">
-                <img src="/logo.png" alt="Gorenel" className="w-full h-full object-cover" />
+                <img src="/logo.png" alt="Gorenel" width="256" height="256" className="w-full h-full object-cover" />
               </div>
               <span className="font-semibold text-white tracking-tight">Gorenel</span>
             </div>

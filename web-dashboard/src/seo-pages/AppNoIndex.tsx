@@ -16,3 +16,5 @@ export function AppNoIndex() {
   );
 }
 
+export const Component = AppNoIndex;
+

@@ -1,12 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import React from 'react';
 import type { RouteRecord } from 'vite-react-ssg';
-import { useParams } from 'react-router-dom';
 import { RootLayout } from './RootLayout';
-import { AppNoIndex } from './seo-pages/AppNoIndex';
 import { LandingSeo } from './seo-pages/LandingSeo';
-import { ShareView } from './components/ShareView';
-import { Seo } from './seo/Seo';
 
 // Public marketing pages (TR-first). We'll expand these with docs/blog in later todos.
 const TrNgrokAlternative = React.lazy(() => import('./seo-pages/tr/NgrokAlternatifi').then(m => ({ default: m.TrNgrokAlternative })));
@@ -66,19 +62,13 @@ export const routes: RouteRecord[] = [
       // Share (default noindex; still needs to work)
       {
         path: '/share/:id',
-        element: (
-          <Page>
-            <ShareRoute />
-          </Page>
-        ),
-        entry: 'src/components/ShareView.tsx',
+        lazy: () => import('./seo-pages/ShareNoIndex'),
       },
 
       // App shell (dashboard). Not intended for indexing.
       {
         path: '/app/*',
-        element: <AppNoIndex />,
-        entry: 'src/seo-pages/AppNoIndex.tsx',
+        lazy: () => import('./seo-pages/AppNoIndex'),
       },
 
       // Back-compat: keep old /dashboard entrypoint working by redirecting to /app.
@@ -94,22 +84,6 @@ export const routes: RouteRecord[] = [
 function Redirect({ to }: { to: string }) {
   if (typeof window !== 'undefined') window.location.replace(to);
   return null;
-}
-
-function ShareRoute() {
-  const { id } = useParams();
-  return (
-    <>
-      <Seo
-        lang="tr"
-        title="Paylaşılan Trace | Gorenel"
-        description="Paylaşılan istek/yanıt iz kaydı."
-        canonicalPath={id ? `/share/${id}` : '/share'}
-        robots="noindex,nofollow"
-      />
-      <ShareView shareId={id || ''} />
-    </>
-  );
 }
 
 function Page({ children }: { children: React.ReactNode }) {

@@ -11,6 +11,7 @@ export default defineConfig(({ isSsrBuild }) => ({
     }),
   ],
   build: {
+    modulePreload: false,
     rollupOptions: isSsrBuild
       ? undefined
       : {

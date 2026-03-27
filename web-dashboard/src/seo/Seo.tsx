@@ -31,7 +31,7 @@ function absoluteUrl(pathOrUrl: string): string {
 export function Seo(props: Props) {
   const canonicalPath = props.canonicalPath ?? '/';
   const canonical = absoluteUrl(canonicalPath);
-  const ogImage = absoluteUrl(props.ogImagePath ?? '/logo.png');
+  const ogImage = absoluteUrl(props.ogImagePath ?? '/og-cover.jpg');
   const lang = props.lang ?? 'tr';
   const googleSiteVerification = import.meta.env?.VITE_GOOGLE_SITE_VERIFICATION;
 

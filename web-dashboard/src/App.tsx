@@ -295,7 +295,7 @@ function App() {
           <div className="h-full bg-[#0c0e14]/80 backdrop-blur-xl border border-white/[0.04] rounded-2xl flex flex-col p-4">
             <div className="flex items-center gap-2.5 mb-8 px-1">
               <div className="w-8 h-8 rounded-lg overflow-hidden border border-white/[0.08] shadow-glow-emerald">
-                <img src="/logo.png" alt="Gorenel Logo" className="w-full h-full object-cover" />
+                <img src="/logo.png" alt="Gorenel Logo" width="256" height="256" className="w-full h-full object-cover" />
               </div>
               <span className="font-semibold text-[15px] tracking-tight">GORENEL</span>
             </div>
@@ -342,7 +342,7 @@ function App() {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg overflow-hidden border border-white/[0.08]">
-              <img src="/logo.png" alt="Gorenel Logo" className="w-full h-full object-cover" />
+              <img src="/logo.png" alt="Gorenel Logo" width="256" height="256" className="w-full h-full object-cover" />
             </div>
             <span className="font-semibold tracking-tight">GORENEL</span>
           </div>
