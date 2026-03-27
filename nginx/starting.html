@@ -25,7 +25,7 @@
     <script>
       // Auto-refresh so users transition immediately when upstream is ready.
       setTimeout(function () {
-        window.location.reload();
+        window.location.replace('/?warm=' + Date.now());
       }, 3500);
     </script>
   </body>
