@@ -1,12 +1,16 @@
 FROM docker:dind
 
 # Install docker-compose and runtime tools
-RUN apk add --no-cache docker-compose bash curl psmisc socat
+RUN apk add --no-cache docker-compose bash curl psmisc socat nginx
 
 WORKDIR /app
 
 # Copy all project files
 COPY . .
+
+# Nginx reverse proxy: binds Fly's internal_port immediately (4002)
+COPY nginx/fly.conf /etc/nginx/http.d/default.conf
+COPY nginx/starting.html /usr/share/nginx/html/starting.html
 
 # Copy the entrypoint script
 COPY entrypoint-fly.sh /entrypoint.sh

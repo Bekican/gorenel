@@ -36,6 +36,10 @@ done
 
 echo "Docker daemon is ready!"
 
+# Start nginx immediately so Fly health checks can pass while services warm up.
+echo "Starting nginx on 0.0.0.0:4002 (health-check proxy)..."
+nginx
+
 # Verify docker-compose
 if ! command -v docker-compose &> /dev/null; then
     echo "docker-compose not found, or not in PATH. Checking alternative..."
@@ -49,15 +53,7 @@ if ! command -v docker-compose &> /dev/null; then
 fi
 
 echo "Configuring dashboard bridge ports for Fly..."
-export DASHBOARD_PORT=4002
-
-# Keep an explicit IPv4 listener on 0.0.0.0:4000 for Fly's socket checks,
-# and forward traffic to the dashboard container host port (4002).
-echo "Starting IPv4 dashboard bridge 0.0.0.0:4000 -> 127.0.0.1:4002 ..."
-while true; do
-  socat TCP4-LISTEN:4000,fork,reuseaddr,bind=0.0.0.0 TCP4:127.0.0.1:4002
-  sleep 1
-done &
+export DASHBOARD_PORT=4003
 
 # Control Port: Fly.io routes external:7000 -> internal_port:7005 (set in fly.toml)
 # Docker maps 7005 -> container:7000 (set in docker-compose.yml)
