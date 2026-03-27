@@ -1,5 +1,9 @@
-import { LandingPage } from '../components/LandingPage';
+import React, { Suspense } from 'react';
 import { Seo } from '../seo/Seo';
+
+const LandingPage = React.lazy(() =>
+  import('../components/LandingPage').then((m) => ({ default: m.LandingPage })),
+);
 
 export function LandingSeo() {
   return (
@@ -31,7 +35,19 @@ export function LandingSeo() {
           },
         ]}
       />
-      <LandingPage onLogin={() => { if (typeof window !== 'undefined') window.location.href = '/app'; }} />
+      <Suspense
+        fallback={
+          <div
+            className="min-h-screen bg-[#080a10] text-white flex items-center justify-center"
+            aria-busy="true"
+            aria-live="polite"
+          >
+            <span className="text-sm text-white/70">Loading…</span>
+          </div>
+        }
+      >
+        <LandingPage onLogin={() => { if (typeof window !== 'undefined') window.location.href = '/app'; }} />
+      </Suspense>
     </>
   );
 }

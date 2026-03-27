@@ -25,8 +25,9 @@ const STYLE: Record<NonNullable<Props['variant']>, { container: string; icon: st
 export const Alert: React.FC<Props> = ({ variant = 'info', title, children }) => {
   const Icon = variant === 'error' ? AlertTriangle : variant === 'success' ? CheckCircle2 : Info;
   const style = STYLE[variant];
+  const live = variant === 'error' ? { role: 'alert' as const, 'aria-live': 'assertive' as const } : {}
   return (
-    <div className={`rounded-xl border px-4 py-3 ${style.container} flex gap-3 text-sm`}>
+    <div className={`rounded-xl border px-4 py-3 ${style.container} flex gap-3 text-sm`} {...live}>
       <Icon className={`w-4 h-4 shrink-0 mt-0.5 ${style.icon}`} />
       <div className="min-w-0 flex-1">
         {title ? <div className="text-xs font-semibold mb-0.5">{title}</div> : null}

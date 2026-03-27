@@ -32,7 +32,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
           </div>
 
           <div className="mt-auto mb-auto space-y-8 max-w-md">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-wide text-white/50">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[11px] font-medium tracking-wide text-white/70">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
               Secure tunnels &middot; Reserved URLs &middot; Policy engine
             </div>
@@ -40,7 +40,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
             <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight text-white leading-tight">
               {title}
             </h1>
-            <p className="text-sm text-white/40 leading-relaxed max-w-sm">{subtitle}</p>
+            <p className="text-sm text-white/70 leading-relaxed max-w-sm">{subtitle}</p>
 
             <div className="grid grid-cols-2 gap-3 pt-2">
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-2">
@@ -51,16 +51,16 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title, subtitl
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-2">
                 <ShieldCheck className="w-4 h-4 text-blue-400/70" />
                 <div className="text-xs font-medium text-white/70">Per-tunnel policies</div>
-                <div className="text-[11px] text-white/35 leading-relaxed">Auth, allowlist, rate limit</div>
+                <div className="text-[11px] text-white/60 leading-relaxed">Auth, allowlist, rate limit</div>
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/[0.06] bg-black/30 p-4 font-mono text-xs text-white/50">
+            <div className="rounded-xl border border-white/[0.06] bg-black/30 p-4 font-mono text-xs text-white/70">
               <span className="text-emerald-400/60">$</span> gorenel start --subdomain my-device-01 --key-auth &lt;TOKEN&gt;
             </div>
           </div>
 
-          <div className="flex items-center gap-6 text-[11px] font-medium text-white/20">
+          <div className="flex items-center gap-6 text-[11px] font-medium text-white/55">
             <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-emerald-500/50" /> Encrypted</span>
             <span className="inline-flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-blue-500/50" /> Edge-ready</span>
           </div>

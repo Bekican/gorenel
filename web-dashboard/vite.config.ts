@@ -11,15 +11,21 @@ export default defineConfig(({ isSsrBuild }) => ({
     }),
   ],
   build: {
+    target: 'es2022',
     modulePreload: false,
     rollupOptions: isSsrBuild
       ? undefined
       : {
           output: {
-            manualChunks: {
-              'vendor-react': ['react', 'react-dom'],
-              charts: ['recharts'],
-              maps: ['leaflet', 'react-leaflet'],
+            manualChunks(id) {
+              if (!id.includes('node_modules')) return
+              if (id.includes('recharts')) return 'charts'
+              if (id.includes('leaflet') || id.includes('react-leaflet')) return 'maps'
+              if (id.includes('axios')) return 'http-vendor'
+              if (id.includes('i18next') || id.includes('react-i18next')) return 'i18n-vendor'
+              if (id.includes('react-router')) return 'router-vendor'
+              if (id.includes('react-dom')) return 'vendor-react'
+              if (id.includes('node_modules/react/')) return 'vendor-react'
             },
           },
         },

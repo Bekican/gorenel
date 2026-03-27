@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { User, Mail, Lock, Loader2, ArrowRight, Github, Languages } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from './AuthLayout';
@@ -40,6 +40,9 @@ function extractErrorMessage(err: unknown): string {
 
 export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onRegisterSuccess }) => {
   const { t, i18n } = useTranslation();
+  const nameId = useId();
+  const emailId = useId();
+  const passwordId = useId();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -93,6 +96,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
           onClick={toggleLanguage}
           className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-[11px] font-medium hover:bg-white/[0.07] transition-all"
           type="button"
+          aria-label={i18n.language === 'en' ? 'Switch to Turkish' : 'Switch to English'}
         >
           <Languages size={12} className="text-emerald-400/70" />
           {i18n.language.toUpperCase()}
@@ -102,7 +106,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
       <div className="space-y-6">
         <div className="space-y-1.5">
           <h2 className="text-xl font-semibold tracking-tight text-white">Create account</h2>
-          <p className="text-sm text-white/40">Get started with API keys, tunnels, and reserved URLs.</p>
+          <p className="text-sm text-white/70">Get started with API keys, tunnels, and reserved URLs.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -112,12 +116,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
 
           <div className="space-y-3.5">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-white/40 ml-0.5">
+              <label htmlFor={nameId} className="text-xs font-medium text-white/75 ml-0.5">
                 {t('auth.name')}
               </label>
               <Input
+                id={nameId}
                 type="text"
                 required
+                autoComplete="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
@@ -126,12 +132,14 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-white/40 ml-0.5">
+              <label htmlFor={emailId} className="text-xs font-medium text-white/75 ml-0.5">
                 {t('auth.email')}
               </label>
               <Input
+                id={emailId}
                 type="email"
                 required
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
@@ -140,19 +148,21 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-white/40 ml-0.5">
+              <label htmlFor={passwordId} className="text-xs font-medium text-white/75 ml-0.5">
                 {t('auth.password')}
               </label>
               <Input
+                id={passwordId}
                 type="password"
                 required
                 minLength={8}
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 leftIcon={<Lock className="w-4 h-4" />}
               />
-              <p className="text-[10px] text-white/20 mt-0.5 ml-0.5">Minimum 8 characters</p>
+              <p className="text-[10px] text-white/55 mt-0.5 ml-0.5">Minimum 8 characters</p>
             </div>
           </div>
 
@@ -179,7 +189,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
             <div className="w-full border-t border-white/[0.06]"></div>
           </div>
           <div className="relative flex justify-center text-xs">
-            <span className="bg-[#0d0f14] px-3 text-white/25 font-medium">or continue with</span>
+            <span className="bg-[#0d0f14] px-3 text-white/55 font-medium">or continue with</span>
           </div>
         </div>
 
@@ -192,7 +202,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
             type="button"
             className="w-full justify-center"
           >
-            <svg className="w-4 h-4 text-white/40" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-white/70" aria-hidden viewBox="0 0 24 24">
               <path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.9 3.24-2.04 4.38-1.26 1.26-3.26 2.4-6.48 2.4-5.06 0-9.14-4.12-9.14-9.18s4.08-9.18 9.14-9.18c2.82 0 4.92 1.1 6.36 2.4l2.4-2.4C18.54 1.08 15.72 0 12.48 0 5.61 0 0 5.61 0 12.48s5.61 12.48 12.48 12.48c3.75 0 6.6-1.23 8.79-3.54 2.19-2.31 2.88-5.52 2.88-8.19 0-.63-.06-1.26-.15-1.89H12.48z"/>
             </svg>
             Google
@@ -205,12 +215,12 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onSwitchToLogin, onR
             type="button"
             className="w-full justify-center"
           >
-            <Github className="w-4 h-4 text-white/40" />
+            <Github className="w-4 h-4 text-white/70" aria-hidden />
             GitHub
           </Button>
         </div>
 
-        <p className="text-center text-[13px] text-white/40">
+        <p className="text-center text-[13px] text-white/70">
           Already have an account?{' '}
           <button 
             onClick={onSwitchToLogin}

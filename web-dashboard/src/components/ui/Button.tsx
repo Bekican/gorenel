@@ -32,6 +32,7 @@ export const Button: React.FC<Props> = ({ variant = 'secondary', size = 'md', cl
       {...rest}
       className={[
         'inline-flex items-center justify-center font-semibold transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none select-none',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#080a10]',
         VARIANT[variant],
         SIZE[size],
         className,

@@ -80,7 +80,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                 <div className="max-w-6xl mx-auto px-6 md:px-10 py-3.5 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                         <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] overflow-hidden shadow-glow-emerald">
-                            <img src="/logo.png" alt="Gorenel" width="256" height="256" className="w-full h-full object-cover" />
+                            <img
+                                src="/logo.png"
+                                alt=""
+                                width={256}
+                                height={256}
+                                fetchPriority="high"
+                                decoding="async"
+                                className="w-full h-full object-cover"
+                            />
                         </div>
                         <span className="font-bold tracking-tight text-white text-[15px]">Gorenel</span>
                         <span className="hidden sm:inline-flex ml-2 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
