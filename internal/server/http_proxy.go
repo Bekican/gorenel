@@ -449,6 +449,9 @@ func (p *HTTPProxy) triggerMLAnalysis(method, path, host string, requestSize int
 	if p.mlClient == nil {
 		return
 	}
+	if shouldIgnoreAnomalyTraffic(clientIP) {
+		return
+	}
 	if requestSize < 0 {
 		requestSize = 0
 	}
@@ -538,6 +541,31 @@ func (p *HTTPProxy) triggerMLAnalysis(method, path, host string, requestSize int
 		}
 	})
 	_ = host // kept for future ML enrichment dimensions
+}
+
+func shouldIgnoreAnomalyTraffic(clientIP string) bool {
+	raw := strings.TrimSpace(clientIP)
+	if raw == "" {
+		return false
+	}
+
+	// Handle values that may include "ip:port".
+	if strings.Contains(raw, ":") {
+		if host, _, err := net.SplitHostPort(raw); err == nil {
+			raw = host
+		}
+	}
+
+	addr, err := netip.ParseAddr(raw)
+	if err != nil {
+		return false
+	}
+
+	// Ignore non-routable/internal traffic for anomaly generation.
+	if addr.IsLoopback() || addr.IsPrivate() || addr.IsLinkLocalUnicast() || addr.IsLinkLocalMulticast() || addr.IsUnspecified() {
+		return true
+	}
+	return false
 }
 
 func resolveTargetKey(host string, baseDomain string) (key string, isCustom bool) {

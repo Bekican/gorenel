@@ -40,7 +40,8 @@ function getMethodColor(method: string): string {
 function getSeverity(score: number): { label: string; color: string } {
     if (score >= 0.9) return { label: 'Critical', color: 'text-rose-300 bg-rose-500/10 border-rose-500/15' };
     if (score >= 0.7) return { label: 'High', color: 'text-orange-300 bg-orange-500/10 border-orange-500/15' };
-    return { label: 'Medium', color: 'text-yellow-300 bg-yellow-500/10 border-yellow-500/15' };
+    if (score >= 0.5) return { label: 'Medium', color: 'text-yellow-300 bg-yellow-500/10 border-yellow-500/15' };
+    return { label: 'Low', color: 'text-sky-300 bg-sky-500/10 border-sky-500/15' };
 }
 
 export const AnomalyAlerts: React.FC<Props> = ({ anomalies }) => {
