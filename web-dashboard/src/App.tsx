@@ -18,7 +18,6 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { api, AUTH_EVENTS, type Metrics, type AnalyticsSnapshot, type AnomalyRecord, type MLStatsEnvelope, type CapturedRequest, type ModificationRule, type TunnelSessionHistory, type Tunnel, type UserSession } from './api/client';
-import './index.css';
 import { Button } from './components/ui/Button';
 
 const MetricCard = React.lazy(() => import('./components/MetricCard').then(module => ({ default: module.MetricCard })));

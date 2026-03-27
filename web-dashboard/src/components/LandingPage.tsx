@@ -133,7 +133,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                             </h1>
 
                             {/* Subheadline */}
-                            <p className="text-base md:text-lg text-white/45 leading-relaxed max-w-lg">
+                            <p className="text-base md:text-lg text-white/65 leading-relaxed max-w-lg">
                                 {isTr
                                     ? 'Güvenli tüneller, sabit URL\'ler, trafik politikaları ve yapay zeka ile anomali tespiti — tek bir CLI komutuyla. Ngrok\'tan daha hızlı, daha güvenli ve tamamen açık kaynak.'
                                     : 'Secure tunnels, stable URLs, traffic policies and AI-powered anomaly detection — with a single CLI command. Faster than ngrok, more secure, and fully open-source.'
@@ -156,7 +156,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                             </div>
 
                             {/* Trust signals */}
-                            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 text-xs text-white/30">
+                            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 text-xs text-white/55">
                                 <div className="flex items-center gap-1.5">
                                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/60" />
                                     {isTr ? 'Kredi kartı gerekmez' : 'No credit card required'}
@@ -187,7 +187,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                             <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/40" />
                                             <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/40" />
                                         </div>
-                                        <span className="text-xs font-medium text-white/30 ml-2">terminal</span>
+                                        <span className="text-xs font-medium text-white/55 ml-2">terminal</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <Activity className="w-3 h-3 text-emerald-400/50 animate-pulse" />
@@ -195,26 +195,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                     </div>
                                 </div>
                                 <div className="p-5 space-y-4">
-                                    <div className="font-mono text-xs text-white/55 space-y-2.5">
+                                    <div className="font-mono text-xs text-white/75 space-y-2.5">
                                         <div><span className="text-emerald-400/60">$</span> gorenel start --port 3000</div>
-                                        <div className="text-white/30 pl-3">
+                                        <div className="text-white/60 pl-3">
                                             <span className="text-emerald-400/50">✓</span> {isTr ? 'Tünel oluşturuldu' : 'Tunnel established'}
-                                            <span className="text-white/15 ml-2">12ms</span>
+                                            <span className="text-white/45 ml-2">12ms</span>
                                         </div>
-                                        <div className="text-white/30 pl-3">
+                                        <div className="text-white/60 pl-3">
                                             <span className="text-emerald-400/50">✓</span> {isTr ? 'SSL sertifikası hazır' : 'SSL certificate ready'}
-                                            <span className="text-white/15 ml-2">auto</span>
+                                            <span className="text-white/45 ml-2">auto</span>
                                         </div>
-                                        <div className="text-white/30 pl-3">
+                                        <div className="text-white/60 pl-3">
                                             <span className="text-emerald-400/50">✓</span> {isTr ? 'AI anomali tespiti aktif' : 'AI anomaly detection active'}
-                                            <span className="text-white/15 ml-2">2 models</span>
+                                            <span className="text-white/45 ml-2">2 models</span>
                                         </div>
-                                        <div className="text-white/30 pl-3">
+                                        <div className="text-white/60 pl-3">
                                             <span className="text-emerald-400/50">✓</span> {isTr ? 'Rate limiter ayarlandı' : 'Rate limiter configured'}
-                                            <span className="text-white/15 ml-2">100 req/s</span>
+                                            <span className="text-white/45 ml-2">100 req/s</span>
                                         </div>
                                         <div className="mt-3 pt-3 border-t border-white/[0.06]">
-                                            <span className="text-white/25">{isTr ? 'Canlı adresiniz:' : 'Your live URL:'}</span>
+                                            <span className="text-white/55">{isTr ? 'Canlı adresiniz:' : 'Your live URL:'}</span>
                                         </div>
                                         <div className="text-emerald-400 font-semibold text-sm">
                                             https://my-app.gorenel.site
@@ -829,7 +829,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                         : <>Your localhost is ready <br className="hidden md:block" />for the <span className="text-emerald-400">world</span></>
                                     }
                                 </h2>
-                                <p className="text-base md:text-lg text-white/40 max-w-xl mx-auto leading-relaxed">
+                                <p className="text-base md:text-lg text-white/65 max-w-xl mx-auto leading-relaxed">
                                     {isTr
                                         ? 'Ücretsiz başlayın. Kredi kartı gerekmez. İlk tünelinizi 30 saniyede oluşturun ve AI korumasının farkını yaşayın.'
                                         : 'Start free. No credit card required. Create your first tunnel in 30 seconds and experience AI-powered protection.'
@@ -844,7 +844,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                         {isTr ? 'Canlı Demo' : 'View Live Demo'}
                                     </Button>
                                 </div>
-                                <p className="text-xs text-white/20 pt-2">
+                                <p className="text-xs text-white/50 pt-2">
                                     {isTr
                                         ? '✦ Tüm özellikler ücretsiz — açık kaynak proje'
                                         : '✦ All features free — open-source project'
@@ -866,7 +866,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                     </div>
                                     <span className="font-bold text-sm text-white">Gorenel</span>
                                 </div>
-                                <p className="text-xs text-white/25 leading-relaxed max-w-[200px]">
+                                <p className="text-xs text-white/55 leading-relaxed max-w-[200px]">
                                     {isTr
                                         ? 'AI destekli yeni nesil tünelleme platformu.'
                                         : 'AI-powered next-gen tunneling platform.'
@@ -874,31 +874,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 </p>
                             </div>
                             <div className="space-y-3">
-                                <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider">{isTr ? 'Ürün' : 'Product'}</h4>
-                                <div className="space-y-2 text-xs text-white/25">
-                                    <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Özellikler' : 'Features'}</div>
-                                    <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</div>
-                                    <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Değişiklik Günlüğü' : 'Changelog'}</div>
+                                <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Ürün' : 'Product'}</h4>
+                                <div className="space-y-2 text-xs text-white/55">
+                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Özellikler' : 'Features'}</div>
+                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</div>
+                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Değişiklik Günlüğü' : 'Changelog'}</div>
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider">{isTr ? 'Geliştirici' : 'Developer'}</h4>
-                                <div className="space-y-2 text-xs text-white/25">
-                                    <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Dokümantasyon' : 'Documentation'}</div>
-                                    <div className="hover:text-white/50 cursor-pointer transition-colors">API Reference</div>
-                                    <div className="hover:text-white/50 cursor-pointer transition-colors">GitHub</div>
+                                <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Geliştirici' : 'Developer'}</h4>
+                                <div className="space-y-2 text-xs text-white/55">
+                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Dokümantasyon' : 'Documentation'}</div>
+                                    <div className="hover:text-white/75 cursor-pointer transition-colors">API Reference</div>
+                                    <div className="hover:text-white/75 cursor-pointer transition-colors">GitHub</div>
                                 </div>
                             </div>
                             <div className="space-y-3">
-                                <h4 className="text-xs font-semibold text-white/40 uppercase tracking-wider">{isTr ? 'Şirket' : 'Company'}</h4>
-                                <div className="space-y-2 text-xs text-white/25">
-                                    <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Hakkımızda' : 'About'}</div>
-                                    <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Gizlilik Politikası' : 'Privacy Policy'}</div>
-                                    <div className="hover:text-white/50 cursor-pointer transition-colors">{isTr ? 'Hizmet Koşulları' : 'Terms of Service'}</div>
+                                <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Şirket' : 'Company'}</h4>
+                                <div className="space-y-2 text-xs text-white/55">
+                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Hakkımızda' : 'About'}</div>
+                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Gizlilik Politikası' : 'Privacy Policy'}</div>
+                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Hizmet Koşulları' : 'Terms of Service'}</div>
                                 </div>
                             </div>
                         </div>
-                        <div className="pt-6 border-t border-white/[0.04] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/20">
+                        <div className="pt-6 border-t border-white/[0.04] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/50">
                             <span>&copy; 2026 Gorenel. {isTr ? 'Tüm hakları saklıdır.' : 'All rights reserved.'}</span>
                             <div className="flex items-center gap-4">
                                 <span className="flex items-center gap-1.5">
