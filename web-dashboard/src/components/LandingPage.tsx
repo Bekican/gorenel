@@ -121,7 +121,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                             {/* Badge */}
                             <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-1.5 text-xs font-medium text-emerald-300/80 animate-fade-in">
                                 <Sparkles className="w-3.5 h-3.5" />
-                                {isTr ? 'Ngrok alternatifi — Yapay zeka destekli' : 'Ngrok alternative — AI-powered'}
+                                {isTr ? 'Yapay zeka destekli güvenli tünelleme' : 'AI-powered secure tunneling'}
                             </div>
 
                             {/* Headline */}
@@ -135,8 +135,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                             {/* Subheadline */}
                             <p className="text-base md:text-lg text-white/65 leading-relaxed max-w-lg">
                                 {isTr
-                                    ? 'Güvenli tüneller, sabit URL\'ler, trafik politikaları ve yapay zeka ile anomali tespiti — tek bir CLI komutuyla. Ngrok\'tan daha hızlı, daha güvenli ve tamamen açık kaynak.'
-                                    : 'Secure tunnels, stable URLs, traffic policies and AI-powered anomaly detection — with a single CLI command. Faster than ngrok, more secure, and fully open-source.'
+                                    ? 'Güvenli tüneller, sabit URL\'ler, trafik politikaları ve yapay zeka ile anomali tespiti — tek bir CLI komutuyla. Açık kaynak ve üretim için hazır.'
+                                    : 'Secure tunnels, stable URLs, traffic policies and AI-powered anomaly detection — with a single CLI command. Open source and production-ready.'
                                 }
                             </p>
 
