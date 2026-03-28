@@ -1076,22 +1076,35 @@ if (!(Test-Path $binaryPath) -or (Get-Item $binaryPath).Length -lt 1000) {
     exit 1
 }
 
-# Add to User PATH permanently if not already there
+# Add to User PATH permanently (dedupe; avoid leading ";"; works if User Path was empty)
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($userPath -notlike "*$installDir*") {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$installDir", "User")
-    Write-Host "Added $installDir to User PATH (restart terminal for permanent effect)" -ForegroundColor DarkCyan
+if ($null -eq $userPath) { $userPath = "" }
+$segments = @($userPath -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+$already = ($segments -contains $installDir)
+if (-not $already) {
+    $without = @($segments | Where-Object { $_ -ne $installDir })
+    $newUserPath = if ($without.Count -gt 0) { ($without -join ';') + ';' + $installDir } else { $installDir }
+    [Environment]::SetEnvironmentVariable("Path", $newUserPath, "User")
+    Write-Host "Added $installDir to User PATH." -ForegroundColor DarkCyan
+    try {
+        $HWND_BROADCAST = [IntPtr]0xffff
+        $WM_SETTINGCHANGE = 0x001a
+        $sig = '[DllImport("user32.dll", SetLastError=true)] public static extern IntPtr SendMessageTimeout(IntPtr hWnd, uint Msg, IntPtr wParam, string lParam, uint fuFlags, uint uTimeout, out IntPtr lpdwResult);'
+        Add-Type -Namespace Win32 -Name EnvNotify -MemberDefinition $sig -ErrorAction SilentlyContinue | Out-Null
+        $r = [IntPtr]::Zero
+        [void][Win32.EnvNotify]::SendMessageTimeout($HWND_BROADCAST, $WM_SETTINGCHANGE, [IntPtr]::Zero, "Environment", 2, 5000, [ref]$r)
+    } catch { }
 }
 
-# Add to current session PATH
+# Current process (e.g. iwr | iex one-liner): PATH + function so chained commands work
 if ($env:Path -notlike "*$installDir*") {
     $env:Path = "$installDir;$env:Path"
 }
-
-# Set alias for current session
 function global:gorenel { & $binaryPath @args }
 
 Write-Host "Gorenel installed to $binaryPath" -ForegroundColor Green
+Write-Host "Yeni bir PowerShell veya CMD penceresi acin; orada 'gorenel' komutu calisir." -ForegroundColor DarkGray
+Write-Host "Bu oturumda calismazsa tam yol: & '$binaryPath'" -ForegroundColor DarkGray
 Write-Host "Run: gorenel config set api_key YOUR_API_KEY; gorenel connect --port 3000" -ForegroundColor Yellow
 `
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
