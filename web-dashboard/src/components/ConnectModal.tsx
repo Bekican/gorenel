@@ -18,10 +18,11 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
     const host = window.location.hostname;
     const isWindows = typeof window !== 'undefined' && /win/i.test(navigator.platform);
     const apiToken = apiKey || 'demo-key-12345';
-    const binary = isWindows ? 'gorenel' : 'gorenel';
-    
+
     const serverUrl = host === 'localhost' ? 'ws://localhost:9091' : `wss://${host}/tunnel/connect`;
-    const command = `${binary} config set api_key ${apiToken} && ${binary} connect --server ${serverUrl} --port 3000`;
+    const command = isWindows
+      ? `$g = Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe'; & $g config set api_key ${apiToken}; & $g connect --server ${serverUrl} --port 3000`
+      : `gorenel config set api_key ${apiToken} && gorenel connect --server ${serverUrl} --port 3000`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(command);

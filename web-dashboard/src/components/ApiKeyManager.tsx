@@ -81,9 +81,10 @@ export const ApiKeyManager: React.FC = () => {
     showToast(t('api_keys_manager.copied_toast'));
   };
 
+  // Windows: single-line for pasting into PowerShell — uses full path so it works without PATH/profile in the same session.
   const installCmd = (key: string, isWindows: boolean) =>
     isWindows
-      ? `powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel config set api_key ${key}; gorenel connect --port 3000"`
+      ? `iwr -useb https://gorenel.site/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe'; & $g config set api_key ${key}; & $g connect --port 3000`
       : `curl -sSL https://gorenel.site/install.sh | bash -s --; gorenel config set api_key ${key}; gorenel connect --port 3000`;
 
   if (loading) {
@@ -252,16 +253,12 @@ export const ApiKeyManager: React.FC = () => {
                 <button
                   type="button"
                   className="group/cmd relative w-full rounded-xl border border-white/[0.06] bg-black/30 p-3.5 text-left font-mono text-[11px] leading-relaxed text-white/60 transition hover:border-emerald-500/15 hover:bg-black/40"
-                  onClick={() =>
-                    copyToClipboard(
-                      `powershell -ExecutionPolicy ByPass -Command "iwr -useb https://gorenel.site/install.ps1 | iex; gorenel config set api_key ${k.key}; gorenel connect --port 3000"`,
-                    )
-                  }
+                  onClick={() => copyToClipboard(installCmd(k.key, true))}
                 >
                   <div className="flex items-start gap-2.5 pr-4">
                     <span className="shrink-0 text-emerald-500/70">$</span>
                     <code className="min-w-0 flex-1 break-all">
-                      powershell -ExecutionPolicy ByPass -Command &quot;iwr -useb https://gorenel.site/install.ps1 | iex; gorenel config set api_key {k.key}; gorenel connect --port 3000&quot;
+                      {`iwr -useb https://gorenel.site/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe'; & $g config set api_key ${k.key}; & $g connect --port 3000`}
                     </code>
                   </div>
                   <div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md bg-emerald-500 px-2 py-1 text-[10px] font-semibold text-[#080a10] opacity-0 transition group-hover/cmd:opacity-100">

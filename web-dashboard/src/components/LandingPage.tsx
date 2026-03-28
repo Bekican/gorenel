@@ -61,6 +61,7 @@ const AnimatedNumber: React.FC<{ target: number; suffix?: string; prefix?: strin
 export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, onGoToDashboard }) => {
     const { t, i18n } = useTranslation();
     const isTr = i18n.language === 'tr';
+    const isWindowsClient = typeof navigator !== 'undefined' && /win/i.test(navigator.platform || '');
 
     const toggleLanguage = () => {
         i18n.changeLanguage(isTr ? 'en' : 'tr');
@@ -326,7 +327,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 desc: isTr
                                     ? 'Tek satır komutla Windows, macOS ve Linux için kurun. 10 saniye sürer.'
                                     : 'One-line install for Windows, macOS and Linux. Takes 10 seconds.',
-                                code: 'curl -sSL gorenel.site/install.sh | bash',
+                                code: isWindowsClient
+                                    ? 'iwr -useb https://gorenel.site/install.ps1 | iex'
+                                    : 'curl -sSL gorenel.site/install.sh | bash',
                                 color: 'emerald',
                             },
                             {
@@ -336,7 +339,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 desc: isTr
                                     ? 'Dashboard\'dan tek tıkla API anahtarınızı oluşturun ve CLI\'ya bağlayın.'
                                     : 'Generate your API key from the dashboard with one click and link it.',
-                                code: 'gorenel config set api_key gk_*****',
+                                code: isWindowsClient
+                                    ? `$g = Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe'; & $g config set api_key gk_*****`
+                                    : 'gorenel config set api_key gk_*****',
                                 color: 'blue',
                             },
                             {
@@ -346,7 +351,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 desc: isTr
                                     ? 'Localhost\'unuz artık HTTPS ile dünyaya açık. AI anomali tespiti otomatik aktif.'
                                     : 'Your localhost is now live with HTTPS. AI anomaly detection activates automatically.',
-                                code: 'gorenel start --port 3000',
+                                code: isWindowsClient
+                                    ? `& (Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe') connect --port 3000`
+                                    : 'gorenel connect --port 3000',
                                 color: 'violet',
                             },
                         ].map((item) => (

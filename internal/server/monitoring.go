@@ -1102,10 +1102,33 @@ if ($env:Path -notlike "*$installDir*") {
 }
 function global:gorenel { & $binaryPath @args }
 
+# Persist 'gorenel' in PowerShell: profile shim (works in new windows even if PATH refresh lags)
+try {
+    if ($PROFILE) {
+        $profileDir = Split-Path -Parent $PROFILE
+        if (!(Test-Path -LiteralPath $profileDir)) { New-Item -ItemType Directory -Path $profileDir -Force | Out-Null }
+        if (!(Test-Path -LiteralPath $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
+        $marker = '# Gorenel CLI (https://gorenel.site/install.ps1)'
+        $hasMarker = $false
+        if ((Get-Item -LiteralPath $PROFILE).Length -gt 0) {
+            $hasMarker = [bool](Select-String -LiteralPath $PROFILE -SimpleMatch $marker -Quiet -ErrorAction SilentlyContinue)
+        }
+        if (-not $hasMarker) {
+            Add-Content -LiteralPath $PROFILE -Value "" -Encoding UTF8
+            Add-Content -LiteralPath $PROFILE -Value $marker -Encoding UTF8
+            Add-Content -LiteralPath $PROFILE -Value "function global:gorenel {" -Encoding UTF8
+            Add-Content -LiteralPath $PROFILE -Value '  & (Join-Path $env:LOCALAPPDATA "gorenel\gorenel.exe") @args' -Encoding UTF8
+            Add-Content -LiteralPath $PROFILE -Value "}" -Encoding UTF8
+            Write-Host "PowerShell profiline 'gorenel' eklendi: $PROFILE" -ForegroundColor DarkCyan
+            Write-Host 'Bu pencerede hemen kullanmak icin: . $PROFILE' -ForegroundColor DarkGray
+        }
+    }
+} catch { }
+
 Write-Host "Gorenel installed to $binaryPath" -ForegroundColor Green
-Write-Host "Yeni bir PowerShell veya CMD penceresi acin; orada 'gorenel' komutu calisir." -ForegroundColor DarkGray
-Write-Host "Bu oturumda calismazsa tam yol: & '$binaryPath'" -ForegroundColor DarkGray
-Write-Host "Run: gorenel config set api_key YOUR_API_KEY; gorenel connect --port 3000" -ForegroundColor Yellow
+Write-Host "CMD / yeni PowerShell: PATH ile 'gorenel' (veya profil yuklendiyse 'gorenel')." -ForegroundColor DarkGray
+Write-Host "PATH sorununda tam yol: & '$binaryPath' connect --port 3000" -ForegroundColor DarkGray
+Write-Host 'Yapistir (PowerShell): iwr -useb https://gorenel.site/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA ''gorenel\gorenel.exe''; & $g config set api_key YOUR_API_KEY; & $g connect --port 3000' -ForegroundColor Yellow
 `
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(script))
