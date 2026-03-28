@@ -9,6 +9,10 @@ const URLS = [
   '/tr/localhost-disari-acma',
   '/tr/webhook-local-test',
   '/tr/docs/cli',
+  '/tr/gizlilik-politikasi',
+  '/en/privacy',
+  '/tr/docs/api',
+  '/en/docs/api',
 ];
 
 function xmlEscape(s) {

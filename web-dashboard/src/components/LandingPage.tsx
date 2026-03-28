@@ -27,7 +27,11 @@ import {
     Monitor
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { Button } from './ui/Button';
+
+const footerLinkClass =
+    'block hover:text-white/75 transition-colors text-inherit no-underline cursor-pointer';
 
 interface LandingPageProps {
     onLogin: () => void;
@@ -884,16 +888,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                             <div className="space-y-3">
                                 <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Ürün' : 'Product'}</h4>
                                 <div className="space-y-2 text-xs text-white/55">
-                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Özellikler' : 'Features'}</div>
-                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</div>
+                                    <Link className={footerLinkClass} to="/#features">{isTr ? 'Özellikler' : 'Features'}</Link>
+                                    <Link className={footerLinkClass} to="/#pricing">{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</Link>
                                     <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Değişiklik Günlüğü' : 'Changelog'}</div>
                                 </div>
                             </div>
                             <div className="space-y-3">
                                 <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Geliştirici' : 'Developer'}</h4>
                                 <div className="space-y-2 text-xs text-white/55">
-                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Dokümantasyon' : 'Documentation'}</div>
-                                    <div className="hover:text-white/75 cursor-pointer transition-colors">API Reference</div>
+                                    <Link className={footerLinkClass} to="/tr/docs/cli">{isTr ? 'Dokümantasyon' : 'Documentation'}</Link>
+                                    <Link className={footerLinkClass} to={isTr ? '/tr/docs/api' : '/en/docs/api'}>
+                                        {isTr ? 'API Referansı' : 'API Reference'}
+                                    </Link>
                                     <div className="hover:text-white/75 cursor-pointer transition-colors">GitHub</div>
                                 </div>
                             </div>
@@ -901,7 +907,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Şirket' : 'Company'}</h4>
                                 <div className="space-y-2 text-xs text-white/55">
                                     <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Hakkımızda' : 'About'}</div>
-                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Gizlilik Politikası' : 'Privacy Policy'}</div>
+                                    <Link className={footerLinkClass} to={isTr ? '/tr/gizlilik-politikasi' : '/en/privacy'}>
+                                        {isTr ? 'Gizlilik Politikası' : 'Privacy Policy'}
+                                    </Link>
                                     <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Hizmet Koşulları' : 'Terms of Service'}</div>
                                 </div>
                             </div>

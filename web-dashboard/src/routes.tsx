@@ -8,6 +8,8 @@ import { LandingSeo } from './seo-pages/LandingSeo';
 const TrNgrokAlternative = React.lazy(() => import('./seo-pages/tr/NgrokAlternatifi').then(m => ({ default: m.TrNgrokAlternative })));
 const TrLocalhostExpose = React.lazy(() => import('./seo-pages/tr/LocalhostDisariAcma').then(m => ({ default: m.TrLocalhostExpose })));
 const TrWebhookLocal = React.lazy(() => import('./seo-pages/tr/WebhookLocalTest').then(m => ({ default: m.TrWebhookLocalTest })));
+const PrivacyPage = React.lazy(() => import('./seo-pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })));
+const ApiReferencePage = React.lazy(() => import('./seo-pages/ApiReferencePage').then((m) => ({ default: m.ApiReferencePage })));
 
 export const routes: RouteRecord[] = [
   {
@@ -57,6 +59,42 @@ export const routes: RouteRecord[] = [
       {
         path: '/tr/docs/cli',
         lazy: () => import('./seo-pages/tr/docs/CliDoc'),
+      },
+      {
+        path: '/tr/gizlilik-politikasi',
+        element: (
+          <Page>
+            <PrivacyPage />
+          </Page>
+        ),
+        entry: 'src/seo-pages/PrivacyPage.tsx',
+      },
+      {
+        path: '/en/privacy',
+        element: (
+          <Page>
+            <PrivacyPage />
+          </Page>
+        ),
+        entry: 'src/seo-pages/PrivacyPage.tsx',
+      },
+      {
+        path: '/tr/docs/api',
+        element: (
+          <Page>
+            <ApiReferencePage />
+          </Page>
+        ),
+        entry: 'src/seo-pages/ApiReferencePage.tsx',
+      },
+      {
+        path: '/en/docs/api',
+        element: (
+          <Page>
+            <ApiReferencePage />
+          </Page>
+        ),
+        entry: 'src/seo-pages/ApiReferencePage.tsx',
       },
 
       // Share (default noindex; still needs to work)
