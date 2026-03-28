@@ -72,12 +72,20 @@ const resources = {
         "latency_chart": "P95 Latency (ms)"
       },
       "connect_modal": {
-        "title": "Connect Your Device",
-        "subtitle": "Securely expose your local app with Gorenel CLI.",
+        "title": "Open a tunnel",
+        "subtitle": "One copy-paste installs the CLI, saves your API key, and connects localhost:3000.",
         "download_btn": "Download CLI",
         "download_url": "/downloads/gorenel-windows-amd64.exe",
-        "command_label": "Connection Command",
-        "command_footer": "Copy and paste this command into your terminal."
+        "need_key": "Create an API key first (API Keys in the sidebar), then open this again.",
+        "tab_windows": "Windows",
+        "tab_unix": "Mac / Linux",
+        "minimal_toggle": "CLI already installed (skip download)",
+        "command_label": "Full command — copy",
+        "command_label_short": "Short command — copy",
+        "command_footer": "Paste into PowerShell (Windows) or Terminal (Mac/Linux), then press Enter.",
+        "hint_local_app": "Run your app on port 3000 (or change the port in the command).",
+        "download_only_win": "Download .exe only",
+        "download_only_unix": "Open install.sh (optional)"
       },
       "api_keys_manager": {
         "title": "API Keys",
@@ -114,13 +122,13 @@ const resources = {
       },
       "tunnels": {
         "empty_title": "Ready to launch?",
-        "empty_subtitle": "Your local services are just one command away from the global edge. Follow these 3 steps to go live.",
+        "empty_subtitle": "Use “New Tunnel” for a single line you paste in the terminal — no manual PATH setup.",
         "step1_title": "Get the CLI",
-        "step1_desc": "Download the lightweight binary for your OS.",
-        "step2_title": "Copy Login",
-        "step2_desc": "Grab your unique connection command.",
-        "step3_title": "Go Online",
-        "step3_desc": "Paste into terminal and watch the magic happen.",
+        "step1_desc": "The connect flow can install it for you automatically.",
+        "step2_title": "Copy one command",
+        "step2_desc": "From the modal: includes your API key and connect step.",
+        "step3_title": "Run it",
+        "step3_desc": "Keep the window open while your local app runs on port 3000.",
         "cta": "Start First Tunnel"
       },
       "modification_rules": {
@@ -257,12 +265,20 @@ const resources = {
         "latency_chart": "P95 Gecikme (ms)"
       },
       "connect_modal": {
-        "title": "Cihazını Bağla",
-        "subtitle": "Gorenel CLI ile yerel uygulamana tünel aç.",
+        "title": "Tünel aç",
+        "subtitle": "Tek kopyala-yapıştır: CLI kurulumu, API anahtarın ve localhost:3000 bağlantısı.",
         "download_btn": "CLI'yı İndir",
         "download_url": "/downloads/gorenel-windows-amd64.exe",
-        "command_label": "Bağlantı Komutu",
-        "command_footer": "Komutu terminale yapıştır ve çalıştır."
+        "need_key": "Önce kenar çubuktan API anahtarı oluştur, sonra burayı tekrar aç.",
+        "tab_windows": "Windows",
+        "tab_unix": "Mac / Linux",
+        "minimal_toggle": "CLI zaten kurulu (indirme adımını atla)",
+        "command_label": "Tam komut — kopyala",
+        "command_label_short": "Kısa komut — kopyala",
+        "command_footer": "Windows’ta PowerShell’e, Mac/Linux’ta Terminal’e yapıştırıp Enter’a bas.",
+        "hint_local_app": "Uygulamanı 3000 portunda çalıştır (veya komuttaki portu değiştir).",
+        "download_only_win": "Sadece .exe indir",
+        "download_only_unix": "install.sh dosyasını aç (isteğe bağlı)"
       },
       "api_keys_manager": {
         "title": "API Anahtarları",
@@ -299,13 +315,13 @@ const resources = {
       },
       "tunnels": {
         "empty_title": "Yayına hazır mısın?",
-        "empty_subtitle": "Yerel servislerin dünyadan sadece bir komut uzakta. Canlıya geçmek için bu 3 adımı izle.",
-        "step1_title": "CLI'yı İndir",
-        "step1_desc": "İşletim sistemin için hafif CLI aracını indir.",
-        "step2_title": "Giriş Komutunu Kopyala",
-        "step2_desc": "Sana özel bağlantı komutunu panelden al.",
-        "step3_title": "Çevrimiçi Ol",
-        "step3_desc": "Terminale yapıştır ve sihrin gerçekleşmesini izle.",
+        "empty_subtitle": "“Yeni tünel” ile tek satır komutu kopyala — PATH ile uğraşmana gerek yok.",
+        "step1_title": "CLI",
+        "step1_desc": "Bağlan penceresi kurulumu senin için otomatik yapabilir.",
+        "step2_title": "Tek komut kopyala",
+        "step2_desc": "Modal’daki satır API anahtarını ve bağlantıyı içerir.",
+        "step3_title": "Çalıştır",
+        "step3_desc": "Uygulaman 3000 portundayken pencereyi açık tut.",
         "cta": "İlk Tüneli Başlat"
       },
       "modification_rules": {

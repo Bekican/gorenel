@@ -5,6 +5,7 @@ import { api } from '../api/client';
 import { ConfirmDialog } from './ui/ConfirmDialog';
 import { Tooltip } from './ui/Tooltip';
 import { Button } from './ui/Button';
+import { tunnelQuickCommandFull } from '../lib/tunnelQuickCommand';
 
 interface APIKey {
   key: string;
@@ -81,11 +82,15 @@ export const ApiKeyManager: React.FC = () => {
     showToast(t('api_keys_manager.copied_toast'));
   };
 
-  // Windows: single-line for pasting into PowerShell — uses full path so it works without PATH/profile in the same session.
-  const installCmd = (key: string, isWindows: boolean) =>
-    isWindows
-      ? `iwr -useb https://gorenel.site/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe'; & $g config set api_key ${key}; & $g connect --port 3000`
-      : `curl -sSL https://gorenel.site/install.sh | bash -s --; gorenel config set api_key ${key}; gorenel connect --port 3000`;
+  const installCmd = (key: string, isWindows: boolean) => {
+    if (typeof window === 'undefined') return '';
+    return tunnelQuickCommandFull({
+      apiKey: key,
+      os: isWindows ? 'windows' : 'unix',
+      hostname: window.location.hostname,
+      protocol: window.location.protocol,
+    });
+  };
 
   if (loading) {
     return (
@@ -257,9 +262,7 @@ export const ApiKeyManager: React.FC = () => {
                 >
                   <div className="flex items-start gap-2.5 pr-4">
                     <span className="shrink-0 text-emerald-500/70">$</span>
-                    <code className="min-w-0 flex-1 break-all">
-                      {`iwr -useb https://gorenel.site/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe'; & $g config set api_key ${k.key}; & $g connect --port 3000`}
-                    </code>
+                    <code className="min-w-0 flex-1 break-all">{installCmd(k.key, true)}</code>
                   </div>
                   <div className="pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-md bg-emerald-500 px-2 py-1 text-[10px] font-semibold text-[#080a10] opacity-0 transition group-hover/cmd:opacity-100">
                     <Copy size={11} /> {t('api_keys_manager.copy_label')}
