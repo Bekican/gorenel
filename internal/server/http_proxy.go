@@ -270,6 +270,21 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.logger.Info("HTTP istek", zap.String("type", "subdomain"), zap.String("method", r.Method), zap.String("path", r.URL.Path), zap.String("subdomain", targetKey))
 	}
 
+	// Smart CORS handling
+	if pol, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok && pol.CORSEnabled {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Token")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+
+		if r.Method == http.MethodOptions {
+			statusCode = http.StatusNoContent
+			w.WriteHeader(statusCode)
+			return
+		}
+	}
+
 	session, exists := p.tunnelManager.GetTunnel(host)
 	if !exists {
 

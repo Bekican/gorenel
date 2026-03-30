@@ -21,6 +21,7 @@ type RegisterRequest struct {
 	// Security policies (applies to HTTP/WSS tunnel traffic)
 	KeyAuthToken string   `json:"key_auth_token,omitempty"`
 	IPWhitelist  []string `json:"ip_whitelist,omitempty"`
+	CORSEnabled  bool     `json:"cors_enabled,omitempty"`
 }
 
 type RegisterResponse struct {

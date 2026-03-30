@@ -64,6 +64,7 @@ type TunnelPolicy struct {
 	PathPrefix      string `json:"path_prefix,omitempty"`
 	ReplacePathFrom string `json:"replace_path_from,omitempty"`
 	ReplacePathTo   string `json:"replace_path_to,omitempty"`
+	CORSEnabled     bool   `json:"cors_enabled,omitempty"`
 }
 
 // TunnelManager maintains the mapping between host names and active tunnel sessions.
