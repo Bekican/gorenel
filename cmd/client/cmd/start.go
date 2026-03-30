@@ -36,6 +36,7 @@ var (
 	remotePort      int    // --- NEW: Requested remote port ---
 	keyAuthToken    string
 	ipWhitelist     []string
+	corsEnabled     bool
 	preferRegion    string
 
 	// Metrikler (atomic - thread-safe)
@@ -71,6 +72,7 @@ func init() {
 	startCmd.Flags().IntVarP(&remotePort, "remote-port", "r", 0, "İstenen uzak port (raw tüneller için)")
 	startCmd.Flags().StringVar(&keyAuthToken, "key-auth", "", "Tunnel key auth token (public requests must send header X-TOKEN)")
 	startCmd.Flags().StringArrayVar(&ipWhitelist, "ip-whitelist", []string{}, "Allowed client IP/CIDR (repeatable). Example: --ip-whitelist 1.2.3.4 --ip-whitelist 10.0.0.0/24")
+	startCmd.Flags().BoolVar(&corsEnabled, "cors", false, "Enable built-in Smart CORS handling at the proxy level")
 	startCmd.Flags().StringVar(&preferRegion, "region", "", "Prefer a Fly.io region for tunnel control-plane (sets Fly-Prefer-Region header, e.g. fra, ams, iad)")
 
 	// Viper ile config dosyasından değerleri bağla
@@ -255,6 +257,7 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 		LocalPort:       localPort,
 		KeyAuthToken:    strings.TrimSpace(keyAuthToken),
 		IPWhitelist:     ipWhitelist,
+		CORSEnabled:     corsEnabled,
 	}
 	reqPayload, err := json.Marshal(regReq)
 	if err != nil {

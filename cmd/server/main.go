@@ -449,6 +449,7 @@ func handleClient(conn net.Conn, tm *server.TunnelManager, authManager *authmgr.
 			policy.IPAllowlistEnabled = true
 			policy.IPAllowlist = regReq.IPWhitelist
 		}
+		policy.CORSEnabled = regReq.CORSEnabled
 
 		tm.RegisterTunnel(subdomain, session, regReq.CustomDomain, regReq.LocalPort, fullURL, authKey.UserID, regReq.TunnelType, policy)
 		defer tm.RemoveTunnel(subdomain)
