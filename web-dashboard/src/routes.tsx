@@ -10,6 +10,9 @@ const TrLocalhostExpose = React.lazy(() => import('./seo-pages/tr/LocalhostDisar
 const TrWebhookLocal = React.lazy(() => import('./seo-pages/tr/WebhookLocalTest').then(m => ({ default: m.TrWebhookLocalTest })));
 const PrivacyPage = React.lazy(() => import('./seo-pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })));
 const ApiReferencePage = React.lazy(() => import('./seo-pages/ApiReferencePage').then((m) => ({ default: m.ApiReferencePage })));
+const ChangelogPage = React.lazy(() => import('./seo-pages/ChangelogPage').then((m) => ({ default: m.ChangelogPage })));
+const AboutPage = React.lazy(() => import('./seo-pages/AboutPage').then((m) => ({ default: m.AboutPage })));
+const TermsPage = React.lazy(() => import('./seo-pages/TermsPage').then((m) => ({ default: m.TermsPage })));
 
 export const routes: RouteRecord[] = [
   {
@@ -95,6 +98,36 @@ export const routes: RouteRecord[] = [
           </Page>
         ),
         entry: 'src/seo-pages/ApiReferencePage.tsx',
+      },
+      {
+        path: '/tr/changelog',
+        element: <Page><ChangelogPage /></Page>,
+        entry: 'src/seo-pages/ChangelogPage.tsx',
+      },
+      {
+        path: '/en/changelog',
+        element: <Page><ChangelogPage /></Page>,
+        entry: 'src/seo-pages/ChangelogPage.tsx',
+      },
+      {
+        path: '/tr/hakkimizda',
+        element: <Page><AboutPage /></Page>,
+        entry: 'src/seo-pages/AboutPage.tsx',
+      },
+      {
+        path: '/en/about',
+        element: <Page><AboutPage /></Page>,
+        entry: 'src/seo-pages/AboutPage.tsx',
+      },
+      {
+        path: '/tr/hizmet-kosullari',
+        element: <Page><TermsPage /></Page>,
+        entry: 'src/seo-pages/TermsPage.tsx',
+      },
+      {
+        path: '/en/terms',
+        element: <Page><TermsPage /></Page>,
+        entry: 'src/seo-pages/TermsPage.tsx',
       },
 
       // Share (default noindex; still needs to work)

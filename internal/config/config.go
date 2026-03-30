@@ -71,7 +71,7 @@ func Load() (*Config, error) {
 	viper.SetDefault("BASE_DOMAIN", "gorenel.site")
 	viper.SetDefault("ACME_EMAIL", "admin@gorenel.site")
 
-	viper.SetDefault("RATE_LIMIT_REQUESTS", 1000)
+	viper.SetDefault("RATE_LIMIT_REQUESTS", 5000)
 	viper.SetDefault("RATE_LIMIT_WINDOW", 1*time.Minute)
 	viper.SetDefault("INSPECTOR_HISTORY_SIZE", 100)
 	viper.SetDefault("INSPECTOR_MAX_BODY_BYTES", int64(5*1024*1024))

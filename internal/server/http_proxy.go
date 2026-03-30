@@ -248,20 +248,37 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// RateLimiter kontrolü
-	// If per-tunnel policy specifies a custom quota, prefer it; otherwise use default limiter tiers.
-	if pol, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok && pol.RateLimitEnabled && pol.RateLimitRequests > 0 && pol.RateLimitWindowS > 0 {
-		q := limiter.Quota{Limit: pol.RateLimitRequests, WindowSize: time.Duration(pol.RateLimitWindowS) * time.Second}
-		if !p.advancedRL.AllowWithQuota("tunnel:"+targetKey+":"+clientIP, 1, q) {
+	// Bypass rate limiting for common static assets to improve page load performance for web apps.
+	isAsset := false
+	extIdx := strings.LastIndex(r.URL.Path, ".")
+	if extIdx != -1 {
+		ext := strings.ToLower(r.URL.Path[extIdx:])
+		switch ext {
+		case ".js", ".css", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff", ".woff2", ".ttf", ".otf", ".map":
+			isAsset = true
+		}
+	}
+
+	if !isAsset {
+		// If per-tunnel policy specifies a custom quota, prefer it; otherwise use default limiter tiers.
+		if pol, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok && pol.RateLimitEnabled && pol.RateLimitRequests > 0 && pol.RateLimitWindowS > 0 {
+			q := limiter.Quota{Limit: pol.RateLimitRequests, WindowSize: time.Duration(pol.RateLimitWindowS) * time.Second}
+			if !p.advancedRL.AllowWithQuota("tunnel:"+targetKey+":"+clientIP, 1, q) {
+				statusCode = http.StatusTooManyRequests
+				// Add CORS headers even on error responses to avoid breaking parallel fetch in browser
+				if pol.CORSEnabled {
+					w.Header().Set("Access-Control-Allow-Origin", "*")
+				}
+				http.Error(w, "Rate limit exceeded", statusCode)
+				p.logger.Warn("Per-tunnel rate limit exceeded", zap.String("target", targetKey))
+				return
+			}
+		} else if !p.advancedRL.Allow(targetKey, 1) {
 			statusCode = http.StatusTooManyRequests
-			http.Error(w, "Rate limit exceeded", statusCode)
-			p.logger.Warn("Per-tunnel rate limit exceeded", zap.String("target", targetKey))
+			http.Error(w, "Rate limit exceeded (Gorenel)", statusCode)
+			p.logger.Warn("Rate limit aşıldı", zap.String("target", targetKey))
 			return
 		}
-	} else if !p.advancedRL.Allow(targetKey, 1) {
-		statusCode = http.StatusTooManyRequests
-		http.Error(w, "Rate limit exceeded", statusCode)
-		p.logger.Warn("Rate limit aşıldı", zap.String("target", targetKey))
-		return
 	}
 
 	if isCustom {

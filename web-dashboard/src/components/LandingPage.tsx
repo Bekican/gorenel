@@ -897,7 +897,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 <div className="space-y-2 text-xs text-white/55">
                                     <Link className={footerLinkClass} to="/#features">{isTr ? 'Özellikler' : 'Features'}</Link>
                                     <Link className={footerLinkClass} to="/#pricing">{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</Link>
-                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Değişiklik Günlüğü' : 'Changelog'}</div>
+                                    <Link className={footerLinkClass} to={isTr ? '/tr/changelog' : '/en/changelog'}>{isTr ? 'Değişiklik Günlüğü' : 'Changelog'}</Link>
                                 </div>
                             </div>
                             <div className="space-y-3">
@@ -907,17 +907,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                     <Link className={footerLinkClass} to={isTr ? '/tr/docs/api' : '/en/docs/api'}>
                                         {isTr ? 'API Referansı' : 'API Reference'}
                                     </Link>
-                                    <div className="hover:text-white/75 cursor-pointer transition-colors">GitHub</div>
+                                    <a className={footerLinkClass} href="https://github.com/bekican/gorenel" target="_blank" rel="noopener noreferrer">GitHub</a>
                                 </div>
                             </div>
                             <div className="space-y-3">
                                 <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Şirket' : 'Company'}</h4>
                                 <div className="space-y-2 text-xs text-white/55">
-                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Hakkımızda' : 'About'}</div>
+                                    <Link className={footerLinkClass} to={isTr ? '/tr/hakkimizda' : '/en/about'}>{isTr ? 'Hakkımızda' : 'About'}</Link>
                                     <Link className={footerLinkClass} to={isTr ? '/tr/gizlilik-politikasi' : '/en/privacy'}>
                                         {isTr ? 'Gizlilik Politikası' : 'Privacy Policy'}
                                     </Link>
-                                    <div className="hover:text-white/75 cursor-pointer transition-colors">{isTr ? 'Hizmet Koşulları' : 'Terms of Service'}</div>
+                                    <Link className={footerLinkClass} to={isTr ? '/tr/hizmet-kosullari' : '/en/terms'}>{isTr ? 'Hizmet Koşulları' : 'Terms of Service'}</Link>
                                 </div>
                             </div>
                         </div>
