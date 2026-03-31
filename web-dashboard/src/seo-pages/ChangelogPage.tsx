@@ -152,7 +152,7 @@ export function ChangelogPage() {
         </header>
 
         <div className="relative space-y-12 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
-          {c.updates.map((u, i) => (
+          {c.updates.map((u) => (
             <div key={u.version} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
               {/* Timeline dot */}
               <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-[#080a10] bg-white/5 group-hover:bg-emerald-500/20 text-emerald-400 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 absolute left-0 md:left-1/2 transform transition-colors duration-300 z-10">

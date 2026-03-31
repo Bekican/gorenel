@@ -13,6 +13,12 @@ const URLS = [
   '/en/privacy',
   '/tr/docs/api',
   '/en/docs/api',
+  '/tr/changelog',
+  '/en/changelog',
+  '/tr/hakkimizda',
+  '/en/about',
+  '/tr/hizmet-kosullari',
+  '/en/terms',
 ];
 
 function xmlEscape(s) {

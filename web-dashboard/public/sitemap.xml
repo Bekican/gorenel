@@ -27,4 +27,22 @@
   <url>
     <loc>https://gorenel.site/en/docs/api</loc>
   </url>
+  <url>
+    <loc>https://gorenel.site/tr/changelog</loc>
+  </url>
+  <url>
+    <loc>https://gorenel.site/en/changelog</loc>
+  </url>
+  <url>
+    <loc>https://gorenel.site/tr/hakkimizda</loc>
+  </url>
+  <url>
+    <loc>https://gorenel.site/en/about</loc>
+  </url>
+  <url>
+    <loc>https://gorenel.site/tr/hizmet-kosullari</loc>
+  </url>
+  <url>
+    <loc>https://gorenel.site/en/terms</loc>
+  </url>
 </urlset>
