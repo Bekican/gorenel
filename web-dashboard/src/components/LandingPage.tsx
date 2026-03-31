@@ -32,6 +32,16 @@ import { Button } from './ui/Button';
 const footerLinkClass =
     'relative z-[60] pointer-events-auto block hover:text-white/75 transition-colors text-inherit no-underline cursor-pointer';
 
+type FooterDialogKey =
+    | 'features'
+    | 'why_free'
+    | 'changelog'
+    | 'docs'
+    | 'api'
+    | 'about'
+    | 'privacy'
+    | 'terms';
+
 interface LandingPageProps {
     onLogin: () => void;
     isLoggedIn?: boolean;
@@ -61,12 +71,188 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
     const { t, i18n } = useTranslation();
     const isTr = i18n.language === 'tr';
     const isWindowsClient = typeof navigator !== 'undefined' && /win/i.test(navigator.platform || '');
+    const [footerDialog, setFooterDialog] = useState<FooterDialogKey | null>(null);
 
     const toggleLanguage = () => {
         i18n.changeLanguage(isTr ? 'en' : 'tr');
     };
 
     const handleCTA = isLoggedIn ? onGoToDashboard : onLogin;
+
+    const footerCopy = (key: FooterDialogKey) => {
+        const common = isTr
+            ? {
+                cta: 'Detay sayfasını aç',
+                close: 'Kapat',
+            }
+            : {
+                cta: 'Open full page',
+                close: 'Close',
+            };
+
+        switch (key) {
+            case 'features':
+                return isTr
+                    ? {
+                        title: 'Özellikler',
+                        body: [
+                            'Gorenel; tek komutla HTTPS tünel açma, sabit URL (reserved subdomain), trafik inceleme (Inspector) ve tünel politikaları (KeyAuth, Basic Auth, IP allowlist, rate limit) sunan bir altyapıdır.',
+                            'Amaç: geliştirme, demo ve üretim benzeri ortamlarda “localhost’u dünyaya açma” sürecini güvenlik ve gözlemlenebilirlikle birlikte çözmek.',
+                        ],
+                        href: '/#features',
+                        ...common,
+                    }
+                    : {
+                        title: 'Features',
+                        body: [
+                            'Gorenel provides one-command HTTPS tunnels, stable URLs (reserved subdomains), a Traffic Inspector, and per-tunnel policies (KeyAuth, Basic Auth, IP allowlist, rate limits).',
+                            'Goal: ship localhost to the world while keeping security and observability built-in.',
+                        ],
+                        href: '/#features',
+                        ...common,
+                    };
+            case 'why_free':
+                return isTr
+                    ? {
+                        title: 'Neden Ücretsiz?',
+                        body: [
+                            'Bu sürüm demo/erken erişim: ürünü hızla iterasyonlamak, topluluk geri bildirimini toplamak ve geliştiricilerin kolayca denemesini sağlamak için ücretsiz sunuyoruz.',
+                            'Güvenilirlik ve güvenlik kritik olduğu için açık kaynak yaklaşımını benimsiyoruz: geliştikçe şeffaf kalmak ve katkıyla büyümek hedefimiz.',
+                        ],
+                        href: '/#pricing',
+                        ...common,
+                    }
+                    : {
+                        title: 'Why Free?',
+                        body: [
+                            'This is a demo/early-access phase. We keep it free to iterate fast, gather feedback, and make it easy for developers to try.',
+                            'We’re building in the open so trust and security stay transparent as the platform evolves.',
+                        ],
+                        href: '/#pricing',
+                        ...common,
+                    };
+            case 'changelog':
+                return isTr
+                    ? {
+                        title: 'Değişiklik Günlüğü',
+                        body: [
+                            'Yeni özellikleri, güvenlik iyileştirmelerini ve düzeltmeleri versiyon bazında takip edebilirsiniz.',
+                            'Panel, API dokümanı ve kurulum akışındaki değişiklikler de burada listelenir.',
+                        ],
+                        href: '/tr/changelog',
+                        ...common,
+                    }
+                    : {
+                        title: 'Changelog',
+                        body: [
+                            'Track new features, security improvements, and fixes by version.',
+                            'Dashboard, API docs, and install-flow updates are also listed here.',
+                        ],
+                        href: '/en/changelog',
+                        ...common,
+                    };
+            case 'docs':
+                return isTr
+                    ? {
+                        title: 'Dokümantasyon',
+                        body: [
+                            'CLI kurulumu ve hızlı başlangıç adımları burada: API key ayarlama, tünel açma ve temel kullanım senaryoları.',
+                            'Hedef: tek satır komutla çalışır hale gelmek ve tüneli güvenle yönetmek.',
+                        ],
+                        href: '/tr/docs/cli',
+                        ...common,
+                    }
+                    : {
+                        title: 'Documentation',
+                        body: [
+                            'CLI install and quickstart: setting your API key, opening a tunnel, and common workflows.',
+                            'Goal: get working with a single command and manage tunnels safely.',
+                        ],
+                        href: '/tr/docs/cli',
+                        ...common,
+                    };
+            case 'api':
+                return isTr
+                    ? {
+                        title: 'API Referansı',
+                        body: [
+                            'Kontrol düzlemi (monitoring) HTTP uç noktalarının özeti: kimlik, anahtarlar, tüneller, inspector, anomali kayıtları ve ML istatistikleri.',
+                            'Entegrasyon geliştirmek veya otomasyon yazmak için başlangıç noktasıdır.',
+                        ],
+                        href: '/tr/docs/api',
+                        ...common,
+                    }
+                    : {
+                        title: 'API Reference',
+                        body: [
+                            'Overview of control-plane (monitoring) HTTP endpoints: auth, keys, tunnels, inspector, anomalies, and ML stats.',
+                            'Use it as the starting point for integrations and automation.',
+                        ],
+                        href: '/en/docs/api',
+                        ...common,
+                    };
+            case 'about':
+                return isTr
+                    ? {
+                        title: 'Hakkımızda',
+                        body: [
+                            'Gorenel; tünelleme altyapısını “güvenlik + gözlemlenebilirlik + hız” üçlüsüyle birlikte ele alan bir geliştirici aracıdır.',
+                            'Go backend, React dashboard ve ML servisleriyle; trafik analizi ve politika yönetimini tek yerde toplar.',
+                        ],
+                        href: '/tr/hakkimizda',
+                        ...common,
+                    }
+                    : {
+                        title: 'About',
+                        body: [
+                            'Gorenel is a developer tool that treats tunneling as a security + observability + performance problem.',
+                            'Built with a Go backend, React dashboard, and ML services to centralize policy and traffic analysis.',
+                        ],
+                        href: '/en/about',
+                        ...common,
+                    };
+            case 'privacy':
+                return isTr
+                    ? {
+                        title: 'Gizlilik Politikası',
+                        body: [
+                            'Hesap verileri, oturum/cookie bilgileri ve tünel trafiğine ait metadataların hangi amaçlarla işlendiğini açıklar.',
+                            'Inspector üzerinden kaydettiğiniz veya paylaştığınız örnek istek/yanıtlar da kapsam dahilindedir.',
+                        ],
+                        href: '/tr/gizlilik-politikasi',
+                        ...common,
+                    }
+                    : {
+                        title: 'Privacy Policy',
+                        body: [
+                            'Explains how we process account data, session/cookies, and tunnel traffic metadata.',
+                            'Also covers request/response samples you capture or share via the Inspector.',
+                        ],
+                        href: '/en/privacy',
+                        ...common,
+                    };
+            case 'terms':
+                return isTr
+                    ? {
+                        title: 'Hizmet Koşulları',
+                        body: [
+                            'Platformu kullanırken kabul edilebilir kullanım kuralları, güvenlik analizi, sorumluluk reddi ve hesap askıya alma koşullarını özetler.',
+                            'Hizmet henüz demo/erken sürüm olduğu için kesinti ve değişiklikler yaşanabilir.',
+                        ],
+                        href: '/tr/hizmet-kosullari',
+                        ...common,
+                    }
+                    : {
+                        title: 'Terms of Service',
+                        body: [
+                            'Summarizes acceptable use, security analysis, disclaimers, and account suspension conditions.',
+                            'This is still a demo/early version, so changes and downtime may occur.',
+                        ],
+                        href: '/en/terms',
+                        ...common,
+                    };
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#080a10] text-white font-sans">
@@ -894,29 +1080,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                             <div className="space-y-3">
                                 <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Ürün' : 'Product'}</h4>
                                 <div className="space-y-2 text-xs text-white/55">
-                                    <a className={footerLinkClass} href="/#features">{isTr ? 'Özellikler' : 'Features'}</a>
-                                    <a className={footerLinkClass} href="/#pricing">{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</a>
-                                    <a className={footerLinkClass} href={isTr ? '/tr/changelog' : '/en/changelog'}>{isTr ? 'Değişiklik Günlüğü' : 'Changelog'}</a>
+                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('features')}>{isTr ? 'Özellikler' : 'Features'}</button>
+                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('why_free')}>{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</button>
+                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('changelog')}>{isTr ? 'Değişiklik Günlüğü' : 'Changelog'}</button>
                                 </div>
                             </div>
                             <div className="space-y-3">
                                 <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Geliştirici' : 'Developer'}</h4>
                                 <div className="space-y-2 text-xs text-white/55">
-                                    <a className={footerLinkClass} href="/tr/docs/cli">{isTr ? 'Dokümantasyon' : 'Documentation'}</a>
-                                    <a className={footerLinkClass} href={isTr ? '/tr/docs/api' : '/en/docs/api'}>
-                                        {isTr ? 'API Referansı' : 'API Reference'}
-                                    </a>
+                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('docs')}>{isTr ? 'Dokümantasyon' : 'Documentation'}</button>
+                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('api')}>{isTr ? 'API Referansı' : 'API Reference'}</button>
                                     <a className={footerLinkClass} href="https://github.com/bekican/gorenel" target="_blank" rel="noopener noreferrer">GitHub</a>
                                 </div>
                             </div>
                             <div className="space-y-3">
                                 <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Şirket' : 'Company'}</h4>
                                 <div className="space-y-2 text-xs text-white/55">
-                                    <a className={footerLinkClass} href={isTr ? '/tr/hakkimizda' : '/en/about'}>{isTr ? 'Hakkımızda' : 'About'}</a>
-                                    <a className={footerLinkClass} href={isTr ? '/tr/gizlilik-politikasi' : '/en/privacy'}>
-                                        {isTr ? 'Gizlilik Politikası' : 'Privacy Policy'}
-                                    </a>
-                                    <a className={footerLinkClass} href={isTr ? '/tr/hizmet-kosullari' : '/en/terms'}>{isTr ? 'Hizmet Koşulları' : 'Terms of Service'}</a>
+                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('about')}>{isTr ? 'Hakkımızda' : 'About'}</button>
+                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('privacy')}>{isTr ? 'Gizlilik Politikası' : 'Privacy Policy'}</button>
+                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('terms')}>{isTr ? 'Hizmet Koşulları' : 'Terms of Service'}</button>
                                 </div>
                             </div>
                         </div>
@@ -934,6 +1116,52 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                     </div>
                 </footer>
             </main>
+
+            {/* Footer modal */}
+            {footerDialog && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+                    <div className="w-full max-w-xl rounded-2xl border border-white/[0.10] bg-[#0b0e14] shadow-elevated overflow-hidden">
+                        <div className="flex items-start justify-between gap-4 p-5 border-b border-white/[0.06]">
+                            <div className="min-w-0">
+                                <h3 className="text-base md:text-lg font-semibold text-white/90 truncate">
+                                    {footerCopy(footerDialog).title}
+                                </h3>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFooterDialog(null)}
+                                className="p-2 rounded-lg hover:bg-white/[0.06] text-white/45 hover:text-white transition-colors"
+                                aria-label={isTr ? 'Kapat' : 'Close'}
+                            >
+                                <XIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div className="p-5 space-y-4">
+                            <div className="space-y-3 text-sm text-white/65 leading-relaxed">
+                                {footerCopy(footerDialog).body.map((p: string) => (
+                                    <p key={p.slice(0, 40)}>{p}</p>
+                                ))}
+                            </div>
+                            <div className="pt-4 border-t border-white/[0.06] flex flex-col sm:flex-row gap-2 sm:justify-end">
+                                <a
+                                    className="inline-flex items-center justify-center rounded-xl border border-white/[0.10] bg-white/[0.04] px-4 py-2 text-sm font-medium text-white/80 hover:bg-white/[0.06] transition-colors"
+                                    href={footerCopy(footerDialog).href}
+                                >
+                                    {footerCopy(footerDialog).cta}
+                                    <ArrowRight size={16} />
+                                </a>
+                                <button
+                                    type="button"
+                                    onClick={() => setFooterDialog(null)}
+                                    className="inline-flex items-center justify-center rounded-xl border border-white/[0.10] bg-transparent px-4 py-2 text-sm font-medium text-white/60 hover:bg-white/[0.04] transition-colors"
+                                >
+                                    {footerCopy(footerDialog).close}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
