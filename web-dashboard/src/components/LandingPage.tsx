@@ -1080,25 +1080,73 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                             <div className="space-y-3">
                                 <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Ürün' : 'Product'}</h4>
                                 <div className="space-y-2 text-xs text-white/55">
-                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('features')}>{isTr ? 'Özellikler' : 'Features'}</button>
-                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('why_free')}>{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</button>
-                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('changelog')}>{isTr ? 'Değişiklik Günlüğü' : 'Changelog'}</button>
+                                    <a
+                                        className={footerLinkClass}
+                                        href="/#features"
+                                        onClick={(e) => { e.preventDefault(); setFooterDialog('features'); }}
+                                    >
+                                        {isTr ? 'Özellikler' : 'Features'}
+                                    </a>
+                                    <a
+                                        className={footerLinkClass}
+                                        href="/#pricing"
+                                        onClick={(e) => { e.preventDefault(); setFooterDialog('why_free'); }}
+                                    >
+                                        {isTr ? 'Neden Ücretsiz?' : 'Why Free?'}
+                                    </a>
+                                    <a
+                                        className={footerLinkClass}
+                                        href={isTr ? '/tr/changelog' : '/en/changelog'}
+                                        onClick={(e) => { e.preventDefault(); setFooterDialog('changelog'); }}
+                                    >
+                                        {isTr ? 'Değişiklik Günlüğü' : 'Changelog'}
+                                    </a>
                                 </div>
                             </div>
                             <div className="space-y-3">
                                 <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Geliştirici' : 'Developer'}</h4>
                                 <div className="space-y-2 text-xs text-white/55">
-                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('docs')}>{isTr ? 'Dokümantasyon' : 'Documentation'}</button>
-                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('api')}>{isTr ? 'API Referansı' : 'API Reference'}</button>
+                                    <a
+                                        className={footerLinkClass}
+                                        href="/tr/docs/cli"
+                                        onClick={(e) => { e.preventDefault(); setFooterDialog('docs'); }}
+                                    >
+                                        {isTr ? 'Dokümantasyon' : 'Documentation'}
+                                    </a>
+                                    <a
+                                        className={footerLinkClass}
+                                        href={isTr ? '/tr/docs/api' : '/en/docs/api'}
+                                        onClick={(e) => { e.preventDefault(); setFooterDialog('api'); }}
+                                    >
+                                        {isTr ? 'API Referansı' : 'API Reference'}
+                                    </a>
                                     <a className={footerLinkClass} href="https://github.com/bekican/gorenel" target="_blank" rel="noopener noreferrer">GitHub</a>
                                 </div>
                             </div>
                             <div className="space-y-3">
                                 <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Şirket' : 'Company'}</h4>
                                 <div className="space-y-2 text-xs text-white/55">
-                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('about')}>{isTr ? 'Hakkımızda' : 'About'}</button>
-                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('privacy')}>{isTr ? 'Gizlilik Politikası' : 'Privacy Policy'}</button>
-                                    <button type="button" className={footerLinkClass} onClick={() => setFooterDialog('terms')}>{isTr ? 'Hizmet Koşulları' : 'Terms of Service'}</button>
+                                    <a
+                                        className={footerLinkClass}
+                                        href={isTr ? '/tr/hakkimizda' : '/en/about'}
+                                        onClick={(e) => { e.preventDefault(); setFooterDialog('about'); }}
+                                    >
+                                        {isTr ? 'Hakkımızda' : 'About'}
+                                    </a>
+                                    <a
+                                        className={footerLinkClass}
+                                        href={isTr ? '/tr/gizlilik-politikasi' : '/en/privacy'}
+                                        onClick={(e) => { e.preventDefault(); setFooterDialog('privacy'); }}
+                                    >
+                                        {isTr ? 'Gizlilik Politikası' : 'Privacy Policy'}
+                                    </a>
+                                    <a
+                                        className={footerLinkClass}
+                                        href={isTr ? '/tr/hizmet-kosullari' : '/en/terms'}
+                                        onClick={(e) => { e.preventDefault(); setFooterDialog('terms'); }}
+                                    >
+                                        {isTr ? 'Hizmet Koşulları' : 'Terms of Service'}
+                                    </a>
                                 </div>
                             </div>
                         </div>
