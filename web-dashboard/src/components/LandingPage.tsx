@@ -875,7 +875,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                 </section>
 
                 {/* ═══════════════════════  FOOTER  ═══════════════════════ */}
-                <footer className="border-t border-white/[0.04]">
+                <footer className="relative z-20 pointer-events-auto border-t border-white/[0.04]">
                     <div className="max-w-6xl mx-auto px-6 md:px-10 py-10">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
                             <div className="space-y-3">
