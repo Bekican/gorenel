@@ -834,8 +834,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                 <section className="border-t border-white/[0.04]">
                     <div className="max-w-6xl mx-auto px-6 md:px-10 py-24">
                         <div className="relative rounded-3xl border border-white/[0.08] bg-gradient-to-br from-emerald-500/[0.08] to-cyan-500/[0.04] overflow-hidden">
-                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.12),transparent_60%)]" />
-                            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+                            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.12),transparent_60%)]" />
+                            <div className="absolute top-0 right-0 pointer-events-none w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                             <div className="relative px-8 md:px-14 py-14 md:py-20 text-center space-y-6">
                                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.08] px-3 py-1 text-xs font-medium text-emerald-300/70 mb-2">
                                     <Zap className="w-3.5 h-3.5" />
@@ -874,7 +874,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                 </section>
 
                 {/* ═══════════════════════  FOOTER  ═══════════════════════ */}
-                <footer className="relative z-20 pointer-events-auto border-t border-white/[0.04]">
+                <footer className="relative z-[80] pointer-events-auto border-t border-white/[0.04]">
                     <div className="max-w-6xl mx-auto px-6 md:px-10 py-10">
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
                             <div className="space-y-3">
