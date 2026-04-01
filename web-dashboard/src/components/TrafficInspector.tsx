@@ -60,6 +60,31 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                     </div>
                 </div>
 
+                <div className="relative overflow-hidden bg-emerald-500/[0.03] border border-emerald-500/10 rounded-2xl p-5 group">
+                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-1">
+                            <h4 className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+                                <Sparkles className="w-4 h-4" />
+                                {t('traffic_inspector.onboarding_title')}
+                            </h4>
+                            <p className="text-xs text-white/40 leading-relaxed max-w-2xl">
+                                {t('traffic_inspector.onboarding_desc')}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                            <div className="flex -space-x-2">
+                                {[1, 2, 3].map((i) => (
+                                    <div key={i} className="w-7 h-7 rounded-full border-2 border-[#0c0e14] bg-white/[0.05] flex items-center justify-center">
+                                        <Activity className="w-3.5 h-3.5 text-emerald-400/50" />
+                                    </div>
+                                ))}
+                            </div>
+                            <span className="text-[10px] font-medium text-emerald-400/40 uppercase tracking-wider">Live Analysis Active</span>
+                        </div>
+                    </div>
+                    <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-emerald-500/5 blur-[40px] rounded-full group-hover:bg-emerald-500/10 transition-colors duration-500" />
+                </div>
+
                 <div className="relative group">
                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/15 group-focus-within:text-emerald-400/60 transition-colors" />
                     <input

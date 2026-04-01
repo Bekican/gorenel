@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Trash2, Link2, Unlink2, RefreshCcw } from 'lucide-react';
+import { Plus, Trash2, Link2, Unlink2, RefreshCcw, Sparkles, Globe, ShieldCheck } from 'lucide-react';
 import { api, type ReservedSubdomain } from '../api/client';
+import { useTranslation } from 'react-i18next';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Alert } from './ui/Alert';
 
 export const Reservations: React.FC = () => {
+  const { t } = useTranslation();
   const [items, setItems] = useState<ReservedSubdomain[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,14 +76,42 @@ export const Reservations: React.FC = () => {
       <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 md:p-8 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-white">Reserved URLs</h3>
+            <h3 className="text-lg font-semibold text-white">{t('reservations.title')}</h3>
             <p className="text-sm text-white/35">
-              Stable subdomains for devices. Use via CLI <span className="font-mono text-white/55">--subdomain</span>.
+              {t('reservations.subtitle')}
             </p>
           </div>
           <Button type="button" variant="secondary" size="sm" onClick={refresh}>
-            <RefreshCcw size={13} /> Refresh
+            <RefreshCcw size={13} /> {t('common.loading')}
           </Button>
+        </div>
+
+        <div className="relative overflow-hidden bg-violet-500/[0.03] border border-violet-500/10 rounded-2xl p-6 group">
+          <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-6">
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-violet-400 flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                {t('reservations.onboarding_title')}
+              </h4>
+              <p className="text-xs text-white/40 leading-relaxed max-w-xl">
+                {t('reservations.onboarding_desc')}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 shrink-0">
+               <div className="p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl space-y-1">
+                 <Globe className="w-3.5 h-3.5 text-violet-400/50" />
+                 <div className="text-[10px] font-medium text-white/40">{t('reservations.stable_endpoints')}</div>
+               </div>
+               <div className="p-3 bg-white/[0.02] border border-white/[0.04] rounded-xl space-y-1">
+                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-400/50" />
+                 <div className="text-[10px] font-medium text-white/40">{t('reservations.reserve_btn')}</div>
+               </div>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-2 text-[10px] text-white/20 bg-white/[0.02] w-fit px-2.5 py-1.5 rounded-lg border border-white/[0.04]">
+            <span className="font-mono text-violet-400/60">Tip:</span> {t('reservations.usage_guide')}
+          </div>
+          <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-violet-500/5 blur-[40px] rounded-full group-hover:bg-violet-500/10 transition-colors duration-500" />
         </div>
 
         <div className="flex flex-col md:flex-row gap-2.5">

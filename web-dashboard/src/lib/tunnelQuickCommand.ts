@@ -27,7 +27,7 @@ export function tunnelQuickCommandFull(opts: {
   const srv = connectServerSuffix(opts.hostname);
 
   if (opts.os === 'windows') {
-    return `iwr -useb ${base}/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe'; & $g config set api_key ${opts.apiKey}; & $g connect --port 3000${srv}`;
+    return `iwr -useb ${base}/install.ps1 | iex; $g = "$env:LOCALAPPDATA\\gorenel\\gorenel.exe"; & $g config set api_key ${opts.apiKey}; & $g connect --port 3000${srv}`;
   }
 
   const bin = '"$HOME/.gorenel/bin/gorenel"';
@@ -43,7 +43,8 @@ export function tunnelQuickCommandMinimal(opts: {
   const srv = connectServerSuffix(opts.hostname);
 
   if (opts.os === 'windows') {
-    return `$g = Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe'; & $g config set api_key ${opts.apiKey}; & $g connect --port 3000${srv}`;
+    // Standardizing on a cleaner format that is easier to read/edit if needed
+    return `$g = "$env:LOCALAPPDATA\\gorenel\\gorenel.exe"; & $g config set api_key ${opts.apiKey}; & $g connect --port 3000${srv}`;
   }
 
   const bin = '"$HOME/.gorenel/bin/gorenel"';

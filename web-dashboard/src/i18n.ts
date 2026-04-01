@@ -118,7 +118,11 @@ const resources = {
       },
       "ai_gateway": {
         "onboarding_title": "AI Protocol Intelligence",
-        "onboarding_desc": "Gorenel's engine automatically detects anomalies and validates LLM payloads using neural autoencoders and isolation forests in real-time."
+        "onboarding_desc": "Gorenel's engine automatically detects anomalies and validates LLM payloads using neural autoencoders and isolation forests in real-time.",
+        "session_history": "Session History",
+        "last_activity": "Last Activity",
+        "offline_msg": "The tunnel is currently offline. Showing data from the last active session.",
+        "log_entry": "Inference detected: {{model}} - {{status}} at {{time}}"
       },
       "tunnels": {
         "empty_title": "Ready to launch?",
@@ -172,6 +176,8 @@ const resources = {
         "search_placeholder": "Search by path, method, or status...",
         "listening_title": "Listening for Packets",
         "listening_desc": "Gorenel is currently sniffing for frames on your active tunnels. Once you make a request to a public .site URL, it will appear here in real-time.",
+        "onboarding_title": "Traffic Inspector",
+        "onboarding_desc": "Monitor and replay every request that passes through your tunnel in real-time. Use this to debug APIs, inspect headers, and share traces with your team.",
         "live_sniffer": "Live Sniffer",
         "binary_logic": "Binary Logic",
         "method": "Method",
@@ -193,6 +199,15 @@ const resources = {
         "collapse": "Collapse Inspector",
         "no_results_title": "No matching requests",
         "no_results_desc": "Try a different search term or clear filters."
+      },
+      "reservations": {
+        "title": "Reserved URLs",
+        "subtitle": "Stable subdomains for your devices and applications.",
+        "onboarding_title": "Why reserve a subdomain?",
+        "onboarding_desc": "By default, tunnels get random URLs. Reserving a subdomain gives you a permanent address (e.g., my-app.gorenel.site) that stays the same even after you restart the CLI.",
+        "reserve_btn": "Reserve Now",
+        "stable_endpoints": "Stable Endpoints",
+        "usage_guide": "Use the --subdomain flag in the CLI to connect to your reserved address."
       }
     }
   },
@@ -311,7 +326,11 @@ const resources = {
       },
       "ai_gateway": {
         "onboarding_title": "AI Protocol Intelligence",
-        "onboarding_desc": "Gorenel motoru, LLM yüklerini (payload) Neural Autoencoders ve Isolation Forest kullanarak gerçek zamanlı olarak analiz eder ve anomalileri tespit eder."
+        "onboarding_desc": "Gorenel motoru, LLM yüklerini (payload) Neural Autoencoders ve Isolation Forest kullanarak gerçek zamanlı olarak analiz eder ve anomalileri tespit eder.",
+        "session_history": "Oturum Geçmişi",
+        "last_activity": "Son Aktivite",
+        "offline_msg": "Tünel şu anda çevrimdışı. Son aktif oturuma ait veriler gösteriliyor.",
+        "log_entry": "Analiz tespit edildi: {{model}} - {{status}} saat {{time}}"
       },
       "tunnels": {
         "empty_title": "Yayına hazır mısın?",
@@ -365,6 +384,8 @@ const resources = {
         "search_placeholder": "Search by path, method, or status...",
         "listening_title": "Listening for Packets",
         "listening_desc": "Gorenel şu anda aktif tünellerinizdeki frame'leri dinliyor. Herhangi bir .site URL'sine istek yaptığınızda, burada gerçek zamanlı olarak görünecektir.",
+        "onboarding_title": "Trafik İzleyici",
+        "onboarding_desc": "Tünelinizden geçen her isteği gerçek zamanlı olarak izleyin ve tekrar oynatın. API'leri hata ayıklamak, header'ları incelemek ve iz kayıtlarını ekibinizle paylaşmak için kullanın.",
         "live_sniffer": "Live Sniffer",
         "binary_logic": "Binary Logic",
         "method": "Metod",
@@ -386,6 +407,15 @@ const resources = {
         "collapse": "Collapse Inspector",
         "no_results_title": "Eşleşen istek bulunamadı",
         "no_results_desc": "Farklı bir arama terimi deneyin veya filtreyi temizleyin."
+      },
+      "reservations": {
+        "title": "Rezerve URL'ler",
+        "subtitle": "Cihazlarınız ve uygulamalarınız için sabit alt alan adları.",
+        "onboarding_title": "Neden alt alan adı rezerve etmeli?",
+        "onboarding_desc": "Varsayılan olarak tüneller rastgele URL'ler alır. Bir alt alan adı rezerve etmek, CLI'yı yeniden başlatsanız bile değişmeyen kalıcı bir adres (örn: uygulamam.gorenel.site) sağlar.",
+        "reserve_btn": "Hemen Rezerve Et",
+        "stable_endpoints": "Sabit Uç Noktalar",
+        "usage_guide": "CLI'da rezerve ettiğiniz adrese bağlanmak için --subdomain bayrağını kullanın."
       }
     }
   }

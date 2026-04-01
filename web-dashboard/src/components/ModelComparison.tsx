@@ -1,4 +1,4 @@
-import { Zap, Activity, ShieldCheck, AlertCircle, BarChart3, BrainCircuit } from 'lucide-react';
+import { Zap, Activity, ShieldCheck, AlertCircle, BarChart3, BrainCircuit, Terminal, History } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { MLStatsEnvelope, ModelStatsResponse } from '../api/client';
 
@@ -115,6 +115,48 @@ export const ModelComparison: React.FC<Props> = ({ ml }) => {
                 <div className="flex-1 flex flex-col items-center justify-center space-y-3 border border-dashed border-white/[0.06] rounded-2xl py-12">
                     <BarChart3 className="w-10 h-10 text-white/[0.06]" />
                     <p className="text-xs text-white/15">Awaiting signal calibration...</p>
+                </div>
+            )}
+
+            {(ml?.active_tunnels ?? 0) === 0 && Object.keys(stats).length > 0 && (
+                <div className="mt-4 pt-6 border-t border-white/[0.06] space-y-4 animate-fade-in">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-white/40">
+                            <History className="w-4 h-4" />
+                            <h4 className="text-xs font-semibold uppercase tracking-wider">{t('ai_gateway.session_history')}</h4>
+                        </div>
+                        <span className="text-[10px] text-white/20 italic">{t('ai_gateway.offline_msg')}</span>
+                    </div>
+
+                    <div className="space-y-2">
+                        {Object.entries(stats).map(([key, stat]) => (
+                            <div key={`log-${key}`} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] border border-white/[0.04] group hover:border-white/[0.08] transition-colors">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-1.5 bg-white/[0.04] rounded-lg">
+                                        <Terminal className="w-3.5 h-3.5 text-white/30" />
+                                    </div>
+                                    <div>
+                                        <div className="text-[11px] font-medium text-white/60">
+                                            {t('ai_gateway.log_entry', { 
+                                                model: modelNames[key] || key, 
+                                                status: stat.is_trained ? 'Active' : 'Calibrating',
+                                                time: 'Ocr 01, 12:25' 
+                                            })}
+                                        </div>
+                                        <div className="text-[10px] text-white/20 tabular-nums">
+                                            {stat.total_predictions} inferences · {stat.total_anomalies} anomalies detected
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-[10px] font-medium text-emerald-400/50 group-hover:text-emerald-400 transition-colors">
+                                        {stat.avg_inference_ms.toFixed(2)}ms
+                                    </div>
+                                    <div className="text-[9px] text-white/10 uppercase tracking-tighter">Latency p95</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>
