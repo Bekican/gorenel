@@ -1,8 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { X, Download, Copy, Check, Terminal, Sparkles } from 'lucide-react';
+import { X, Download, Copy, Check, Terminal, Sparkles, Wand2, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './ui/Button';
-import { tunnelQuickCommandFull, tunnelQuickCommandMinimal, type TunnelQuickOs } from '../lib/tunnelQuickCommand';
+import {
+  tunnelQuickCommandFull,
+  tunnelQuickCommandMinimal,
+  tunnelMagicDownloadUrl,
+  type TunnelQuickOs,
+} from '../lib/tunnelQuickCommand';
 
 interface ConnectModalProps {
   isOpen: boolean;
@@ -17,6 +22,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
     typeof navigator !== 'undefined' && /win/i.test(navigator.platform || '') ? 'windows' : 'unix',
   );
   const [minimal, setMinimal] = useState(false);
+  const [installMode, setInstallMode] = useState<'magic' | 'manual'>('magic');
 
   const apiToken = apiKey || 'YOUR_API_KEY';
 
@@ -31,9 +37,13 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
 
   const downloadHref = useMemo(() => {
     if (typeof window === 'undefined') return '/downloads/gorenel-windows-amd64.exe';
+    const { hostname, protocol } = window.location;
+    if (installMode === 'magic') {
+      return tunnelMagicDownloadUrl({ apiKey: apiToken, os: osTab, hostname, protocol });
+    }
     const o = window.location.origin;
     return osTab === 'windows' ? `${o}/downloads/gorenel-windows-amd64.exe` : `${o}/install.sh`;
-  }, [osTab]);
+  }, [osTab, apiToken, installMode]);
 
   if (!isOpen) return null;
 
@@ -80,67 +90,135 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
           <div className="flex rounded-lg border border-white/[0.08] bg-black/20 p-0.5">
             <button
               type="button"
-              onClick={() => setOsTab('windows')}
-              className={`flex-1 rounded-md py-2 text-xs font-medium transition ${
-                osTab === 'windows' ? 'bg-white/[0.1] text-white' : 'text-white/40 hover:text-white/65'
+              onClick={() => setInstallMode('magic')}
+              className={`flex-1 rounded-md py-2.5 text-xs font-semibold flex items-center justify-center gap-2 transition ${
+                installMode === 'magic' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'text-white/35 hover:text-white/60 border border-transparent'
               }`}
             >
-              {t('connect_modal.tab_windows')}
+              <Wand2 size={13} />
+              {t('connect_modal.mode_magic', 'Magic Install')}
             </button>
             <button
               type="button"
-              onClick={() => setOsTab('unix')}
-              className={`flex-1 rounded-md py-2 text-xs font-medium transition ${
-                osTab === 'unix' ? 'bg-white/[0.1] text-white' : 'text-white/40 hover:text-white/65'
+              onClick={() => setInstallMode('manual')}
+              className={`flex-1 rounded-md py-2.5 text-xs font-semibold flex items-center justify-center gap-2 transition ${
+                installMode === 'manual' ? 'bg-white/[0.08] text-white border border-white/[0.1]' : 'text-white/35 hover:text-white/60 border border-transparent'
               }`}
             >
-              {t('connect_modal.tab_unix')}
+              <Terminal size={13} />
+              {t('connect_modal.mode_manual', 'Manual Setup')}
             </button>
           </div>
 
-          <label className="flex cursor-pointer items-center gap-2.5 text-xs text-white/50">
-            <input
-              type="checkbox"
-              checked={minimal}
-              onChange={(e) => setMinimal(e.target.checked)}
-              className="rounded border-white/20 bg-black/40 text-emerald-500 focus:ring-emerald-500/30"
-            />
-            {t('connect_modal.minimal_toggle')}
-          </label>
-
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-xs font-medium text-white/55">
-              <Terminal className="w-3.5 h-3.5 text-emerald-400/80" />
-              {minimal ? t('connect_modal.command_label_short') : t('connect_modal.command_label')}
-            </div>
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="w-full bg-black/35 border border-white/[0.08] rounded-xl p-3.5 flex items-start gap-3 text-left hover:border-emerald-500/20 transition-colors group"
-            >
-              <code className="text-white/75 font-mono text-[11px] md:text-xs flex-1 break-all leading-relaxed">
-                {command}
-              </code>
-              <div className="p-1.5 bg-white/[0.05] rounded-lg group-hover:bg-emerald-500/15 transition-colors shrink-0 mt-0.5">
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-white/45 group-hover:text-emerald-400" />}
+          {installMode === 'magic' ? (
+            <div className="space-y-6 py-2">
+              <div className="space-y-4">
+                <div className="flex gap-4 items-start">
+                   <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-400 shrink-0">1</div>
+                   <div className="space-y-1 pt-1">
+                      <p className="text-sm font-medium text-white/80">{t('connect_modal.magic_step1_title', 'Download & Save')}</p>
+                      <p className="text-[11px] text-white/35 leading-relaxed">{t('connect_modal.magic_step1_desc', 'Click the button below to get your personalized installer.')}</p>
+                   </div>
+                </div>
+                <div className="flex gap-4 items-start">
+                   <div className="w-8 h-8 rounded-full bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-xs font-bold text-white/30 shrink-0">2</div>
+                   <div className="space-y-1 pt-1">
+                      <p className="text-sm font-medium text-white/80">{t('connect_modal.magic_step2_title', 'Run the Setup')}</p>
+                      <p className="text-[11px] text-white/35 leading-relaxed">
+                        {osTab === 'windows' 
+                           ? t('connect_modal.magic_step2_win', 'Right-click the file and select "Run with PowerShell".')
+                           : t('connect_modal.magic_step2_unix', 'Run: chmod +x gorenel-setup.sh && ./gorenel-setup.sh')}
+                      </p>
+                   </div>
+                </div>
+                <div className="flex gap-4 items-start">
+                   <div className="w-8 h-8 rounded-full bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-xs font-bold text-white/30 shrink-0">3</div>
+                   <div className="space-y-1 pt-1">
+                      <p className="text-sm font-medium text-white/80">{t('connect_modal.magic_step3_title', 'Enjoy Your Tunnel')}</p>
+                      <p className="text-[11px] text-white/35 leading-relaxed">{t('connect_modal.magic_step3_desc', 'The script will handle API key and PATH setup automatically.')}</p>
+                   </div>
+                </div>
               </div>
-            </button>
-            <p className="text-[11px] text-white/30 leading-relaxed">{t('connect_modal.command_footer')}</p>
-          </div>
 
-          <p className="text-[11px] text-white/35 text-center leading-relaxed border-t border-white/[0.06] pt-4">
-            {t('connect_modal.hint_local_app')}
-          </p>
+              <a
+                href={downloadHref}
+                className="flex items-center justify-center gap-2.5 w-full py-4 text-sm font-bold text-[#0d0f14] bg-emerald-400 hover:bg-emerald-300 rounded-2xl transition-all shadow-lg shadow-emerald-500/10 group active:scale-[0.98]"
+              >
+                <Download className="w-4 h-4 group-hover:animate-bounce" />
+                {t('connect_modal.magic_download_btn', 'Download Setup Script')}
+              </a>
 
-          <a
-            href={downloadHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-medium text-white/45 hover:text-emerald-300/90 border border-white/[0.06] rounded-xl hover:border-white/[0.1] transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            {osTab === 'windows' ? t('connect_modal.download_only_win') : t('connect_modal.download_only_unix')}
-          </a>
+              <div className="p-3 bg-blue-500/[0.03] border border-blue-500/10 rounded-xl flex items-center gap-3">
+                <ShieldCheck className="w-4 h-4 text-blue-400/60" />
+                <p className="text-[10px] text-blue-300/40 font-medium italic">
+                   {t('connect_modal.security_note', 'Note: This script contains your unique API key for automated setup.')}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <div className="flex rounded-lg border border-white/[0.08] bg-black/20 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setOsTab('windows')}
+                  className={`flex-1 rounded-md py-2 text-xs font-medium transition ${
+                    osTab === 'windows' ? 'bg-white/[0.1] text-white' : 'text-white/40 hover:text-white/65'
+                  }`}
+                >
+                  {t('connect_modal.tab_windows')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOsTab('unix')}
+                  className={`flex-1 rounded-md py-2 text-xs font-medium transition ${
+                    osTab === 'unix' ? 'bg-white/[0.1] text-white' : 'text-white/40 hover:text-white/65'
+                  }`}
+                >
+                  {t('connect_modal.tab_unix')}
+                </button>
+              </div>
+
+              <label className="flex cursor-pointer items-center gap-2.5 text-xs text-white/50">
+                <input
+                  type="checkbox"
+                  checked={minimal}
+                  onChange={(e) => setMinimal(e.target.checked)}
+                  className="rounded border-white/20 bg-black/40 text-emerald-500 focus:ring-emerald-500/30"
+                />
+                {t('connect_modal.minimal_toggle')}
+              </label>
+
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-medium text-white/55">
+                  <Terminal className="w-3.5 h-3.5 text-emerald-400/80" />
+                  {minimal ? t('connect_modal.command_label_short') : t('connect_modal.command_label')}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopy}
+                  className="w-full bg-black/35 border border-white/[0.08] rounded-xl p-3.5 flex items-start gap-3 text-left hover:border-emerald-500/20 transition-colors group"
+                >
+                  <code className="text-white/75 font-mono text-[11px] md:text-xs flex-1 break-all leading-relaxed">
+                    {command}
+                  </code>
+                  <div className="p-1.5 bg-white/[0.05] rounded-lg group-hover:bg-emerald-500/15 transition-colors shrink-0 mt-0.5">
+                    {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 text-white/45 group-hover:text-emerald-400" />}
+                  </div>
+                </button>
+                <p className="text-[11px] text-white/30 leading-relaxed">{t('connect_modal.command_footer')}</p>
+              </div>
+
+              <a
+                href={downloadHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-2.5 text-xs font-medium text-white/45 hover:text-emerald-300/90 border border-white/[0.06] rounded-xl hover:border-white/[0.1] transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                {osTab === 'windows' ? t('connect_modal.download_only_win') : t('connect_modal.download_only_unix')}
+              </a>
+            </div>
+          )}
 
           <Button type="button" variant="outline" size="md" className="w-full" onClick={onClose}>
             {t('common.close', 'Close')}

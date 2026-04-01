@@ -50,3 +50,17 @@ export function tunnelQuickCommandMinimal(opts: {
   const bin = '"$HOME/.gorenel/bin/gorenel"';
   return `${bin} config set api_key ${opts.apiKey} && ${bin} connect --port 3000${srv}`;
 }
+
+/** URL for "Magic Install" download with API key. */
+export function tunnelMagicDownloadUrl(opts: {
+  apiKey: string;
+  os: TunnelQuickOs;
+  hostname: string;
+  protocol: string;
+}): string {
+  const base = installBaseUrl(opts.hostname, opts.protocol);
+  const path = opts.os === 'windows' ? '/install.ps1' : '/install.sh';
+  const url = new URL(path, base);
+  url.searchParams.set('api_key', opts.apiKey);
+  return url.toString();
+}

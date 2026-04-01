@@ -1004,6 +1004,11 @@ func (m *MonitoringServer) handleAutoInstall(w http.ResponseWriter, r *http.Requ
 
 // handleInstallSh serves the Bash installation script
 func (m *MonitoringServer) handleInstallSh(w http.ResponseWriter, r *http.Request) {
+	apiKey := strings.TrimSpace(r.URL.Query().Get("api_key"))
+	if apiKey != "" {
+		w.Header().Set("Content-Disposition", "attachment; filename=gorenel-setup.sh")
+	}
+
 	script := `#!/bin/bash
 set -e
 
@@ -1041,7 +1046,12 @@ export PATH="$INSTALL_DIR:$PATH"
 
 echo "Gorenel installed to $INSTALL_DIR/gorenel"
 
-if [ "$#" -gt 0 ]; then
+API_KEY="` + apiKey + `"
+if [ -n "$API_KEY" ]; then
+    "$INSTALL_DIR/gorenel" config set api_key "$API_KEY"
+    echo "API Key configured automatically."
+    echo "You can now run: gorenel connect --port 3000"
+elif [ "$#" -gt 0 ]; then
     echo "Executing: gorenel $*"
     "$INSTALL_DIR/gorenel" "$@"
 else
@@ -1054,6 +1064,11 @@ fi
 
 // handleInstallPs1 serves the PowerShell installation script
 func (m *MonitoringServer) handleInstallPs1(w http.ResponseWriter, r *http.Request) {
+	apiKey := strings.TrimSpace(r.URL.Query().Get("api_key"))
+	if apiKey != "" {
+		w.Header().Set("Content-Disposition", "attachment; filename=gorenel-setup.ps1")
+	}
+
 	script := `# Gorenel Magic Install Script (Windows)
 # Usage: iwr -useb https://gorenel.site/install.ps1 | iex
 
@@ -1126,9 +1141,17 @@ try {
 } catch { }
 
 Write-Host "Gorenel installed to $binaryPath" -ForegroundColor Green
-Write-Host "CMD / yeni PowerShell: PATH ile 'gorenel' (veya profil yuklendiyse 'gorenel')." -ForegroundColor DarkGray
-Write-Host "PATH sorununda tam yol: & '$binaryPath' connect --port 3000" -ForegroundColor DarkGray
-Write-Host 'Yapistir (PowerShell): iwr -useb https://gorenel.site/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA ''gorenel\gorenel.exe''; & $g config set api_key YOUR_API_KEY; & $g connect --port 3000' -ForegroundColor Yellow
+
+$apiKey = "` + apiKey + `"
+if ($apiKey) {
+    & $binaryPath config set api_key $apiKey
+    Write-Host "API Key configured automatically." -ForegroundColor Green
+    Write-Host "You can now run: gorenel connect --port 3000" -ForegroundColor Cyan
+} else {
+    Write-Host "CMD / yeni PowerShell: PATH ile 'gorenel' (veya profil yuklendiyse 'gorenel')." -ForegroundColor DarkGray
+    Write-Host "PATH sorununda tam yol: & '$binaryPath' connect --port 3000" -ForegroundColor DarkGray
+    Write-Host 'Yapistir (PowerShell): iwr -useb https://gorenel.site/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA ''gorenel\gorenel.exe''; & $g config set api_key YOUR_API_KEY; & $g connect --port 3000' -ForegroundColor Yellow
+}
 `
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(script))
