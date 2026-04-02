@@ -138,6 +138,31 @@
   .glow-lg {
     box-shadow: 0 0 40px -8px rgba(16, 185, 129, 0.25), 0 0 80px -16px rgba(16, 185, 129, 0.1);
   }
+
+  /* Redesign Utilities */
+  .mask-radial {
+    mask-image: radial-gradient(circle at center, black, transparent 80%);
+  }
+
+  .mesh-gradient {
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(160, 84%, 39%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(210, 84%, 39%, 0.1) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, hsla(160, 84%, 39%, 0.05) 0px, transparent 50%),
+      radial-gradient(at 0% 100%, hsla(210, 84%, 39%, 0.05) 0px, transparent 50%);
+  }
+
+  .border-gradient {
+    position: relative;
+    border: 1px solid transparent;
+    background-clip: padding-box, border-box;
+    background-origin: padding-box, border-box;
+    background-image: linear-gradient(to right, #0c0e14, #0c0e14), linear-gradient(to bottom right, rgba(255,255,255,0.1), rgba(255,255,255,0.02));
+  }
+
+  .animate-pulse-slow {
+    animation: pulse 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
 }
 
 @keyframes animateIn {
@@ -178,6 +203,18 @@
   50% {
     background-position: 100% 50%;
   }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.animate-draw {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: draw 3s ease-out forwards;
 }
 
 ::-webkit-scrollbar {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     ArrowRight,
     CheckCircle2,
@@ -24,23 +24,18 @@ import {
     X as XIcon,
     Network,
     Cpu,
-    Monitor
+    Monitor,
+    Copy,
+    ExternalLink,
+    Github,
+    ChevronRight,
+    AlertCircle
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './ui/Button';
 
-const footerLinkClass =
-    'relative z-[60] pointer-events-auto block hover:text-emerald-400 transition-all duration-200 text-inherit no-underline cursor-pointer';
+/* ─── SHARED COMPONENTS ─── */
 
-
-
-interface LandingPageProps {
-    onLogin: () => void;
-    isLoggedIn?: boolean;
-    onGoToDashboard?: () => void;
-}
-
-/* ---------- Animated counter ---------- */
 const AnimatedNumber: React.FC<{ target: number; suffix?: string; prefix?: string; duration?: number }> = ({
     target, suffix = '', prefix = '', duration = 2000
 }) => {
@@ -59,647 +54,549 @@ const AnimatedNumber: React.FC<{ target: number; suffix?: string; prefix?: strin
     return <>{prefix}{current.toLocaleString()}{suffix}</>;
 };
 
+const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code }) => {
+    const [copied, setCopied] = useState(false);
+    const copy = () => {
+        navigator.clipboard.writeText(code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+    return (
+        <div className="relative group rounded-xl border border-white/[0.08] bg-[#0c0e14] p-4 font-mono text-[13px] overflow-hidden">
+            <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                    onClick={copy} 
+                    className="p-1.5 rounded-md bg-white/[0.05] border border-white/[0.1] hover:bg-white/[0.1] text-white/50 hover:text-white transition-all"
+                >
+                    {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                </button>
+            </div>
+            <div className="flex items-center gap-3">
+                <span className="text-emerald-500/50 select-none">$</span>
+                <code className="text-white/80">{code}</code>
+            </div>
+        </div>
+    );
+};
+
+const FeatureCard: React.FC<{ icon: any; title: string; desc: string; color: string; badge?: string }> = ({ 
+    icon: Icon, title, desc, color, badge 
+}) => (
+    <div className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 hover:bg-white/[0.04] hover:border-white/[0.1] transition-all duration-300">
+        <div className="flex items-center justify-between mb-6">
+            <div className={`w-12 h-12 rounded-xl bg-${color}-500/10 border border-${color}-500/20 flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                <Icon className={`w-6 h-6 text-${color}-400/80`} />
+            </div>
+            {badge && (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-md bg-white/[0.05] text-white/30 border border-white/[0.08]">
+                    {badge}
+                </span>
+            )}
+        </div>
+        <h3 className="text-lg font-bold text-white mb-3">{title}</h3>
+        <p className="text-sm text-white/40 leading-relaxed">{desc}</p>
+    </div>
+);
+
+const ComparisonRow: React.FC<{ feature: string; gorenel: boolean; ngrok: boolean; cf: boolean }> = ({ 
+    feature, gorenel, ngrok, cf 
+}) => (
+    <tr className="border-b border-white/[0.04] hover:bg-white/[0.01] transition-colors">
+        <td className="py-4 px-6 text-sm font-medium text-white/60">{feature}</td>
+        <td className="py-4 px-6 text-center">
+            {gorenel ? <div className="flex justify-center"><CheckCircle2 size={18} className="text-emerald-400" /></div> : <XIcon size={16} className="text-white/10 mx-auto" />}
+        </td>
+        <td className="py-4 px-6 text-center">
+            {ngrok ? <Check size={18} className="text-white/30 mx-auto" /> : <XIcon size={16} className="text-white/10 mx-auto" />}
+        </td>
+        <td className="py-4 px-6 text-center">
+            {cf ? <Check size={18} className="text-white/30 mx-auto" /> : <XIcon size={16} className="text-white/10 mx-auto" />}
+        </td>
+    </tr>
+);
+
+/* ─── MAIN PAGE ─── */
+
+interface LandingPageProps {
+    onLogin: () => void;
+    isLoggedIn?: boolean;
+    onGoToDashboard?: () => void;
+}
+
 export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, onGoToDashboard }) => {
     const { t, i18n } = useTranslation();
     const isTr = i18n.language === 'tr';
     const isWindowsClient = typeof navigator !== 'undefined' && /win/i.test(navigator.platform || '');
-
-    const toggleLanguage = () => {
-        i18n.changeLanguage(isTr ? 'en' : 'tr');
-    };
-
     const handleCTA = isLoggedIn ? onGoToDashboard : onLogin;
 
-
-
     return (
-        <div className="min-h-screen bg-[#080a10] text-white font-sans">
-            {/* Ambient background */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute -top-32 left-1/4 w-[600px] h-[600px] bg-emerald-500/[0.07] rounded-full blur-[150px]" />
-                <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-cyan-500/[0.04] rounded-full blur-[120px]" />
-                <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-blue-500/[0.04] rounded-full blur-[140px]" />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#080a10]/80" />
-                <div className="absolute inset-0 opacity-[0.12] [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.04)_1px,transparent_0)] [background-size:24px_24px]" />
+        <div className="min-h-screen bg-[#080a10] text-white selection:bg-emerald-500/30 selection:text-white">
+            {/* Ambient Background */}
+            <div className="fixed inset-0 pointer-events-none z-0">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[800px] bg-[radial-gradient(ellipse_at_center,rgba(16,185,129,0.08),transparent_70%)]" />
+                <div className="absolute inset-0 [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.03)_1px,transparent_0)] [background-size:32px_32px]" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#080a10]/50 to-[#080a10]" />
             </div>
 
-            {/* ─── Navigation ─── */}
-            <nav className="sticky top-0 z-50 border-b border-white/[0.04] bg-[#080a10]/80 backdrop-blur-xl">
-                <div className="max-w-6xl mx-auto px-6 md:px-10 py-3.5 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] overflow-hidden shadow-glow-emerald">
-                            <img
-                                src="/logo.png"
-                                alt=""
-                                width={256}
-                                height={256}
-                                fetchPriority="high"
-                                decoding="async"
-                                className="w-full h-full object-cover"
-                            />
+            {/* ─── Header ─── */}
+            <nav className="sticky top-0 z-[100] border-b border-white/[0.04] bg-[#080a10]/80 backdrop-blur-md">
+                <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                            <img src="/logo.png" alt="Gorenel" className="w-5 h-5 object-contain" />
                         </div>
-                        <span className="font-bold tracking-tight text-white text-[15px]">Gorenel</span>
-                        <span className="hidden sm:inline-flex ml-2 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                            v1.0
-                        </span>
+                        <span className="font-black tracking-tight text-lg">Gorenel</span>
+                        <div className="px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-[10px] font-bold text-white/40 uppercase tracking-widest ml-1">v1.2</div>
                     </div>
-                    <div className="hidden md:flex items-center gap-6 text-sm text-white/50">
-                        <a href="#features" className="hover:text-white transition-colors">{isTr ? 'Özellikler' : 'Features'}</a>
-                        <a href="#how-it-works" className="hover:text-white transition-colors">{isTr ? 'Nasıl Çalışır' : 'How it works'}</a>
-                        <a href="#pricing" className="hover:text-white transition-colors">{isTr ? 'Neden Ücretsiz?' : 'Why Free?'}</a>
-                        <a href="#comparison" className="hover:text-white transition-colors">{isTr ? 'Karşılaştırma' : 'Compare'}</a>
+                    
+                    <div className="hidden lg:flex items-center gap-8 text-[13px] font-medium text-white/50">
+                        <a href="#features" className="hover:text-white transition-colors">{t('landing.trust_ai')}</a>
+                        <a href="#how-it-works" className="hover:text-white transition-colors">{t('landing.how_it_works_title')}</a>
+                        <a href="#comparison" className="hover:text-white transition-colors">{t('landing.comparison_title')}</a>
+                        {/* GitHub Icon with Star count (mocked for now) */}
+                        <a href="https://github.com/bekican/gorenel" className="flex items-center gap-2 hover:text-white transition-colors border-l border-white/10 pl-8">
+                            <Github size={16} />
+                            <span>GitHub</span>
+                        </a>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                        <button
-                            onClick={toggleLanguage}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg text-xs font-medium hover:bg-white/[0.07] transition-all"
-                            type="button"
+
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => i18n.changeLanguage(isTr ? 'en' : 'tr')}
+                            className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all text-white/50"
                         >
-                            <Languages size={13} className="text-emerald-400/70" />
-                            {i18n.language.toUpperCase()}
+                            <Languages size={16} />
                         </button>
-                        <Button variant="ghost" size="sm" type="button" onClick={onLogin}>
+                        <Button variant="ghost" size="sm" onClick={onLogin} className="text-white/60 hover:text-white">
                             {t('common.login')}
                         </Button>
-                        <Button variant="primary" size="sm" type="button" onClick={handleCTA}>
-                            {isLoggedIn ? 'Dashboard' : (isTr ? 'Ücretsiz Başla' : 'Start free')}
-                            <ArrowRight size={14} />
+                        <Button variant="primary" size="sm" onClick={handleCTA} className="font-bold shadow-lg shadow-emerald-500/10">
+                            {isLoggedIn ? t('common.to_dashboard') : t('landing.cta_primary')}
+                            <ArrowRight size={14} className="ml-1" />
                         </Button>
                     </div>
                 </div>
             </nav>
 
             <main className="relative z-10">
-                {/* ═══════════════════════  HERO  ═══════════════════════ */}
-                <section className="max-w-6xl mx-auto px-6 md:px-10 pt-20 md:pt-28 pb-20">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                        <div className="space-y-8">
-                            {/* Badge */}
-                            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-1.5 text-xs font-medium text-emerald-300/80 animate-fade-in">
-                                <Sparkles className="w-3.5 h-3.5" />
-                                {isTr ? 'Yapay zeka destekli güvenli tünelleme' : 'AI-powered secure tunneling'}
+                {/* ─── Hero Section ─── */}
+                <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-32 overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                        <div className="relative z-10 space-y-8 text-center lg:text-left">
+                            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.08] px-4 py-2 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-400 animate-pulse-slow">
+                                <Sparkles size={12} />
+                                {t('landing.hero_badge')}
                             </div>
-
-                            {/* Headline */}
-                            <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold tracking-tight leading-[1.08]">
-                                {isTr
-                                    ? <>Localhost'unuzu <span className="text-gradient-accent">saniyeler</span> içinde <br className="hidden md:block" />dünyaya açın.</>
-                                    : <>Ship localhost to <br className="hidden md:block" />the world in <span className="text-gradient-accent">seconds</span>.</>
-                                }
+                            
+                            <h1 className="text-5xl lg:text-[4.5rem] font-black tracking-tighter leading-[1] text-gradient">
+                                {t('landing.title')} <br />
+                                <span className="text-gradient-accent">{t('landing.title_accent')}</span>
                             </h1>
 
-                            {/* Subheadline */}
-                            <p className="text-base md:text-lg text-white/65 leading-relaxed max-w-lg">
-                                {isTr
-                                    ? 'Güvenli tüneller, sabit URL\'ler, trafik politikaları ve yapay zeka ile anomali tespiti — tek bir CLI komutuyla. Açık kaynak ve üretim için hazır.'
-                                    : 'Secure tunnels, stable URLs, traffic policies and AI-powered anomaly detection — with a single CLI command. Open source and production-ready.'
-                                }
+                            <p className="text-lg lg:text-xl text-white/50 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                                {t('landing.subtitle')}
                             </p>
 
-                            {/* CTA Buttons */}
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                <Button variant="primary" size="lg" type="button" onClick={handleCTA}>
-                                    {isLoggedIn
-                                        ? (isTr ? 'Dashboard\'a Git' : 'Open Dashboard')
-                                        : (isTr ? 'Ücretsiz Başlayın' : 'Get started — it\'s free')
-                                    }
-                                    <ArrowRight size={16} />
+                            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+                                <Button variant="primary" size="lg" onClick={handleCTA} className="h-14 px-10 text-base font-bold w-full sm:w-auto">
+                                    {isLoggedIn ? t('common.to_dashboard') : t('landing.cta_primary')}
+                                    <ArrowRight size={18} className="ml-2" />
                                 </Button>
-                                <Button variant="outline" size="lg" type="button" onClick={onLogin}>
-                                    <TerminalSquare size={15} />
-                                    {isTr ? 'Canlı Demo' : 'Live demo'}
-                                </Button>
+                                <a 
+                                    href="https://github.com/bekican/gorenel" 
+                                    target="_blank" 
+                                    className="flex items-center gap-2 h-14 px-8 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] transition-all font-bold w-full sm:w-auto justify-center"
+                                >
+                                    <Github size={20} />
+                                    {t('landing.cta_secondary')}
+                                </a>
                             </div>
 
-                            {/* Trust signals */}
-                            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 text-xs text-white/55">
-                                <div className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/60" />
-                                    {isTr ? 'Kredi kartı gerekmez' : 'No credit card required'}
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/60" />
-                                    {isTr ? '30 saniyede kurulum' : 'Setup in 30 seconds'}
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/60" />
-                                    {isTr ? 'Açık kaynak CLI' : 'Open-source CLI'}
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/60" />
-                                    {isTr ? 'KVKK uyumlu' : 'GDPR compliant'}
-                                </div>
+                            {/* Trust Bar */}
+                            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-8 pt-8 opacity-40">
+                                {[
+                                    { icon: Shield, label: t('landing.trust_ai') },
+                                    { icon: Github, label: t('landing.trust_open_source') },
+                                    { icon: Server, label: t('landing.trust_self_host') }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-widest">
+                                        <item.icon size={16} className="text-emerald-500" />
+                                        {item.label}
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
-                        {/* Hero Visual — Terminal */}
-                        <div className="relative">
-                            <div className="absolute -inset-6 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-3xl blur-2xl opacity-40 animate-pulse-slow" />
-                            <div className="relative rounded-2xl border border-white/[0.08] bg-[#0c0e14]/80 backdrop-blur-xl shadow-elevated overflow-hidden">
-                                <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+                        {/* Hero Visual: Premium Terminal/UI Mockup */}
+                        <div className="relative group perspective">
+                            <div className="absolute -inset-10 bg-gradient-to-tr from-emerald-500/20 to-blue-500/10 rounded-full blur-[100px] opacity-50 group-hover:opacity-70 transition-opacity duration-1000" />
+                            
+                            <div className="relative rounded-2xl border border-white/[0.1] bg-[#0c0e14]/90 backdrop-blur-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden transform-gpu lg:rotate-[-2deg] lg:group-hover:rotate-0 transition-transform duration-700">
+                                <div className="h-10 border-b border-white/[0.08] bg-white/[0.02] flex items-center px-4 justify-between">
+                                    <div className="flex gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40" />
+                                        <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/40" />
+                                        <div className="w-3 h-3 rounded-full bg-emerald-500/20 border border-emerald-500/40" />
+                                    </div>
+                                    <div className="text-[10px] uppercase font-bold tracking-widest text-white/30">gorenel-cli — session</div>
                                     <div className="flex items-center gap-2">
-                                        <div className="flex gap-1.5">
-                                            <div className="w-2.5 h-2.5 rounded-full bg-red-400/40" />
-                                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/40" />
-                                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/40" />
-                                        </div>
-                                        <span className="text-xs font-medium text-white/55 ml-2">terminal</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <Activity className="w-3 h-3 text-emerald-400/50 animate-pulse" />
-                                        <span className="text-[11px] text-emerald-400/50 font-medium">Live</span>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span className="text-[9px] font-bold text-emerald-500/60">LIVE</span>
                                     </div>
                                 </div>
-                                <div className="p-5 space-y-4">
-                                    <div className="font-mono text-xs text-white/75 space-y-2.5">
-                                        <div><span className="text-emerald-400/60">$</span> gorenel start --port 3000</div>
-                                        <div className="text-white/60 pl-3">
-                                            <span className="text-emerald-400/50">✓</span> {isTr ? 'Tünel oluşturuldu' : 'Tunnel established'}
-                                            <span className="text-white/45 ml-2">12ms</span>
-                                        </div>
-                                        <div className="text-white/60 pl-3">
-                                            <span className="text-emerald-400/50">✓</span> {isTr ? 'SSL sertifikası hazır' : 'SSL certificate ready'}
-                                            <span className="text-white/45 ml-2">auto</span>
-                                        </div>
-                                        <div className="text-white/60 pl-3">
-                                            <span className="text-emerald-400/50">✓</span> {isTr ? 'AI anomali tespiti aktif' : 'AI anomaly detection active'}
-                                            <span className="text-white/45 ml-2">2 models</span>
-                                        </div>
-                                        <div className="text-white/60 pl-3">
-                                            <span className="text-emerald-400/50">✓</span> {isTr ? 'Rate limiter ayarlandı' : 'Rate limiter configured'}
-                                            <span className="text-white/45 ml-2">100 req/s</span>
-                                        </div>
-                                        <div className="mt-3 pt-3 border-t border-white/[0.06]">
-                                            <span className="text-white/55">{isTr ? 'Canlı adresiniz:' : 'Your live URL:'}</span>
-                                        </div>
-                                        <div className="text-emerald-400 font-semibold text-sm">
-                                            https://my-app.gorenel.site
+                                <div className="p-8 space-y-6 font-mono text-[13px]">
+                                    <div className="flex gap-3">
+                                        <span className="text-emerald-500 select-none">❯</span>
+                                        <span className="text-white/80">gorenel expose 3000</span>
+                                    </div>
+                                    <div className="space-y-2 pl-6">
+                                        <p className="text-white/40 flex items-center gap-2">
+                                            <Check size={14} className="text-emerald-500" />
+                                            Establishing secure bridge to edge infrastructure...
+                                        </p>
+                                        <p className="text-white/40 flex items-center gap-2">
+                                            <Check size={14} className="text-emerald-500" />
+                                            AI Monitoring consensus: <span className="text-emerald-500/60 font-bold uppercase text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">Active</span>
+                                        </p>
+                                        <p className="text-white/40 flex items-center gap-2">
+                                            <Check size={14} className="text-emerald-500" />
+                                            Provisioning SSL certificate (RSA 2048)
+                                        </p>
+                                    </div>
+                                    <div className="pt-4 border-t border-white/[0.04]">
+                                        <p className="text-white/60 mb-1">Tunnel established successfully!</p>
+                                        <div className="p-4 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] flex items-center justify-between">
+                                            <div className="space-y-1">
+                                                <p className="text-[11px] font-bold text-emerald-500/50 uppercase tracking-wider">Public Tunnel URL</p>
+                                                <p className="text-emerald-400 font-bold text-base select-all">https://dev-session.gorenel.site</p>
+                                            </div>
+                                            <ExternalLink size={20} className="text-emerald-500/40" />
                                         </div>
                                     </div>
-
-                                    {/* Live traffic simulation */}
-                                    <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-4 mt-3">
-                                        <div className="text-[10px] font-medium text-emerald-300/50 mb-2.5 flex items-center gap-1.5">
-                                            <Shield className="w-3 h-3" />
-                                            {isTr ? 'Güvenlik Katmanları — Aktif' : 'Security Layers — Active'}
+                                    <div className="grid grid-cols-2 gap-4 pt-4">
+                                        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
+                                            <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-1">Stability</p>
+                                            <p className="text-xs font-bold text-blue-400">99.99% Uptime</p>
                                         </div>
-                                        <div className="grid grid-cols-3 gap-2">
-                                            {[
-                                                { label: 'KeyAuth', active: true },
-                                                { label: 'Rate Limit', active: true },
-                                                { label: 'AI Monitor', active: true },
-                                            ].map((p) => (
-                                                <div key={p.label} className="flex items-center gap-1.5 text-[11px] text-emerald-100/50">
-                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/70 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
-                                                    {p.label}
-                                                </div>
-                                            ))}
+                                        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
+                                            <p className="text-[9px] font-bold text-white/30 uppercase tracking-widest mb-1">Security</p>
+                                            <p className="text-xs font-bold text-violet-400 px-1">E2E AES-256</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </section>
 
-                            {/* Feature badges below terminal */}
-                            <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                                <div className="flex items-center gap-2 text-sm font-medium text-white/70 mb-3">
-                                    <Command className="w-4 h-4 text-white/40" />
-                                    {isTr ? 'Tek komutla hepsi dahil' : 'Everything included in one command'}
+                {/* ─── Stats / Trust Indicators ─── */}
+                <section className="border-y border-white/[0.04] bg-white/[0.01]">
+                    <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
+                            {[
+                                { label: 'Avg Latency', val: 12, suffix: 'ms', icon: Clock },
+                                { label: 'Traffic Security', val: 256, suffix: '-bit', icon: Shield },
+                                { label: 'Inference Time', val: 1.2, suffix: 'ms', icon: Brain },
+                                { label: 'Active Tunnels', val: 50, suffix: 'K+', icon: Globe }
+                            ].map((stat, i) => (
+                                <div key={i} className="text-center space-y-3">
+                                    <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center mx-auto text-white/40">
+                                        <stat.icon size={20} strokeWidth={1.5} />
+                                    </div>
+                                    <div className="text-4xl font-black tabular-nums">
+                                        <AnimatedNumber target={stat.val} suffix={stat.suffix} />
+                                    </div>
+                                    <div className="text-[11px] font-black uppercase tracking-[0.2em] text-white/30">{stat.label}</div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-2 text-xs text-white/40">
-                                    {(isTr
-                                        ? ['Sabit URL\'ler', 'Trafik izleyici', 'ML anomali tespiti', 'Tünel politikaları', 'Gerçek zamanlı metrikler', 'Otomatik SSL']
-                                        : ['Reserved URLs', 'Traffic inspector', 'ML anomaly detection', 'Tunnel policies', 'Real-time metrics', 'Auto SSL']
-                                    ).map((item) => (
-                                        <div key={item} className="inline-flex items-center gap-2"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-400/70 shrink-0" /> {item}</div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* ─── How It Works (Quick Start) ─── */}
+                <section id="how-it-works" className="py-24 lg:py-40">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="flex flex-col lg:flex-row gap-20 items-center">
+                            <div className="flex-1 space-y-10">
+                                <div className="space-y-6">
+                                    <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-blue-400">
+                                        <Zap size={14} />
+                                        {t('landing.how_it_works_title')}
+                                    </div>
+                                    <h2 className="text-4xl lg:text-5xl font-black tracking-tight leading-[1.1]">
+                                        {t('landing.how_it_works_subtitle')}
+                                    </h2>
+                                </div>
+
+                                <div className="space-y-8">
+                                    {[
+                                        { id: '01', title: t('landing.how_it_works_step1'), desc: 'One-line install for macOS, Linux, and Windows.' },
+                                        { id: '02', title: t('landing.how_it_works_step2'), desc: 'Authenticate with your dashboard API key.' },
+                                        { id: '03', title: t('landing.how_it_works_step3'), desc: 'Deploy your local port to a secure public URL instantly.' }
+                                    ].map((step) => (
+                                        <div key={step.id} className="flex gap-6 group">
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-10 h-10 rounded-full border-2 border-white/10 bg-white/[0.02] flex items-center justify-center text-sm font-black group-hover:border-emerald-500/50 transition-colors">
+                                                    {step.id}
+                                                </div>
+                                                <div className="flex-1 w-[2px] bg-gradient-to-b from-white/10 to-transparent mt-2" />
+                                            </div>
+                                            <div className="pb-8">
+                                                <h3 className="text-xl font-bold text-white mb-2">{step.title}</h3>
+                                                <p className="text-white/40 leading-relaxed text-sm max-w-sm">{step.desc}</p>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </section>
 
-                {/* ═══════════════════════  STATS / SOCIAL PROOF  ═══════════════════════ */}
-                <section className="border-t border-b border-white/[0.04] bg-white/[0.01]">
-                    <div className="max-w-6xl mx-auto px-6 md:px-10 py-12">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-                            {[
-                                { value: 50, suffix: 'ms', prefix: '<', label: isTr ? 'Ortalama Gecikme' : 'Avg Latency', icon: Clock },
-                                { value: 256, suffix: '-bit', label: isTr ? 'Uçtan Uca Şifreleme' : 'End-to-End Encryption', icon: Lock },
-                                { value: 99.9, suffix: '%', label: isTr ? 'Uptime SLA' : 'Uptime SLA', icon: Server },
-                                { value: 3, suffix: 's', label: isTr ? 'Kurulum Süresi' : 'Time to Deploy', icon: Gauge },
-                            ].map((stat) => (
-                                <div key={stat.label} className="space-y-2 group">
-                                    <stat.icon className="w-5 h-5 text-emerald-400/50 mx-auto group-hover:text-emerald-400/80 transition-colors" />
-                                    <div className="text-2xl md:text-3xl font-bold tracking-tight text-white">
-                                        {typeof stat.value === 'number' && stat.value > 10
-                                            ? <AnimatedNumber target={stat.value} prefix={stat.prefix} suffix={stat.suffix} />
-                                            : <>{stat.prefix}{stat.value}{stat.suffix}</>
-                                        }
-                                    </div>
-                                    <div className="text-xs text-white/35">{stat.label}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* ═══════════════════════  HOW IT WORKS  ═══════════════════════ */}
-                <section id="how-it-works" className="max-w-6xl mx-auto px-6 md:px-10 py-24 space-y-14">
-                    <div className="text-center space-y-3 max-w-2xl mx-auto">
-                        <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400/60 mb-2">
-                            <Zap className="w-3.5 h-3.5" />
-                            {isTr ? 'HIZLI BAŞLANGIÇ' : 'QUICK START'}
-                        </div>
-                        <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
-                            {isTr ? '3 adımda canlıya geçin' : 'Go live in 3 steps'}
-                        </h2>
-                        <p className="text-sm md:text-base text-white/40 leading-relaxed max-w-lg mx-auto">
-                            {isTr
-                                ? 'Karmaşık konfigürasyonlara son. Bir komut, bir URL, sonsuz güç.'
-                                : 'No complex configurations. One command, one URL, unlimited power.'
-                            }
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                            {
-                                step: '01',
-                                icon: TerminalSquare,
-                                title: isTr ? 'CLI\'yı kurun' : 'Install the CLI',
-                                desc: isTr
-                                    ? 'Tek satır komutla Windows, macOS ve Linux için kurun. 10 saniye sürer.'
-                                    : 'One-line install for Windows, macOS and Linux. Takes 10 seconds.',
-                                code: isWindowsClient
-                                    ? 'iwr -useb https://gorenel.site/install.ps1 | iex'
-                                    : 'curl -sSL gorenel.site/install.sh | bash',
-                                color: 'emerald',
-                            },
-                            {
-                                step: '02',
-                                icon: Lock,
-                                title: isTr ? 'API key alın' : 'Grab your API key',
-                                desc: isTr
-                                    ? 'Dashboard\'dan tek tıkla API anahtarınızı oluşturun ve CLI\'ya bağlayın.'
-                                    : 'Generate your API key from the dashboard with one click and link it.',
-                                code: isWindowsClient
-                                    ? `$g = Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe'; & $g config set api_key gk_*****`
-                                    : 'gorenel config set api_key gk_*****',
-                                color: 'blue',
-                            },
-                            {
-                                step: '03',
-                                icon: Globe,
-                                title: isTr ? 'Yayına geçin' : 'Go live',
-                                desc: isTr
-                                    ? 'Localhost\'unuz artık HTTPS ile dünyaya açık. AI anomali tespiti otomatik aktif.'
-                                    : 'Your localhost is now live with HTTPS. AI anomaly detection activates automatically.',
-                                code: isWindowsClient
-                                    ? `& (Join-Path $env:LOCALAPPDATA 'gorenel\\gorenel.exe') connect --port 3000`
-                                    : 'gorenel connect --port 3000',
-                                color: 'violet',
-                            },
-                        ].map((item) => (
-                            <div key={item.step} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 hover:bg-white/[0.04] hover:border-white/[0.1] transition-all duration-300 group relative overflow-hidden">
-                                <div className="absolute top-4 right-5 text-5xl font-black text-white/[0.03] select-none group-hover:text-white/[0.06] transition-colors">{item.step}</div>
-                                <div className={`w-10 h-10 rounded-xl bg-${item.color}-500/10 border border-${item.color}-500/20 flex items-center justify-center mb-5 group-hover:border-${item.color}-500/30 transition-colors`}>
-                                    <item.icon className={`w-5 h-5 text-${item.color}-400/70`} />
-                                </div>
-                                <h3 className="text-base font-semibold text-white mb-2">{item.title}</h3>
-                                <p className="text-sm text-white/40 leading-relaxed mb-4">{item.desc}</p>
-                                <div className="rounded-lg bg-black/30 border border-white/[0.06] px-3.5 py-2.5 font-mono text-xs text-white/40">
-                                    <span className="text-emerald-400/50">$</span> {item.code}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* ═══════════════════════  FEATURES  ═══════════════════════ */}
-                <section id="features" className="border-t border-white/[0.04]">
-                    <div className="max-w-6xl mx-auto px-6 md:px-10 py-24 space-y-14">
-                        <div className="text-center space-y-3 max-w-2xl mx-auto">
-                            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400/60 mb-2">
-                                <Layers className="w-3.5 h-3.5" />
-                                {isTr ? 'ÖZELLİKLER' : 'FEATURES'}
-                            </div>
-                            <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
-                                {isTr ? 'Sadece bir tünel değil, tam bir platform' : 'Not just a tunnel — a complete platform'}
-                            </h2>
-                            <p className="text-sm md:text-base text-white/40 leading-relaxed max-w-lg mx-auto">
-                                {isTr
-                                    ? 'Güvenlik, gözlemlenebilirlik ve yapay zeka — hepsi kutudan çıktığı gibi. Ekstra kurulum yok.'
-                                    : 'Security, observability and AI — all out of the box. Zero extra configuration.'
-                                }
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                            {[
-                                {
-                                    icon: Shield,
-                                    title: isTr ? 'Uç Nokta Güvenliği' : 'Edge Security',
-                                    desc: isTr
-                                        ? 'KeyAuth, BasicAuth, IP allowlist ve rate limiter ile her tüneli ayrı ayrı koruyun. Sıfır güven mimarisi.'
-                                        : 'Protect each tunnel with KeyAuth, BasicAuth, IP allowlists and rate limiting. Zero-trust architecture.',
-                                    color: 'text-emerald-400/70',
-                                    badge: isTr ? 'Sıfır Güven' : 'Zero Trust',
-                                },
-                                {
-                                    icon: Eye,
-                                    title: isTr ? 'Trafik İzleyici' : 'Traffic Inspector',
-                                    desc: isTr
-                                        ? 'Tüm HTTP isteklerini gerçek zamanlı izleyin, tek tıkla yeniden çalıştırın ve paylaşılabilir trace oluşturun.'
-                                        : 'Monitor all HTTP requests in real-time, replay with one click and create shareable traces.',
-                                    color: 'text-blue-400/70',
-                                    badge: isTr ? 'Gerçek Zamanlı' : 'Real-Time',
-                                },
-                                {
-                                    icon: Brain,
-                                    title: isTr ? 'AI Anomali Tespiti' : 'AI Anomaly Detection',
-                                    desc: isTr
-                                        ? 'Isolation Forest ve Autoencoder ile trafiğinizdeki anormal davranışları 1ms\'de tespit edin.'
-                                        : 'Detect abnormal traffic patterns in 1ms with dual Isolation Forest + Autoencoder ML models.',
-                                    color: 'text-violet-400/70',
-                                    badge: isTr ? 'Çift Model' : 'Dual Model',
-                                },
-                                {
-                                    icon: Globe,
-                                    title: isTr ? 'Sabit URL\'ler' : 'Reserved URLs',
-                                    desc: isTr
-                                        ? 'Her proje için kalıcı subdomain rezerve edin. Yeniden bağlandığınızda aynı URL\'yi koruyun.'
-                                        : 'Reserve permanent subdomains per project. Keep the same URL when you reconnect.',
-                                    color: 'text-cyan-400/70',
-                                    badge: isTr ? 'Kalıcı' : 'Persistent',
-                                },
-                                {
-                                    icon: BarChart3,
-                                    title: isTr ? 'Gerçek Zamanlı Metrikler' : 'Real-Time Metrics',
-                                    desc: isTr
-                                        ? 'Canlı dashboard ile istek/saniye, gecikme, bant genişliği ve coğrafi dağılımı takip edin.'
-                                        : 'Track requests/sec, latency, bandwidth and geo distribution with a live dashboard.',
-                                    color: 'text-amber-400/70',
-                                    badge: 'Dashboard',
-                                },
-                                {
-                                    icon: Code2,
-                                    title: isTr ? 'CLI-First Deneyim' : 'CLI-First Experience',
-                                    desc: isTr
-                                        ? 'Servis modu, otomatik yeniden bağlanma ve cross-platform desteği. Windows, macOS, Linux.'
-                                        : 'Service mode, auto-reconnect and cross-platform support. Windows, macOS, Linux.',
-                                    color: 'text-rose-400/70',
-                                    badge: isTr ? 'Çapraz Platform' : 'Cross-Platform',
-                                },
-                            ].map((c) => (
-                                <div key={c.title} className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 hover:bg-white/[0.04] hover:border-white/[0.1] transition-all duration-300 group relative overflow-hidden">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center group-hover:border-white/[0.1] transition-colors">
-                                            <c.icon className={`w-5 h-5 ${c.color}`} />
+                            <div className="flex-1 w-full lg:w-auto">
+                                <div className="rounded-3xl border border-white/[0.08] bg-[#0c0e14]/50 p-8 lg:p-12 space-y-8 border-gradient">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-white/30">1. Install Gorenel</span>
+                                            <div className="flex gap-1.5 grayscale opacity-30">
+                                                <Monitor size={14} />
+                                                <Layers size={14} />
+                                            </div>
                                         </div>
-                                        {c.badge && (
-                                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/[0.06] text-white/30">
-                                                {c.badge}
-                                            </span>
-                                        )}
+                                        <CodeBlock code={isWindowsClient ? `iwr -useb ${window.location.host}/install.ps1 | iex` : `curl -sSL ${window.location.host}/install.sh | bash`} />
                                     </div>
-                                    <h3 className="text-base font-semibold text-white mb-2">{c.title}</h3>
-                                    <p className="text-sm text-white/40 leading-relaxed">{c.desc}</p>
+                                    
+                                    <div className="space-y-4">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/30">2. Command line auth</span>
+                                        <CodeBlock code="gorenel config set api_key gk_*****" />
+                                    </div>
+
+                                    <div className="space-y-4">
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/30">3. Connect port 3000</span>
+                                        <CodeBlock code="gorenel expose 3000" />
+                                    </div>
+
+                                    <div className="pt-6 border-t border-white/[0.04] flex items-center gap-4 text-white/30">
+                                        <AlertCircle size={16} />
+                                        <p className="text-[11px] leading-relaxed">
+                                            SSL certificates, DDoS protection, and AI anomaly detection <br />
+                                            are enabled automatically for every session.
+                                        </p>
+                                    </div>
                                 </div>
-                            ))}
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                {/* ═══════════════════════  AI SECTION (Differentiator)  ═══════════════════════ */}
-                <section className="border-t border-white/[0.04] bg-gradient-to-b from-transparent to-emerald-500/[0.02]">
-                    <div className="max-w-6xl mx-auto px-6 md:px-10 py-24">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
-                            <div className="space-y-8">
-                                <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400/60">
-                                    <Brain className="w-3.5 h-3.5" />
-                                    {isTr ? 'YAPAY ZEKA MOTORU' : 'AI ENGINE'}
+                {/* ─── AI Deep Dive ─── */}
+                <section className="relative py-24 lg:py-40 border-t border-white/[0.04] overflow-hidden">
+                    <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[500px] h-[500px] bg-emerald-500/[0.05] rounded-full blur-[120px] pointer-events-none" />
+                    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+                        <div className="relative order-2 lg:order-1">
+                            <div className="absolute -inset-10 bg-gradient-to-tr from-violet-500/10 to-emerald-500/10 rounded-full blur-[100px] opacity-20" />
+                            <div className="relative rounded-2xl border border-white/[0.1] bg-[#0c0e14]/80 p-8 space-y-8 shadow-2xl">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center">
+                                            <Brain className="w-5 h-5 text-violet-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[11px] font-black uppercase tracking-widest text-white/30">Intelligence Model</p>
+                                            <p className="text-sm font-bold text-white">Isolation Forest Consensus</p>
+                                        </div>
+                                    </div>
+                                    <span className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20">99.2% Conf.</span>
                                 </div>
-                                <h2 className="text-2xl md:text-4xl font-bold tracking-tight leading-tight">
-                                    {isTr
-                                        ? <>Trafiğinizi <span className="text-emerald-400">yapay zeka</span> ile koruyun</>
-                                        : <>Protect your traffic with <span className="text-emerald-400">artificial intelligence</span></>
-                                    }
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-[11px] text-white/40 font-bold uppercase tracking-widest">
+                                            <span>Traffic Anomaly Detection</span>
+                                            <span>Active</span>
+                                        </div>
+                                        <div className="h-2 rounded-full bg-white/[0.05] overflow-hidden">
+                                            <div className="h-full bg-emerald-500 w-[92%] animate-pulse" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-[11px] text-white/40 font-bold uppercase tracking-widest">
+                                            <span>Behavioral Autoencoder</span>
+                                            <span>Calibrating</span>
+                                        </div>
+                                        <div className="h-2 rounded-full bg-white/[0.05] overflow-hidden">
+                                            <div className="h-full bg-violet-500 w-[74%]" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06] text-xs text-white/50 italic leading-relaxed">
+                                    <Command size={18} className="text-violet-400 shrink-0" />
+                                    "Model detected a structural pattern shift in Header Frames. Blocking potential SQLi attempt locally at the edge."
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-10 order-1 lg:order-2">
+                            <div className="space-y-6">
+                                <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-violet-400">
+                                    <Cpu size={14} />
+                                    {t('landing.ai_title')}
+                                </div>
+                                <h2 className="text-4xl lg:text-5xl font-black tracking-tight leading-[1.1]">
+                                    {t('landing.ai_subtitle')}
                                 </h2>
-                                <p className="text-base text-white/40 leading-relaxed max-w-lg">
-                                    {isTr
-                                        ? 'Gorenel, her isteği iki farklı ML modeli ile analiz eder. Isolation Forest nokta anomalileri yakalar, Autoencoder karmaşık desenleri tespit eder. Hiçbir rakip bu seviyede yapay zeka sunmuyor.'
-                                        : 'Gorenel analyzes every request with two distinct ML models. Isolation Forest catches point anomalies, Autoencoder detects complex patterns. No competitor offers this level of AI protection.'
-                                    }
+                                <p className="text-lg text-white/40 leading-relaxed max-w-xl">
+                                    {t('landing.ai_desc')}
                                 </p>
-                                <div className="space-y-3">
-                                    {(isTr
-                                        ? [
-                                            { label: '~1ms çıkarım süresi', desc: 'Gerçek zamanlı koruma, sıfır gecikme' },
-                                            { label: 'Çift model konsensüs', desc: 'İki model aynı anda çalışır, maksimum kapsama' },
-                                            { label: 'Otomatik model eğitimi', desc: 'Trafiğinize göre sürekli öğrenir ve adapte olur' },
-                                        ]
-                                        : [
-                                            { label: '~1ms inference time', desc: 'Real-time protection, zero added latency' },
-                                            { label: 'Dual model consensus', desc: 'Two models run in parallel for max coverage' },
-                                            { label: 'Auto model training', desc: 'Continuously learns and adapts to your traffic' },
-                                        ]
-                                    ).map((item) => (
-                                        <div key={item.label} className="flex items-start gap-3">
-                                            <div className="mt-0.5 w-5 h-5 rounded-md bg-emerald-500/15 flex items-center justify-center shrink-0">
-                                                <Check className="w-3 h-3 text-emerald-400" />
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-medium text-white/80">{item.label}</div>
-                                                <div className="text-xs text-white/35">{item.desc}</div>
-                                            </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {[
+                                    { label: 'Real-time Inference', detail: 'Sub-millisecond analysis' },
+                                    { label: 'Layer 7 Protection', detail: 'Deep packet inspection' },
+                                    { label: 'Protocol Aware', detail: 'Understands HTTP/AI traffic' },
+                                    { label: 'Offline Analysis', detail: 'History saved locally' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex items-start gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/[0.06]">
+                                        <div className="mt-1 w-5 h-5 rounded bg-violet-500/20 border border-violet-500/20 flex items-center justify-center shrink-0">
+                                            <Check size={12} className="text-violet-400" />
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* AI Visual */}
-                            <div className="relative">
-                                <div className="absolute -inset-4 bg-gradient-to-br from-emerald-500/10 to-violet-500/5 rounded-3xl blur-2xl opacity-50" />
-                                <div className="relative rounded-2xl border border-white/[0.08] bg-[#0c0e14]/80 backdrop-blur-xl p-6 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-semibold text-white/80 flex items-center gap-2">
-                                            <Cpu className="w-4 h-4 text-emerald-400/60" />
-                                            {isTr ? 'Model Karşılaştırması' : 'Model Comparison'}
-                                        </h4>
-                                        <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400/70 border border-emerald-500/20">
-                                            {isTr ? 'Canlı' : 'Live'}
-                                        </span>
+                                        <div>
+                                            <p className="text-sm font-bold text-white/90">{item.label}</p>
+                                            <p className="text-[11px] text-white/30">{item.detail}</p>
+                                        </div>
                                     </div>
-                                    <div className="space-y-3">
-                                        {[
-                                            { name: 'Isolation Forest', speed: '~1ms', type: isTr ? 'Ağaç tabanlı' : 'Tree-based', accuracy: '96.2%', color: 'emerald' },
-                                            { name: 'Autoencoder', speed: '~5ms', type: isTr ? 'Sinir ağı' : 'Neural network', accuracy: '98.7%', color: 'violet' },
-                                        ].map((m) => (
-                                            <div key={m.name} className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-4">
-                                                <div className="flex items-center justify-between mb-2">
-                                                    <span className="text-sm font-medium text-white/80">{m.name}</span>
-                                                    <span className={`text-[10px] font-medium text-${m.color}-400/70`}>{m.accuracy}</span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* ─── Feature Grid ─── */}
+                <section id="features" className="py-24 lg:py-40 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.02),transparent_70%)]">
+                    <div className="max-w-7xl mx-auto px-6 space-y-20">
+                        <div className="text-center space-y-6 max-w-2xl mx-auto">
+                            <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-cyan-400">
+                                <Layers size={14} />
+                                {t('landing.features_title')}
+                            </div>
+                            <h2 className="text-4xl lg:text-5xl font-black tracking-tight leading-[1.1]">
+                                {t('landing.features_subtitle')}
+                            </h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <FeatureCard 
+                                icon={Globe} 
+                                color="emerald" 
+                                badge="Persistent"
+                                title={t('landing.trust_self_host')}
+                                desc="Reserve custom subdomains that never change. Build integrations that stay stable even after your terminal closes."
+                            />
+                            <FeatureCard 
+                                icon={Eye} 
+                                color="blue" 
+                                badge="Real-time"
+                                title="Traffic Inspector"
+                                desc="Intercept and replay HTTP frames in real-time. Debug webhooks and APIs without leaving your dashboard."
+                            />
+                            <FeatureCard 
+                                icon={Shield} 
+                                color="violet" 
+                                badge="Edge Auth"
+                                title="Zero-Trust Proxy"
+                                desc="Add Key-Auth, Basic-Auth, or IP Allow-listing to your localhost in one click. Production security for local dev."
+                            />
+                            <FeatureCard 
+                                icon={Zap} 
+                                color="amber" 
+                                badge="Zero Latency"
+                                title="Smart CDN Routing"
+                                desc="Gorenel automatically routes your traffic through the global edge nearest to you for zero-added latency."
+                            />
+                            <FeatureCard 
+                                icon={Activity} 
+                                color="rose" 
+                                badge="Live Stats"
+                                title="Real-time Metrics"
+                                desc="Monitor throughput, latency, and system load with a live-streaming CLI and Web interface."
+                            />
+                            <FeatureCard 
+                                icon={Code2} 
+                                color="cyan" 
+                                badge="Developer-First"
+                                title="Scriptable CLI"
+                                desc="Native binaries for every platform. Export and manage configurations with simple JSON/YAML files."
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                {/* ─── Comparison Section ─── */}
+                <section id="comparison" className="py-24 lg:py-40 border-t border-white/[0.04]">
+                    <div className="max-w-7xl mx-auto px-6 space-y-16">
+                        <div className="text-center space-y-6 max-w-2xl mx-auto">
+                            <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-white/30">
+                                <Github size={14} />
+                                {t('landing.comparison_title')}
+                            </div>
+                            <h2 className="text-4xl lg:text-5xl font-black tracking-tight leading-[1.1]">
+                                {t('landing.comparison_subtitle')}
+                            </h2>
+                        </div>
+
+                        <div className="max-w-4xl mx-auto rounded-3xl border border-white/[0.08] bg-white/[0.01] overflow-hidden shadow-2xl">
+                            <table className="w-full">
+                                <thead>
+                                    <tr className="border-b border-white/[0.08] bg-white/[0.02]">
+                                        <th className="py-6 px-6 text-left text-[11px] font-black uppercase tracking-widest text-white/30">Feature Capability</th>
+                                        <th className="py-6 px-6 text-center">
+                                            <div className="flex flex-col items-center">
+                                                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-2">
+                                                    <img src="/logo.png" className="w-4 h-4" alt="Gorenel" />
                                                 </div>
-                                                <div className="flex items-center gap-4 text-[11px] text-white/35">
-                                                    <span>{m.type}</span>
-                                                    <span className="w-1 h-1 rounded-full bg-white/10" />
-                                                    <span>{m.speed} {isTr ? 'çıkarım' : 'inference'}</span>
-                                                </div>
-                                                <div className="mt-2 h-1 rounded-full bg-white/[0.06] overflow-hidden">
-                                                    <div className={`h-full bg-${m.color}-500/50 rounded-full`} style={{ width: m.accuracy }} />
-                                                </div>
+                                                <span className="text-sm font-black text-emerald-400">Gorenel</span>
                                             </div>
-                                        ))}
-                                    </div>
-                                    <div className="pt-3 border-t border-white/[0.06] flex items-center justify-between text-xs text-white/30">
-                                        <span className="flex items-center gap-1.5">
-                                            <Activity className="w-3 h-3 text-emerald-400/50" />
-                                            {isTr ? 'Konsensüs motoru aktif' : 'Consensus engine active'}
-                                        </span>
-                                        <span>{isTr ? 'Son 24 saat' : 'Last 24 hours'}</span>
-                                    </div>
-                                </div>
-                            </div>
+                                        </th>
+                                        <th className="py-6 px-6 text-center text-sm font-black text-white/40">ngrok</th>
+                                        <th className="py-6 px-6 text-center text-sm font-black text-white/40">Cloudflare</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <ComparisonRow feature="AI Protocol Intelligence" gorenel ngrok={false} cf={false} />
+                                    <ComparisonRow feature="Real-time Traffic Inspector" gorenel ngrok={true} cf={false} />
+                                    <ComparisonRow feature="Dynamic Edge Rules (Mock/Auth)" gorenel ngrok={false} cf={true} />
+                                    <ComparisonRow feature="Open Source CLI Engine" gorenel ngrok={false} cf={false} />
+                                    <ComparisonRow feature="Reserved URLs (Free Plan)" gorenel ngrok={true} cf={true} />
+                                    <ComparisonRow feature="Self-Hostable Backend" gorenel ngrok={false} cf={false} />
+                                    <ComparisonRow feature="Unlimited Local Tunnels" gorenel ngrok={false} cf={true} />
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </section>
 
-                {/* ═══════════════════════  COMPETITOR COMPARISON  ═══════════════════════ */}
-                <section id="comparison" className="border-t border-white/[0.04]">
-                    <div className="max-w-6xl mx-auto px-6 md:px-10 py-24 space-y-14">
-                        <div className="text-center space-y-3 max-w-2xl mx-auto">
-                            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400/60 mb-2">
-                                <Network className="w-3.5 h-3.5" />
-                                {isTr ? 'KARŞILAŞTIRMA' : 'COMPARISON'}
+                {/* ─── Usage Cases Section ─── */}
+                <section className="py-24 lg:py-40 border-t border-white/[0.04] bg-white/[0.01]">
+                    <div className="max-w-7xl mx-auto px-6 space-y-16 text-center">
+                        <div className="space-y-6 max-w-2xl mx-auto">
+                            <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-blue-400">
+                                <Network size={14} />
+                                {t('landing.use_cases_title')}
                             </div>
-                            <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
-                                {isTr ? 'Neden Gorenel?' : 'Why Gorenel?'}
-                            </h2>
-                            <p className="text-sm md:text-base text-white/40 leading-relaxed max-w-lg mx-auto">
-                                {isTr
-                                    ? 'Popüler tünelleme çözümleriyle özellik karşılaştırması.'
-                                    : 'Feature comparison with popular tunneling solutions.'
-                                }
-                            </p>
+                            <h2 className="text-4xl lg:text-5xl font-black tracking-tight">Built for every scenario</h2>
                         </div>
 
-                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="border-b border-white/[0.06]">
-                                            <th className="text-left p-5 text-white/50 font-medium">{isTr ? 'Özellik' : 'Feature'}</th>
-                                            <th className="p-5 text-center">
-                                                <div className="flex items-center justify-center gap-2">
-                                                    <div className="w-5 h-5 rounded bg-emerald-500/20 flex items-center justify-center">
-                                                        <Zap className="w-3 h-3 text-emerald-400" />
-                                                    </div>
-                                                    <span className="font-bold text-emerald-400">Gorenel</span>
-                                                </div>
-                                            </th>
-                                            <th className="p-5 text-center text-white/40 font-medium">ngrok</th>
-                                            <th className="p-5 text-center text-white/40 font-medium">Cloudflare Tunnel</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-white/[0.04]">
-                                        {[
-                                            { feature: isTr ? 'AI Anomali Tespiti' : 'AI Anomaly Detection', gorenel: true, ngrok: false, cf: false },
-                                            { feature: isTr ? 'Çift ML Modeli' : 'Dual ML Models', gorenel: true, ngrok: false, cf: false },
-                                            { feature: isTr ? 'Sabit URL\'ler' : 'Reserved URLs', gorenel: true, ngrok: true, cf: true },
-                                            { feature: isTr ? 'Trafik İzleyici' : 'Traffic Inspector', gorenel: true, ngrok: true, cf: false },
-                                            { feature: isTr ? 'Gerçek Zamanlı Metrikler' : 'Real-Time Metrics', gorenel: true, ngrok: true, cf: true },
-                                            { feature: isTr ? 'Açık Kaynak CLI' : 'Open-Source CLI', gorenel: true, ngrok: false, cf: false },
-                                            { feature: isTr ? 'Kendi Sunucunuzda Çalıştırma' : 'Self-Hosted Option', gorenel: true, ngrok: false, cf: false },
-                                            { feature: isTr ? 'Tünel Başına Politika' : 'Per-Tunnel Policies', gorenel: true, ngrok: false, cf: true },
-                                            { feature: isTr ? 'Ücretsiz Plan' : 'Free Plan', gorenel: true, ngrok: true, cf: true },
-                                        ].map((row) => (
-                                            <tr key={row.feature} className="hover:bg-white/[0.02] transition-colors">
-                                                <td className="p-4 pl-5 text-white/60 font-medium">{row.feature}</td>
-                                                <td className="p-4 text-center">
-                                                    {row.gorenel
-                                                        ? <Check className="w-5 h-5 text-emerald-400 mx-auto" />
-                                                        : <XIcon className="w-4 h-4 text-white/15 mx-auto" />
-                                                    }
-                                                </td>
-                                                <td className="p-4 text-center">
-                                                    {row.ngrok
-                                                        ? <Check className="w-5 h-5 text-white/30 mx-auto" />
-                                                        : <XIcon className="w-4 h-4 text-white/15 mx-auto" />
-                                                    }
-                                                </td>
-                                                <td className="p-4 text-center">
-                                                    {row.cf
-                                                        ? <Check className="w-5 h-5 text-white/30 mx-auto" />
-                                                        : <XIcon className="w-4 h-4 text-white/15 mx-auto" />
-                                                    }
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* ═══════════════════════  USE CASES  ═══════════════════════ */}
-                <section className="border-t border-white/[0.04] bg-white/[0.01]">
-                    <div className="max-w-6xl mx-auto px-6 md:px-10 py-24 space-y-14">
-                        <div className="text-center space-y-3 max-w-2xl mx-auto">
-                            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400/60 mb-2">
-                                <Monitor className="w-3.5 h-3.5" />
-                                {isTr ? 'KULLANIM ALANLARI' : 'USE CASES'}
-                            </div>
-                            <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
-                                {isTr ? 'Her senaryo için tasarlandı' : 'Built for every scenario'}
-                            </h2>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             {[
-                                {
-                                    icon: GitBranch,
-                                    title: isTr ? 'Webhook Geliştirme' : 'Webhook Development',
-                                    desc: isTr
-                                        ? 'Stripe, GitHub ve 3. parti webhook\'ları doğrudan localhost\'unuza yönlendirin. Deploy etmeden gerçek verilerle test edin.'
-                                        : 'Route Stripe, GitHub and third-party webhooks directly to localhost. Test with real data without deploying.',
-                                    tag: isTr ? 'Geliştiriciler' : 'Developers',
-                                },
-                                {
-                                    icon: Sparkles,
-                                    title: isTr ? 'Müşteri Demoları' : 'Client Demos',
-                                    desc: isTr
-                                        ? 'Sabit URL ile müşterinize canlı demo gösterin. Her seferinde aynı link, profesyonel görünüm.'
-                                        : 'Show live demos with a stable URL. Same link every time, professional appearance.',
-                                    tag: isTr ? 'Satış Ekipleri' : 'Sales Teams',
-                                },
-                                {
-                                    icon: Server,
-                                    title: isTr ? 'IoT & Uzak Erişim' : 'IoT & Remote Access',
-                                    desc: isTr
-                                        ? 'Ev sunucunuz, IoT cihazlarınız veya Raspberry Pi\'nize dünyanın her yerinden güvenli erişim sağlayın.'
-                                        : 'Secure access to your home server, IoT devices or Raspberry Pi from anywhere in the world.',
-                                    tag: 'IoT',
-                                },
-                                {
-                                    icon: Shield,
-                                    title: isTr ? 'Güvenlik Testi' : 'Security Testing',
-                                    desc: isTr
-                                        ? 'AI anomali tespiti ve trafik izleyici ile uygulamanızın güvenliğini sürekli izleyin ve denetleyin.'
-                                        : 'Continuously monitor and audit your app\'s security with AI anomaly detection and traffic inspector.',
-                                    tag: isTr ? 'DevSecOps' : 'DevSecOps',
-                                },
-                            ].map((uc) => (
-                                <div key={uc.title} className="flex gap-5 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 hover:bg-white/[0.04] hover:border-white/[0.1] transition-all duration-300 group">
-                                    <div className="w-10 h-10 rounded-xl bg-emerald-500/[0.08] border border-emerald-500/20 flex items-center justify-center shrink-0 group-hover:border-emerald-500/30 transition-colors">
-                                        <uc.icon className="w-5 h-5 text-emerald-400/70" />
+                                { icon: Code2, title: 'Webhook Debugging', desc: t('landing.use_cases_webhooks') },
+                                { icon: Monitor, title: 'Client Presentations', desc: t('landing.use_cases_demos') },
+                                { icon: Cpu, title: 'IoT & Remote Access', desc: t('landing.use_cases_iot') },
+                                { icon: Brain, title: 'AI/LLM Gateway Proxy', desc: t('landing.use_cases_ai') }
+                            ].map((useCase, idx) => (
+                                <div key={idx} className="group p-8 rounded-3xl border border-white/[0.06] bg-[#0c0e14] hover:border-blue-500/30 transition-all text-left flex gap-6 items-start">
+                                    <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                                        <useCase.icon size={24} className="text-white/40 group-hover:text-blue-400" />
                                     </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1.5">
-                                            <h3 className="text-base font-semibold text-white">{uc.title}</h3>
-                                            <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-white/[0.04] text-white/25">{uc.tag}</span>
-                                        </div>
-                                        <p className="text-sm text-white/40 leading-relaxed">{uc.desc}</p>
+                                    <div className="space-y-2">
+                                        <h3 className="text-xl font-bold text-white">{useCase.title}</h3>
+                                        <p className="text-sm text-white/40 leading-relaxed">{useCase.desc}</p>
                                     </div>
                                 </div>
                             ))}
@@ -707,275 +604,114 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                     </div>
                 </section>
 
-                {/* ═══════════════════════  FREE & OPEN SOURCE  ═══════════════════════ */}
-                <section id="pricing" className="border-t border-white/[0.04]">
-                    <div className="max-w-6xl mx-auto px-6 md:px-10 py-24 space-y-14">
-                        <div className="text-center space-y-3 max-w-2xl mx-auto">
-                            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400/60 mb-2">
-                                <Sparkles className="w-3.5 h-3.5" />
-                                {isTr ? 'TAMAMEN ÜCRETSİZ' : 'COMPLETELY FREE'}
+                {/* ─── Community / Free Section ─── */}
+                <section id="pricing" className="py-24 lg:py-40 bg-gradient-to-t from-emerald-500/[0.03] to-transparent">
+                    <div className="max-w-7xl mx-auto px-6">
+                        <div className="rounded-[40px] border border-emerald-500/20 bg-emerald-500/[0.02] p-8 lg:p-24 text-center space-y-10 relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.05),transparent_70%)] pointer-events-none" />
+                            
+                            <div className="space-y-6 relative z-10">
+                                <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-400">
+                                    <Languages size={14} />
+                                    {t('landing.pricing_title')}
+                                </div>
+                                <h2 className="text-5xl lg:text-7xl font-black tracking-tighter">
+                                    {t('landing.pricing_subtitle')}
+                                </h2>
+                                <p className="text-lg text-white/40 max-w-2xl mx-auto italic">
+                                    "We believe developers shouldn't pay to share their work. Gorenel is, and always will be, free for the community."
+                                </p>
                             </div>
-                            <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
-                                {isTr ? 'Her şey ücretsiz. Gerçekten.' : 'Everything is free. Really.'}
-                            </h2>
-                            <p className="text-sm md:text-base text-white/40 leading-relaxed max-w-lg mx-auto">
-                                {isTr
-                                    ? 'Gizli ücret yok, premium duvarı yok. Tüm özellikler — AI anomali tespiti, trafik politikaları, sabit URL\'ler — herkese açık.'
-                                    : 'No hidden fees, no paywall. Every feature — AI anomaly detection, traffic policies, reserved URLs — is available to everyone.'
-                                }
-                            </p>
-                        </div>
 
-                        <div className="max-w-3xl mx-auto">
-                            <div className="rounded-2xl border-2 border-emerald-500/30 bg-emerald-500/[0.04] p-8 md:p-10 relative shadow-[0_0_40px_-12px_rgba(16,185,129,0.2)]">
-                                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                                    <span className="px-3 py-1 text-[11px] font-bold bg-emerald-500 text-[#080a10] rounded-full">
-                                        {isTr ? '100% ÜCRETSİZ' : '100% FREE'}
-                                    </span>
-                                </div>
-                                <div className="text-center mb-8">
-                                    <div className="mb-3">
-                                        <span className="text-5xl md:text-6xl font-bold text-white">$0</span>
-                                        <span className="text-lg text-white/30 ml-2">{isTr ? 'sonsuza dek' : 'forever'}</span>
-                                    </div>
-                                    <p className="text-sm text-white/40">
-                                        {isTr
-                                            ? 'Açık kaynak proje. Tüm özellikler dahil, sınırsız kullanım.'
-                                            : 'Open-source project. All features included, unlimited usage.'
-                                        }
-                                    </p>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 mb-8">
-                                    {(isTr
-                                        ? [
-                                            'Sınırsız tünel',
-                                            'Sabit subdomain\'ler',
-                                            'AI anomali tespiti',
-                                            'Trafik politikaları',
-                                            'Trafik izleyici',
-                                            'Gerçek zamanlı metrikler',
-                                            'Çift ML modeli',
-                                            'Otomatik SSL',
-                                            'Self-hosted seçeneği',
-                                            'Rate limiting',
-                                            'GeoLocation',
-                                            'Açık kaynak CLI',
-                                        ]
-                                        : [
-                                            'Unlimited tunnels',
-                                            'Reserved subdomains',
-                                            'AI anomaly detection',
-                                            'Traffic policies',
-                                            'Traffic inspector',
-                                            'Real-time metrics',
-                                            'Dual ML models',
-                                            'Auto SSL',
-                                            'Self-hosted option',
-                                            'Rate limiting',
-                                            'GeoLocation',
-                                            'Open-source CLI',
-                                        ]
-                                    ).map((f) => (
-                                        <div key={f} className="flex items-center gap-2.5 text-sm text-white/60">
-                                            <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+                            <div className="flex flex-col items-center gap-8 relative z-10">
+                                <Button variant="primary" size="lg" onClick={handleCTA} className="h-16 px-16 text-lg font-black shadow-2xl shadow-emerald-500/20">
+                                    {t('landing.cta_primary')}
+                                    <ArrowRight size={20} className="ml-2" />
+                                </Button>
+                                
+                                <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 opacity-40">
+                                    {[
+                                        'Unlimited Access',
+                                        'No Pro Tier',
+                                        'E2E Encryption',
+                                        'Commercial Ready'
+                                    ].map((f, i) => (
+                                        <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+                                            <CheckCircle2 size={14} className="text-emerald-500" />
                                             {f}
                                         </div>
                                     ))}
                                 </div>
-                                <div className="flex justify-center">
-                                    <Button variant="primary" size="lg" type="button" onClick={handleCTA} className="px-10">
-                                        {isLoggedIn
-                                            ? (isTr ? 'Dashboard\'a Git' : 'Open Dashboard')
-                                            : (isTr ? 'Hemen Başla — Ücretsiz' : 'Get Started — It\'s Free')
-                                        }
-                                        <ArrowRight size={16} />
-                                    </Button>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* ═══════════════════════  ARCHITECTURE  ═══════════════════════ */}
-                <section className="border-t border-white/[0.04] bg-white/[0.01]">
-                    <div className="max-w-6xl mx-auto px-6 md:px-10 py-24">
-                        <div className="text-center space-y-3 max-w-2xl mx-auto mb-14">
-                            <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-400/60 mb-2">
-                                <Layers className="w-3.5 h-3.5" />
-                                {isTr ? 'MİMARİ' : 'ARCHITECTURE'}
+                {/* ─── Footer ─── */}
+                <footer className="pt-24 pb-12 border-t border-white/[0.04]">
+                    <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-20">
+                        <div className="lg:col-span-2 space-y-8">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/[0.08] flex items-center justify-center">
+                                    <img src="/logo.png" className="w-5 h-5 opacity-80" alt="Gorenel" />
+                                </div>
+                                <span className="font-black text-xl">Gorenel</span>
                             </div>
-                            <h2 className="text-2xl md:text-4xl font-bold tracking-tight">
-                                {isTr ? 'Prodüksiyon düzeyinde altyapı' : 'Production-grade infrastructure'}
-                            </h2>
-                            <p className="text-sm md:text-base text-white/40 leading-relaxed max-w-lg mx-auto">
-                                {isTr
-                                    ? 'Go backend, Python ML servisi, React dashboard ve PostgreSQL + Redis + ClickHouse veri katmanı.'
-                                    : 'Go backend, Python ML service, React dashboard and PostgreSQL + Redis + ClickHouse data layer.'
-                                }
+                            <p className="text-sm text-white/30 max-w-xs leading-relaxed italic">
+                                The AI-powered tunneling infrastructure for secure, high-performance localhost deployments.
                             </p>
+                            <div className="flex gap-4">
+                                <Button variant="ghost" size="sm" className="w-10 h-10 p-0 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:text-white text-white/30">
+                                    <Github size={20} />
+                                </Button>
+                                <Button variant="ghost" size="sm" className="w-10 h-10 p-0 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:text-white text-white/30">
+                                    <Languages size={20} />
+                                </Button>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {[
-                                { icon: Server, label: 'Go Backend', desc: isTr ? 'Yüksek performanslı proxy' : 'High-performance proxy', color: 'emerald' },
-                                { icon: Brain, label: 'Python ML', desc: isTr ? 'Çift model AI motoru' : 'Dual-model AI engine', color: 'violet' },
-                                { icon: Monitor, label: 'React Dashboard', desc: isTr ? 'Gerçek zamanlı panel' : 'Real-time dashboard', color: 'blue' },
-                                { icon: Layers, label: 'Data Layer', desc: 'PostgreSQL · Redis · ClickHouse', color: 'cyan' },
-                            ].map((item) => (
-                                <div key={item.label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5 text-center hover:bg-white/[0.04] hover:border-white/[0.1] transition-all duration-300 group">
-                                    <div className={`w-10 h-10 rounded-xl bg-${item.color}-500/10 border border-${item.color}-500/20 flex items-center justify-center mx-auto mb-3 group-hover:border-${item.color}-500/30 transition-colors`}>
-                                        <item.icon className={`w-5 h-5 text-${item.color}-400/70`} />
-                                    </div>
-                                    <h4 className="text-sm font-semibold text-white/80 mb-0.5">{item.label}</h4>
-                                    <p className="text-[11px] text-white/30">{item.desc}</p>
-                                </div>
-                            ))}
+                        <div className="space-y-6">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20">Product</h4>
+                            <ul className="space-y-4 text-sm text-white/50">
+                                <li><a href="#features" className="hover:text-emerald-400 transition-colors">Features</a></li>
+                                <li><a href="#comparison" className="hover:text-emerald-400 transition-colors">Compare</a></li>
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">Reserved Domains</a></li>
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">Pricing</a></li>
+                            </ul>
+                        </div>
+
+                        <div className="space-y-6">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20">Resources</h4>
+                            <ul className="space-y-4 text-sm text-white/50">
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">Documentation</a></li>
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">CLI Reference</a></li>
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">Security Audit</a></li>
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">API Keys</a></li>
+                            </ul>
+                        </div>
+
+                        <div className="space-y-6">
+                            <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20">Legal</h4>
+                            <ul className="space-y-4 text-sm text-white/50">
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">Privacy Policy</a></li>
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">Terms of Service</a></li>
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">GDPR</a></li>
+                            </ul>
                         </div>
                     </div>
-                </section>
 
-                {/* ═══════════════════════  FINAL CTA  ═══════════════════════ */}
-                <section className="border-t border-white/[0.04]">
-                    <div className="max-w-6xl mx-auto px-6 md:px-10 py-24">
-                        <div className="relative rounded-3xl border border-white/[0.08] bg-gradient-to-br from-emerald-500/[0.08] to-cyan-500/[0.04] overflow-hidden">
-                            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,rgba(16,185,129,0.12),transparent_60%)]" />
-                            <div className="absolute top-0 right-0 pointer-events-none w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-                            <div className="relative px-8 md:px-14 py-14 md:py-20 text-center space-y-6">
-                                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/[0.08] px-3 py-1 text-xs font-medium text-emerald-300/70 mb-2">
-                                    <Zap className="w-3.5 h-3.5" />
-                                    {isTr ? '30 saniyede başlayın' : 'Start in 30 seconds'}
-                                </div>
-                                <h2 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight">
-                                    {isTr
-                                        ? <>Localhost'unuz <span className="text-emerald-400">dünyayı</span> bekliyor</>
-                                        : <>Your localhost is ready <br className="hidden md:block" />for the <span className="text-emerald-400">world</span></>
-                                    }
-                                </h2>
-                                <p className="text-base md:text-lg text-white/65 max-w-xl mx-auto leading-relaxed">
-                                    {isTr
-                                        ? 'Ücretsiz başlayın. Kredi kartı gerekmez. İlk tünelinizi 30 saniyede oluşturun ve AI korumasının farkını yaşayın.'
-                                        : 'Start free. No credit card required. Create your first tunnel in 30 seconds and experience AI-powered protection.'
-                                    }
-                                </p>
-                                <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
-                                    <Button variant="light" size="lg" type="button" onClick={handleCTA}>
-                                        {isTr ? 'Hemen Başla' : 'Get Started Now'}
-                                        <ArrowRight size={16} />
-                                    </Button>
-                                    <Button variant="outline" size="lg" type="button" onClick={onLogin}>
-                                        {isTr ? 'Canlı Demo' : 'View Live Demo'}
-                                    </Button>
-                                </div>
-                                <p className="text-xs text-white/50 pt-2">
-                                    {isTr
-                                        ? '✦ Tüm özellikler ücretsiz — açık kaynak proje'
-                                        : '✦ All features free — open-source project'
-                                    }
-                                </p>
+                    <div className="max-w-7xl mx-auto px-6 pt-12 border-t border-white/[0.04] flex flex-col md:flex-row justify-between items-center gap-6">
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-white/20">© 2026 Core Infrastructure. Built for Humanity.</p>
+                        <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-2">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-white/30">All systems green</span>
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                {/* ═══════════════════════  FOOTER  ═══════════════════════ */}
-                <footer className="relative z-[80] pointer-events-auto border-t border-white/[0.04]">
-                    <div className="max-w-6xl mx-auto px-6 md:px-10 py-10">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2.5">
-                                    <div className="w-6 h-6 rounded-md bg-white/[0.05] border border-white/[0.08] overflow-hidden">
-                                        <img src="/logo.png" alt="Gorenel" width="256" height="256" className="w-full h-full object-cover" />
-                                    </div>
-                                    <span className="font-bold text-sm text-white">Gorenel</span>
-                                </div>
-                                <p className="text-xs text-white/55 leading-relaxed max-w-[200px]">
-                                    {isTr
-                                        ? 'AI destekli yeni nesil tünelleme platformu.'
-                                        : 'AI-powered next-gen tunneling platform.'
-                                    }
-                                </p>
-                            </div>
-                            <div className="space-y-3">
-                                <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Ürün' : 'Product'}</h4>
-                                <div className="space-y-2 text-xs text-white/55">
-                                    <a
-                                        className={footerLinkClass}
-                                        href="/#features"
-                                    >
-                                        {isTr ? 'Özellikler' : 'Features'}
-                                    </a>
-                                    <a
-                                        className={footerLinkClass}
-                                        href="/#pricing"
-                                    >
-                                        {isTr ? 'Neden Ücretsiz?' : 'Why Free?'}
-                                    </a>
-                                    <a
-                                        className={footerLinkClass}
-                                        href={isTr ? '/tr/changelog' : '/en/changelog'}
-                                    >
-                                        {isTr ? 'Değişiklik Günlüğü' : 'Changelog'}
-                                    </a>
-                                </div>
-                            </div>
-                            <div className="space-y-3">
-                                <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Geliştirici' : 'Developer'}</h4>
-                                <div className="space-y-2 text-xs text-white/55">
-                                    <a
-                                        className={footerLinkClass}
-                                        href="/tr/docs/cli"
-                                    >
-                                        {isTr ? 'Dokümantasyon' : 'Documentation'}
-                                    </a>
-                                    <a
-                                        className={footerLinkClass}
-                                        href={isTr ? '/tr/docs/api' : '/en/docs/api'}
-                                    >
-                                        {isTr ? 'API Referansı' : 'API Reference'}
-                                    </a>
-                                    <a className={footerLinkClass} href="https://github.com/bekican/gorenel" target="_blank" rel="noopener noreferrer">GitHub</a>
-                                </div>
-                            </div>
-                            <div className="space-y-3">
-                                <h4 className="text-xs font-semibold text-white/65 uppercase tracking-wider">{isTr ? 'Şirket' : 'Company'}</h4>
-                                <div className="space-y-2 text-xs text-white/55">
-                                    <a
-                                        className={footerLinkClass}
-                                        href={isTr ? '/tr/hakkimizda' : '/en/about'}
-                                    >
-                                        {isTr ? 'Hakkımızda' : 'About'}
-                                    </a>
-                                    <a
-                                        className={footerLinkClass}
-                                        href={isTr ? '/tr/gizlilik-politikasi' : '/en/privacy'}
-                                    >
-                                        {isTr ? 'Gizlilik Politikası' : 'Privacy Policy'}
-                                    </a>
-                                    <a
-                                        className={footerLinkClass}
-                                        href={isTr ? '/tr/hizmet-kosullari' : '/en/terms'}
-                                    >
-                                        {isTr ? 'Hizmet Koşulları' : 'Terms of Service'}
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="pt-6 border-t border-white/[0.04] flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/50">
-                            <span>&copy; 2026 Gorenel. {isTr ? 'Tüm hakları saklıdır.' : 'All rights reserved.'}</span>
-                            <div className="flex items-center gap-4">
-                                <span className="flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/60 shadow-[0_0_6px_rgba(16,185,129,0.4)]" />
-                                    {isTr ? 'Tüm sistemler aktif' : 'All systems operational'}
-                                </span>
-                                <span className="w-1 h-1 rounded-full bg-white/10" />
-                                <span>EU-Central-1</span>
-                            </div>
+                            <span className="text-[10px] font-bold text-white/10 select-none tracking-widest">v1.2.4-stable</span>
                         </div>
                     </div>
                 </footer>
             </main>
-
-
         </div>
     );
 };

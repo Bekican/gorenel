@@ -397,7 +397,7 @@ export const api = {
     return {
       stats: (data && typeof data === 'object' ? (data as Record<string, ModelStat>) : {}) || {},
       active_tunnels: 0,
-      ml_up: true,
+      ml_up: false,
       last_prediction_at: null,
     };
   },
