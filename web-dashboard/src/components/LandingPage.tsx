@@ -1,15 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ArrowRight,
     CheckCircle2,
     Command,
     Globe,
     Languages,
-    Lock,
     Shield,
-    TerminalSquare,
     Activity,
-    Gauge,
     Eye,
     Brain,
     Server,
@@ -17,9 +14,7 @@ import {
     Clock,
     Zap,
     Code2,
-    GitBranch,
     Layers,
-    BarChart3,
     Check,
     X as XIcon,
     Network,
@@ -28,7 +23,6 @@ import {
     Copy,
     ExternalLink,
     Github,
-    ChevronRight,
     AlertCircle
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -64,8 +58,8 @@ const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code }) => {
     return (
         <div className="relative group rounded-xl border border-white/[0.08] bg-[#0c0e14] p-4 font-mono text-[13px] overflow-hidden">
             <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                    onClick={copy} 
+                <button
+                    onClick={copy}
                     className="p-1.5 rounded-md bg-white/[0.05] border border-white/[0.1] hover:bg-white/[0.1] text-white/50 hover:text-white transition-all"
                 >
                     {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
@@ -79,8 +73,8 @@ const CodeBlock: React.FC<{ code: string; language?: string }> = ({ code }) => {
     );
 };
 
-const FeatureCard: React.FC<{ icon: any; title: string; desc: string; color: string; badge?: string }> = ({ 
-    icon: Icon, title, desc, color, badge 
+const FeatureCard: React.FC<{ icon: any; title: string; desc: string; color: string; badge?: string }> = ({
+    icon: Icon, title, desc, color, badge
 }) => (
     <div className="group relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 hover:bg-white/[0.04] hover:border-white/[0.1] transition-all duration-300">
         <div className="flex items-center justify-between mb-6">
@@ -98,8 +92,8 @@ const FeatureCard: React.FC<{ icon: any; title: string; desc: string; color: str
     </div>
 );
 
-const ComparisonRow: React.FC<{ feature: string; gorenel: boolean; ngrok: boolean; cf: boolean }> = ({ 
-    feature, gorenel, ngrok, cf 
+const ComparisonRow: React.FC<{ feature: string; gorenel: boolean; ngrok: boolean; cf: boolean }> = ({
+    feature, gorenel, ngrok, cf
 }) => (
     <tr className="border-b border-white/[0.04] hover:bg-white/[0.01] transition-colors">
         <td className="py-4 px-6 text-sm font-medium text-white/60">{feature}</td>
@@ -148,7 +142,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                         <span className="font-black tracking-tight text-lg">Gorenel</span>
                         <div className="px-2 py-0.5 rounded-full bg-white/[0.05] border border-white/[0.08] text-[10px] font-bold text-white/40 uppercase tracking-widest ml-1">v1.2</div>
                     </div>
-                    
+
                     <div className="hidden lg:flex items-center gap-8 text-[13px] font-medium text-white/50">
                         <a href="#features" className="hover:text-white transition-colors">{t('landing.trust_ai')}</a>
                         <a href="#how-it-works" className="hover:text-white transition-colors">{t('landing.how_it_works_title')}</a>
@@ -161,7 +155,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <button 
+                        <button
                             onClick={() => i18n.changeLanguage(isTr ? 'en' : 'tr')}
                             className="p-2 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:bg-white/[0.06] transition-all text-white/50"
                         >
@@ -187,7 +181,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 <Sparkles size={12} />
                                 {t('landing.hero_badge')}
                             </div>
-                            
+
                             <h1 className="text-5xl lg:text-[4.5rem] font-black tracking-tighter leading-[1] text-gradient">
                                 {t('landing.title')} <br />
                                 <span className="text-gradient-accent">{t('landing.title_accent')}</span>
@@ -202,9 +196,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                     {isLoggedIn ? t('common.to_dashboard') : t('landing.cta_primary')}
                                     <ArrowRight size={18} className="ml-2" />
                                 </Button>
-                                <a 
-                                    href="https://github.com/bekican/gorenel" 
-                                    target="_blank" 
+                                <a
+                                    href="https://github.com/bekican/gorenel"
+                                    target="_blank"
                                     className="flex items-center gap-2 h-14 px-8 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] transition-all font-bold w-full sm:w-auto justify-center"
                                 >
                                     <Github size={20} />
@@ -230,7 +224,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                         {/* Hero Visual: Premium Terminal/UI Mockup */}
                         <div className="relative group perspective">
                             <div className="absolute -inset-10 bg-gradient-to-tr from-emerald-500/20 to-blue-500/10 rounded-full blur-[100px] opacity-50 group-hover:opacity-70 transition-opacity duration-1000" />
-                            
+
                             <div className="relative rounded-2xl border border-white/[0.1] bg-[#0c0e14]/90 backdrop-blur-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] overflow-hidden transform-gpu lg:rotate-[-2deg] lg:group-hover:rotate-0 transition-transform duration-700">
                                 <div className="h-10 border-b border-white/[0.08] bg-white/[0.02] flex items-center px-4 justify-between">
                                     <div className="flex gap-2">
@@ -362,7 +356,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                         </div>
                                         <CodeBlock code={isWindowsClient ? `iwr -useb ${window.location.host}/install.ps1 | iex` : `curl -sSL ${window.location.host}/install.sh | bash`} />
                                     </div>
-                                    
+
                                     <div className="space-y-4">
                                         <span className="text-[10px] font-black uppercase tracking-widest text-white/30">2. Command line auth</span>
                                         <CodeBlock code="gorenel config set api_key gk_*****" />
@@ -482,44 +476,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <FeatureCard 
-                                icon={Globe} 
-                                color="emerald" 
+                            <FeatureCard
+                                icon={Globe}
+                                color="emerald"
                                 badge="Persistent"
                                 title={t('landing.trust_self_host')}
                                 desc="Reserve custom subdomains that never change. Build integrations that stay stable even after your terminal closes."
                             />
-                            <FeatureCard 
-                                icon={Eye} 
-                                color="blue" 
+                            <FeatureCard
+                                icon={Eye}
+                                color="blue"
                                 badge="Real-time"
                                 title="Traffic Inspector"
                                 desc="Intercept and replay HTTP frames in real-time. Debug webhooks and APIs without leaving your dashboard."
                             />
-                            <FeatureCard 
-                                icon={Shield} 
-                                color="violet" 
+                            <FeatureCard
+                                icon={Shield}
+                                color="violet"
                                 badge="Edge Auth"
                                 title="Zero-Trust Proxy"
                                 desc="Add Key-Auth, Basic-Auth, or IP Allow-listing to your localhost in one click. Production security for local dev."
                             />
-                            <FeatureCard 
-                                icon={Zap} 
-                                color="amber" 
+                            <FeatureCard
+                                icon={Zap}
+                                color="amber"
                                 badge="Zero Latency"
                                 title="Smart CDN Routing"
                                 desc="Gorenel automatically routes your traffic through the global edge nearest to you for zero-added latency."
                             />
-                            <FeatureCard 
-                                icon={Activity} 
-                                color="rose" 
+                            <FeatureCard
+                                icon={Activity}
+                                color="rose"
                                 badge="Live Stats"
                                 title="Real-time Metrics"
                                 desc="Monitor throughput, latency, and system load with a live-streaming CLI and Web interface."
                             />
-                            <FeatureCard 
-                                icon={Code2} 
-                                color="cyan" 
+                            <FeatureCard
+                                icon={Code2}
+                                color="cyan"
                                 badge="Developer-First"
                                 title="Scriptable CLI"
                                 desc="Native binaries for every platform. Export and manage configurations with simple JSON/YAML files."
@@ -609,7 +603,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                     <div className="max-w-7xl mx-auto px-6">
                         <div className="rounded-[40px] border border-emerald-500/20 bg-emerald-500/[0.02] p-8 lg:p-24 text-center space-y-10 relative overflow-hidden">
                             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.05),transparent_70%)] pointer-events-none" />
-                            
+
                             <div className="space-y-6 relative z-10">
                                 <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.2em] text-emerald-400">
                                     <Languages size={14} />
@@ -628,7 +622,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                     {t('landing.cta_primary')}
                                     <ArrowRight size={20} className="ml-2" />
                                 </Button>
-                                
+
                                 <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 opacity-40">
                                     {[
                                         'Unlimited Access',
