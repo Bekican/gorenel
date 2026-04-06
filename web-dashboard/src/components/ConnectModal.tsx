@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { X, Download, Copy, Check, Terminal, Sparkles, Wand2, ShieldCheck } from 'lucide-react';
+import { X, Download, Copy, Check, Terminal, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './ui/Button';
 import {
@@ -96,7 +96,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
               }`}
             >
               <Zap size={13} />
-              {t('connect_modal.mode_magic', 'Hızlı Başlat (Önerilen)')}
+              {t('connect_modal.mode_magic')}
             </button>
             <button
               type="button"
@@ -106,7 +106,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
               }`}
             >
               <Terminal size={13} />
-              {t('connect_modal.mode_manual', 'Manuel Kurulum')}
+              {t('connect_modal.mode_manual')}
             </button>
           </div>
 
@@ -137,7 +137,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-xs font-medium text-white/55">
                     <Terminal className="w-3.5 h-3.5 text-emerald-400/80" />
-                    {t('connect_modal.magic_label', 'Kur ve Bağlan (Kopyala & Yapıştır)')}
+                    {t('connect_modal.magic_label')}
                   </div>
                   <button
                     type="button"
@@ -153,8 +153,8 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
                   </button>
                   <p className="text-[10px] text-white/30 leading-relaxed italic">
                     {osTab === 'windows' 
-                      ? 'Bu komut CLI\'yı otomatik indirir, kurar ve hesabınıza bağlayarak tüneli açar.'
-                      : 'Bu komut CLI\'yı indirir, yetkilendirir ve tüneli başlatır.'}
+                      ? t('connect_modal.magic_footer_win')
+                      : t('connect_modal.magic_footer_unix')}
                   </p>
                 </div>
               </div>
@@ -162,7 +162,7 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
               <div className="p-3 bg-blue-500/[0.03] border border-blue-500/10 rounded-xl flex items-center gap-3">
                 <ShieldCheck className="w-4 h-4 text-blue-400/60" />
                 <p className="text-[10px] text-blue-300/40 font-medium leading-normal">
-                   {t('connect_modal.security_note', 'Not: Güvenliğiniz için bu komut size özel geçici bir API anahtarı içerir.')}
+                   {t('connect_modal.security_note')}
                 </p>
               </div>
             </div>
