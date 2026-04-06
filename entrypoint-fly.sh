@@ -67,7 +67,7 @@ docker-compose down --remove-orphans || true
 docker system prune -f || true
 
 echo "Starting Gorenel services..."
-if ! docker-compose up -d --remove-orphans; then
+if ! docker-compose up -d --build --remove-orphans; then
     echo "ERROR: Docker Compose failed to start services."
     docker-compose ps
     docker-compose logs --tail=50
