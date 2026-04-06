@@ -354,7 +354,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                                 <Layers size={14} />
                                             </div>
                                         </div>
-                                        <CodeBlock code={isWindowsClient ? `iwr -useb ${window.location.host}/install.ps1 | iex` : `curl -sSL ${window.location.host}/install.sh | bash`} />
+                                        <CodeBlock 
+                                            code={isWindowsClient 
+                                                ? `iwr -useb ${typeof window !== 'undefined' ? window.location.host : 'gorenel.site'}/install.ps1 | iex` 
+                                                : `curl -sSL ${typeof window !== 'undefined' ? window.location.host : 'gorenel.site'}/install.sh | bash`} 
+                                        />
                                     </div>
 
                                     <div className="space-y-4">
