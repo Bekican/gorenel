@@ -1,3 +1,12 @@
+# Stage 1: Build the Dashboard
+FROM node:20-alpine AS dashboard-build
+WORKDIR /app
+COPY ./web-dashboard/package*.json ./
+RUN npm install
+COPY ./web-dashboard/ .
+RUN npm run build
+
+# Stage 2: Final Image
 FROM docker:dind
 
 # Install docker-compose and runtime tools
@@ -7,6 +16,9 @@ WORKDIR /app
 
 # Copy all project files
 COPY . .
+
+# Overwrite the web-dashboard/dist with the pre-built version
+COPY --from=dashboard-build /app/dist ./web-dashboard/dist
 
 # Nginx reverse proxy: binds Fly's internal_port immediately (4002)
 COPY nginx/fly.conf /etc/nginx/http.d/default.conf
