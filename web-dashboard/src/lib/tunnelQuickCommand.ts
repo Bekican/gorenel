@@ -27,28 +27,22 @@ export function tunnelQuickCommandFull(opts: {
   const srv = connectServerSuffix(opts.hostname);
 
   if (opts.os === 'windows') {
-    return `iwr -useb ${base}/install.ps1 | iex; $g = "$env:LOCALAPPDATA\\gorenel\\gorenel.exe"; & $g config set api_key ${opts.apiKey}; & $g connect --port 3000${srv}`;
+    // Magic one-liner for Windows PowerShell
+    return `iwr -useb ${base}/install.ps1?api_key=${opts.apiKey} | iex; gorenel connect --port 3000${srv}`;
   }
 
-  const bin = '"$HOME/.gorenel/bin/gorenel"';
-  return `curl -sSL ${base}/install.sh | bash && ${bin} config set api_key ${opts.apiKey} && ${bin} connect --port 3000${srv}`;
+  // Magic one-liner for Unix (Linux/macOS)
+  return `curl -sSL "${base}/install.sh?api_key=${opts.apiKey}" | bash && gorenel connect --port 3000${srv}`;
 }
 
-/** Shorter line when CLI is already installed (PATH not required on Windows). */
+/** Shorter line when CLI is already installed and in PATH. */
 export function tunnelQuickCommandMinimal(opts: {
   apiKey: string;
   os: TunnelQuickOs;
   hostname: string;
 }): string {
   const srv = connectServerSuffix(opts.hostname);
-
-  if (opts.os === 'windows') {
-    // Standardizing on a cleaner format that is easier to read/edit if needed
-    return `$g = "$env:LOCALAPPDATA\\gorenel\\gorenel.exe"; & $g config set api_key ${opts.apiKey}; & $g connect --port 3000${srv}`;
-  }
-
-  const bin = '"$HOME/.gorenel/bin/gorenel"';
-  return `${bin} config set api_key ${opts.apiKey} && ${bin} connect --port 3000${srv}`;
+  return `gorenel config set api_key ${opts.apiKey} && gorenel connect --port 3000${srv}`;
 }
 
 /** URL for "Magic Install" download with API key. */
