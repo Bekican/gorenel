@@ -193,7 +193,7 @@ function App() {
     setIsAuthStarted(false);
   }, []);
 
-  const path = window.location.pathname;
+  const path = typeof window !== 'undefined' ? window.location.pathname : '/';
   if (path.startsWith('/share/')) {
     const shareId = path.split('/')[2];
     return <ShareView shareId={shareId} />;

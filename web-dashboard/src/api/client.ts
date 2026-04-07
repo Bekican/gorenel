@@ -7,7 +7,7 @@ function defaultApiBaseUrl(): string {
 
   // Runtime fallback: if the UI is opened on a tunnel subdomain, still call the apex API host.
   // Otherwise, use relative URLs (same-origin) for dev/local setups.
-  const host = window.location.hostname;
+  const host = typeof window !== 'undefined' ? window.location.hostname : 'gorenel.site';
   if (host.endsWith('.gorenel.site') && host !== 'gorenel.site') return 'https://gorenel.site';
   if (host.endsWith('.fly.dev') && host !== 'gorenel-app.fly.dev') return 'https://gorenel.site';
   return '';
@@ -34,7 +34,9 @@ apiClient.interceptors.response.use(
     const status = err?.response?.status;
     if (status === 401) {
       // Let the app react (clear stale local session, stop polling, show login).
-      window.dispatchEvent(new CustomEvent(AUTH_EVENTS.unauthorized));
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent(AUTH_EVENTS.unauthorized));
+      }
     }
     return Promise.reject(err);
   },
