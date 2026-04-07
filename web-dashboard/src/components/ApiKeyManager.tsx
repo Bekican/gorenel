@@ -23,6 +23,16 @@ export const ApiKeyManager: React.FC = () => {
   const [revokeKey, setRevokeKey] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [hostInfo, setHostInfo] = useState({ hostname: '', protocol: 'https:' });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHostInfo({
+        hostname: window.location.hostname,
+        protocol: window.location.protocol
+      });
+    }
+  }, []);
 
   const showToast = useCallback((message: string) => {
     setToast(message);
@@ -83,12 +93,12 @@ export const ApiKeyManager: React.FC = () => {
   };
 
   const installCmd = (key: string, isWindows: boolean) => {
-    if (typeof window === 'undefined') return '';
+    if (!hostInfo.hostname) return '';
     return tunnelQuickCommandFull({
       apiKey: key,
       os: isWindows ? 'windows' : 'unix',
-      hostname: window.location.hostname,
-      protocol: window.location.protocol,
+      hostname: hostInfo.hostname,
+      protocol: hostInfo.protocol,
     });
   };
 

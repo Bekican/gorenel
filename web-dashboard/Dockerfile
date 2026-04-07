@@ -1,19 +1,11 @@
-FROM public.ecr.aws/docker/library/node:20-alpine AS build-stage
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . ./
-RUN npm run build
-
-# Stage 2: Serve with Nginx
 FROM public.ecr.aws/docker/library/nginx:alpine
-WORKDIR /usr/share/nginx/html
-# Remove default nginx static assets
-RUN rm -rf ./*
-# Copy static assets from build-stage
-COPY --from=build-stage /app/dist .
-# Copy custom nginx config
+
+# Copy our custom configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Copy the pre-built dashboard files
+COPY dist /usr/share/nginx/html
+
 EXPOSE 80
+
 CMD ["nginx", "-g", "daemon off;"]

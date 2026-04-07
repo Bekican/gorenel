@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { X, Download, Copy, Check, Terminal, Sparkles, Zap, ShieldCheck } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from './ui/Button';
@@ -18,32 +18,42 @@ interface ConnectModalProps {
 export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, apiKey }) => {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
-  const [osTab, setOsTab] = useState<TunnelQuickOs>(() =>
-    typeof navigator !== 'undefined' && /win/i.test(navigator.platform || '') ? 'windows' : 'unix',
-  );
+  const [osTab, setOsTab] = useState<TunnelQuickOs>('unix');
   const [minimal, setMinimal] = useState(false);
   const [installMode, setInstallMode] = useState<'magic' | 'manual'>('magic');
+  const [hostInfo, setHostInfo] = useState({ hostname: '', protocol: 'https:', origin: '' });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHostInfo({
+        hostname: window.location.hostname,
+        protocol: window.location.protocol,
+        origin: window.location.origin
+      });
+      if (/win/i.test(navigator.platform || '')) {
+        setOsTab('windows');
+      }
+    }
+  }, []);
 
   const apiToken = apiKey || 'YOUR_API_KEY';
 
   const command = useMemo(() => {
-    if (typeof window === 'undefined') return '';
-    const { hostname, protocol } = window.location;
+    if (!hostInfo.hostname) return '';
     if (minimal) {
-      return tunnelQuickCommandMinimal({ apiKey: apiToken, os: osTab, hostname });
+      return tunnelQuickCommandMinimal({ apiKey: apiToken, os: osTab, hostname: hostInfo.hostname });
     }
-    return tunnelQuickCommandFull({ apiKey: apiToken, os: osTab, hostname, protocol });
-  }, [apiToken, osTab, minimal]);
+    return tunnelQuickCommandFull({ apiKey: apiToken, os: osTab, hostname: hostInfo.hostname, protocol: hostInfo.protocol });
+  }, [apiToken, osTab, minimal, hostInfo]);
 
   const downloadHref = useMemo(() => {
-    if (typeof window === 'undefined') return '/downloads/gorenel-windows-amd64.exe';
-    const { hostname, protocol } = window.location;
+    if (!hostInfo.hostname) return '/downloads/gorenel-windows-amd64.exe';
     if (installMode === 'magic') {
-      return tunnelMagicDownloadUrl({ apiKey: apiToken, os: osTab, hostname, protocol });
+      return tunnelMagicDownloadUrl({ apiKey: apiToken, os: osTab, hostname: hostInfo.hostname, protocol: hostInfo.protocol });
     }
-    const o = window.location.origin;
+    const o = hostInfo.origin;
     return osTab === 'windows' ? `${o}/downloads/gorenel-windows-amd64.exe` : `${o}/install.sh`;
-  }, [osTab, apiToken, installMode]);
+  }, [osTab, apiToken, installMode, hostInfo]);
 
   if (!isOpen) return null;
 
