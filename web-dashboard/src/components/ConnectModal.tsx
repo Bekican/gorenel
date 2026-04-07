@@ -24,13 +24,15 @@ export const ConnectModal: React.FC<ConnectModalProps> = ({ isOpen, onClose, api
   const [hostInfo, setHostInfo] = useState({ hostname: '', protocol: 'https:', origin: '' });
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined') {
       setHostInfo({
         hostname: window.location.hostname,
         protocol: window.location.protocol,
         origin: window.location.origin
       });
-      if (/win/i.test(navigator.platform || '')) {
+      const platform = (navigator.platform || '').toLowerCase();
+      const ua = (navigator.userAgent || '').toLowerCase();
+      if (platform.includes('win') || ua.includes('win')) {
         setOsTab('windows');
       }
     }

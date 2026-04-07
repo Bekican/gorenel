@@ -42,7 +42,8 @@ export function tunnelQuickCommandMinimal(opts: {
   hostname: string;
 }): string {
   const srv = connectServerSuffix(opts.hostname);
-  return `gorenel config set api_key ${opts.apiKey} && gorenel connect --port 3000${srv}`;
+  const sep = opts.os === 'windows' ? ';' : '&&';
+  return `gorenel config set api_key ${opts.apiKey} ${sep} gorenel connect --port 3000${srv}`;
 }
 
 /** URL for "Magic Install" download with API key. */
