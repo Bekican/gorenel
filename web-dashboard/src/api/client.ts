@@ -3,13 +3,26 @@ import axios from 'axios';
 function defaultApiBaseUrl(): string {
   // VITE_API_URL is preferred (build-time).
   const fromEnv = import.meta.env?.VITE_API_URL;
-  if (fromEnv && typeof fromEnv === 'string' && fromEnv.trim() !== '') return fromEnv.trim();
+  const isProd = typeof window !== 'undefined' && 
+                 (window.location.hostname === 'gorenel.site' || 
+                  window.location.hostname.endsWith('.gorenel.site') ||
+                  window.location.hostname.endsWith('.fly.dev'));
+
+  // If we are in production but the environment variable is pointing to localhost, ignore it.
+  if (fromEnv && typeof fromEnv === 'string' && fromEnv.trim() !== '') {
+    const trimmed = fromEnv.trim();
+    if (isProd && (trimmed.includes('localhost') || trimmed.includes('127.0.0.1'))) {
+      // Use relative paths instead of hardcoded local IP in production.
+    } else {
+      return trimmed;
+    }
+  }
 
   // Runtime fallback: if the UI is opened on a tunnel subdomain, still call the apex API host.
-  // Otherwise, use relative URLs (same-origin) for dev/local setups.
   const host = typeof window !== 'undefined' ? window.location.hostname : 'gorenel.site';
   if (host.endsWith('.gorenel.site') && host !== 'gorenel.site') return 'https://gorenel.site';
   if (host.endsWith('.fly.dev') && host !== 'gorenel-app.fly.dev') return 'https://gorenel.site';
+  
   return '';
 }
 

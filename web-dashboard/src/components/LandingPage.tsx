@@ -120,7 +120,12 @@ interface LandingPageProps {
 export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, onGoToDashboard }) => {
     const { t, i18n } = useTranslation();
     const isTr = i18n.language === 'tr';
-    const isWindowsClient = typeof navigator !== 'undefined' && /win/i.test(navigator.platform || '');
+    const [isWindowsClient, setIsWindowsClient] = useState(false);
+    useEffect(() => {
+        if (typeof navigator !== 'undefined' && /win/i.test(navigator.platform || '')) {
+            setIsWindowsClient(true);
+        }
+    }, []);
     const handleCTA = isLoggedIn ? onGoToDashboard : onLogin;
 
     return (
