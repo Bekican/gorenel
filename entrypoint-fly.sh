@@ -66,8 +66,11 @@ docker-compose down --remove-orphans || true
 # Light cleanup: only remove stopped containers and dangling images (NOT all images/volumes)
 docker system prune -f || true
 
-echo "Starting Gorenel services..."
-if ! docker-compose up -d --remove-orphans --build; then
+echo "Optimizing startup: Rebuilding only the dashboard UI..."
+docker-compose build gorenel-dashboard
+
+echo "Starting all Gorenel services..."
+if ! docker-compose up -d --remove-orphans; then
     echo "ERROR: Docker Compose failed to start services."
     docker-compose ps
     docker-compose logs --tail=50
