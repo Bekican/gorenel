@@ -1,69 +1,24 @@
-# Git
 .git
 .gitignore
-
-# Go
-main.exe
-client.exe
-server.exe
+venv
+.venv
+env
+.env
+node_modules
+**/node_modules
+web-dashboard/node_modules
+services/ml/node_modules
+dist
+web-dashboard/dist
+.env
+web-dashboard/.env
+docker-compose.override.yml
+docker-compose.dev.yml
 *.log
-
-# Python
-**/__pycache__/
-**/.venv/
-**/venv/
-**/env/
-**/*.pyc
-**/*.pyo
-**/*.pyd
-.Python
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.log
-.mypy_cache/
-.pytest_cache/
-
-# Node/React
-**/node_modules/
-# **/dist/
-**/build/
-.npm
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# IDEs
-.vscode
-.idea
-
-# Local Configs
-# .env (Uncommented for Fly.io DinD deployment)
-# .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Docker/K8s local
-helm/gorenel/charts/*.tgz
-helm/gorenel/Chart.lock
-
-# Gorenel Specific Cleanup
-# *.exe (Serving from Go)
-!web-dashboard/public/downloads/*.exe
-!gorenel-windows-amd64.exe
-*.exe~
-tmp_server
-*.log
-bench.txt
-build_verify.txt
-gofmt_offenders.txt
-metrics.json
-claude.md
+.fly
+flyctl
+bin
+tmp
