@@ -67,7 +67,16 @@ docker-compose down --remove-orphans || true
 docker system prune -f || true
 
 echo "Optimizing startup: Rebuilding only the dashboard UI..."
-docker-compose build gorenel-dashboard
+if [ -d "web-dashboard/dist" ]; then
+    echo "Found pre-built dashboard dist. Proceeding with build..."
+    if ! docker-compose build gorenel-dashboard; then
+        echo "ERROR: Dashboard container build failed."
+        exit 1
+    fi
+else
+    echo "ERROR: web-dashboard/dist not found! Dashboard cannot be built."
+    exit 1
+fi
 
 echo "Starting all Gorenel services..."
 if ! docker-compose up -d --remove-orphans; then
