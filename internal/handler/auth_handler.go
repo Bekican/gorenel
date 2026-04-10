@@ -214,7 +214,12 @@ func (h *AuthHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 	h.setAuthCookie(w, r, tokenString)
 
 	// 6. Redirect to Frontend Dashboard
-	http.Redirect(w, r, "/dashboard?login=success", http.StatusSeeOther)
+	dashboardURL := "/dashboard?login=success"
+	if h.isProd {
+		dashboardURL = "https://gorenel.site/dashboard?login=success"
+	}
+	http.Redirect(w, r, dashboardURL, http.StatusSeeOther)
+
 	return nil
 }
 

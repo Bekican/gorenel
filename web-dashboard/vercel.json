@@ -1,0 +1,46 @@
+{
+  "version": 2,
+  "name": "gorenel-dashboard",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://api.gorenel.site/api/$1"
+    },
+    {
+      "source": "/health",
+      "destination": "https://api.gorenel.site/health"
+    },
+    {
+      "source": "/metrics",
+      "destination": "https://api.gorenel.site/metrics"
+    },
+    {
+      "source": "/info",
+      "destination": "https://api.gorenel.site/info"
+    },
+    {
+      "source": "/analytics/(.*)",
+      "destination": "https://api.gorenel.site/analytics/$1"
+    },
+    {
+      "source": "/ws",
+      "destination": "https://api.gorenel.site/ws"
+    },
+    {
+      "source": "/((?!assets/|favicon.ico|logo.png|og-cover.jpg|robots.txt|sitemap.xml|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}

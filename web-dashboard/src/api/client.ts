@@ -6,6 +6,7 @@ function defaultApiBaseUrl(): string {
   const isProd = typeof window !== 'undefined' && 
                  (window.location.hostname === 'gorenel.site' || 
                   window.location.hostname.endsWith('.gorenel.site') ||
+                  window.location.hostname.endsWith('.vercel.app') ||
                   window.location.hostname.endsWith('.fly.dev'));
 
   // If we are in production but the environment variable is pointing to localhost, ignore it.
@@ -18,13 +19,25 @@ function defaultApiBaseUrl(): string {
     }
   }
 
-  // Runtime fallback: if the UI is opened on a tunnel subdomain, still call the apex API host.
-  const host = typeof window !== 'undefined' ? window.location.hostname : 'gorenel.site';
-  if (host.endsWith('.gorenel.site') && host !== 'gorenel.site') return 'https://gorenel.site';
-  if (host.endsWith('.fly.dev') && host !== 'gorenel-app.fly.dev') return 'https://gorenel.site';
+  // Runtime fallback:
+  if (typeof window === 'undefined') return '';
+  const host = window.location.hostname;
+
+  // If we are on a tunnel subdomain (e.g. user.gorenel.site), we must hit the main API.
+  // We point to gorenel.site, which Vercel will then proxy to api.gorenel.site.
+  if (host.endsWith('.gorenel.site') && host !== 'gorenel.site' && host !== 'api.gorenel.site') {
+    return 'https://gorenel.site';
+  }
+
+  // Same for fly.dev fallbacks
+  if (host.endsWith('.fly.dev') && host !== 'gorenel-app.fly.dev') {
+    return 'https://gorenel-app.fly.dev';
+  }
   
+  // Default to relative paths (works with Vercel rewrites or Vite proxy)
   return '';
 }
+
 
 const API_BASE_URL = defaultApiBaseUrl();
 
