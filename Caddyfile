@@ -31,7 +31,12 @@ gorenel.site {
     }
 
     handle /tunnel/connect {
-        reverse_proxy gorenel-server:9091
+        reverse_proxy gorenel-server:9091 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up Connection "Upgrade"
+            header_up Upgrade "websocket"
+        }
     }
 
     # Gerisi Dashboard (React)

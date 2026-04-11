@@ -1219,6 +1219,13 @@ func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.
 	// 	m.authManager.IncrementUsage(apiKey)
 	// }
 
+	// DEBUG: Log all headers to see what Caddy is sending
+	headerLog := make(map[string]string)
+	for k, v := range r.Header {
+		headerLog[k] = strings.Join(v, ", ")
+	}
+	m.logger.Debug("Incoming WebSocket upgrade request headers", zap.Any("headers", headerLog))
+
 	ws, err := tunnelUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		m.logger.Error("WebSocket upgrade failed", 
