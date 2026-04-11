@@ -1219,21 +1219,16 @@ func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.
 	// 	m.authManager.IncrementUsage(apiKey)
 	// }
 
-	// DEBUG: Enforce headers if they are missing (Proxy bypass hack)
-	if r.Header.Get("Upgrade") == "" {
-		r.Header.Set("Upgrade", "websocket")
-	}
-	connHeader := strings.ToLower(r.Header.Get("Connection"))
-	if !strings.Contains(connHeader, "upgrade") {
-		r.Header.Set("Connection", "Upgrade")
-	}
+	// DEBUG: Force headers (Unconditional Proxy bypass)
+	r.Header.Set("Upgrade", "websocket")
+	r.Header.Set("Connection", "Upgrade")
 
 	// Log headers for absolute certainty
 	headerLog := make(map[string]string)
 	for k, v := range r.Header {
 		headerLog[k] = strings.Join(v, ", ")
 	}
-	m.logger.Info("FIXED WebSocket upgrade headers", zap.Any("headers", headerLog))
+	m.logger.Info("FORCED WebSocket upgrade headers (v2)", zap.Any("headers", headerLog))
 
 	ws, err := tunnelUpgrader.Upgrade(w, r, nil)
 	if err != nil {
