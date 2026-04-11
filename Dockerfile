@@ -1,3 +1,19 @@
+# Build stage
+FROM docker.io/library/golang:1.24-alpine AS builder
+
+RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Install dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source and build
+COPY . .
+RUN go build -o gorenel-server ./cmd/server
+
+# Production stage
 FROM public.ecr.aws/docker/library/alpine:latest
 
 RUN apk --no-cache add ca-certificates tzdata curl bash
@@ -7,8 +23,9 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 WORKDIR /home/appuser
 
-# Copy the server binary and client binaries for download
-COPY gorenel-server .
+# Copy the server binary from builder stage
+COPY --from=builder /app/gorenel-server .
+# Copy client binaries for download
 COPY bin/ ./bin/
 # .env is optional — env vars are injected via docker-compose
 COPY .env* ./
@@ -16,7 +33,7 @@ COPY .env* ./
 RUN chmod +x gorenel-server
 
 # Create logs directory owned by appuser
-RUN mkdir -p logs/batches logs/archives && chown -R appuser:appgroup .
+RUN mkdir -p logs/batches logs/archives bin && chown -R appuser:appgroup .
 
 # API, Control, and Proxy ports
 EXPOSE 9091 7000 8085
