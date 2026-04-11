@@ -1219,12 +1219,21 @@ func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.
 	// 	m.authManager.IncrementUsage(apiKey)
 	// }
 
-	// DEBUG: Log all headers to see what Caddy is sending
+	// DEBUG: Enforce headers if they are missing (Proxy bypass hack)
+	if r.Header.Get("Upgrade") == "" {
+		r.Header.Set("Upgrade", "websocket")
+	}
+	connHeader := strings.ToLower(r.Header.Get("Connection"))
+	if !strings.Contains(connHeader, "upgrade") {
+		r.Header.Set("Connection", "Upgrade")
+	}
+
+	// Log headers for absolute certainty
 	headerLog := make(map[string]string)
 	for k, v := range r.Header {
 		headerLog[k] = strings.Join(v, ", ")
 	}
-	m.logger.Debug("Incoming WebSocket upgrade request headers", zap.Any("headers", headerLog))
+	m.logger.Info("FIXED WebSocket upgrade headers", zap.Any("headers", headerLog))
 
 	ws, err := tunnelUpgrader.Upgrade(w, r, nil)
 	if err != nil {
