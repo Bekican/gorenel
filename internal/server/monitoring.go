@@ -188,6 +188,9 @@ func (m *MonitoringServer) Start(port string) error {
 		mux.HandleFunc("/tunnel/connect", rl(m.handleTunnelWebSocket))
 	}
 
+	// Caddy On-Demand TLS "ask" endpoint
+	mux.HandleFunc("/api/tls/ask", m.handleCaddyAsk)
+
 	l, _ := zap.NewProduction()
 	l.Info("Monitoring server başlatılıyor", zap.String("port", port))
 	srv := &http.Server{
@@ -1249,4 +1252,31 @@ func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.
 	// Wrap WebSocket as net.Conn and hand off to existing tunnel handler
 	conn := NewWSConn(ws)
 	m.tunnelHandler(conn)
+}
+
+func (m *MonitoringServer) handleCaddyAsk(w http.ResponseWriter, r *http.Request) {
+	domain := r.URL.Query().Get("domain")
+	if domain == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Log the request for debugging
+	m.logger.Debug("Caddy TLS ask request", zap.String("domain", domain))
+
+	// Check if it's a subdomain of our base domain
+	if !strings.HasSuffix(domain, "."+m.baseDomain) {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	subdomain := strings.TrimSuffix(domain, "."+m.baseDomain)
+	if _, exists := m.tunnelManager.GetTunnel(subdomain); exists {
+		m.logger.Info("Caddy TLS ask: Domain allowed", zap.String("domain", domain))
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	m.logger.Warn("Caddy TLS ask: Domain denied", zap.String("domain", domain))
+	w.WriteHeader(http.StatusNotFound)
 }

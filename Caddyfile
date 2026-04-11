@@ -1,9 +1,13 @@
 {
     email bekircan3634@gmail.com
+    on_demand_tls {
+        ask http://gorenel-server:9091/api/tls/ask
+    }
 }
 
+# Main Site & API
 gorenel.site {
-    log # Bağlantı detaylarını görmek için loglamayı açtık
+    log
 
     # API yolları
     handle /api/* {
@@ -34,8 +38,16 @@ gorenel.site {
         reverse_proxy gorenel-server:9091
     }
 
-    # Gerisi Dashboard (React)
+    # Dashboard (React)
     handle {
         reverse_proxy gorenel-dashboard:80
     }
+}
+
+# Dynamic Tunnels (subdomains)
+*.gorenel.site {
+    tls {
+        on_demand
+    }
+    reverse_proxy gorenel-server:8085
 }
