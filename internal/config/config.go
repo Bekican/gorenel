@@ -3,6 +3,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -19,6 +20,13 @@ type Config struct {
 	DBURL       string `mapstructure:"DB_URL"`
 	RedisAddr   string `mapstructure:"REDIS_ADDR"`
 	MLURL       string `mapstructure:"ML_URL"`
+
+	// Separate Database components for safer DSN construction
+	PostgresUser     string `mapstructure:"POSTGRES_USER"`
+	PostgresPassword string `mapstructure:"POSTGRES_PASSWORD"`
+	PostgresHost     string `mapstructure:"POSTGRES_HOST"`
+	PostgresPort     string `mapstructure:"POSTGRES_PORT"`
+	PostgresDB       string `mapstructure:"POSTGRES_DB"`
 
 	// Analytics (ClickHouse)
 	ClickHouseAddr     string `mapstructure:"CLICKHOUSE_ADDR"`
@@ -140,7 +148,21 @@ func Load() (*Config, error) {
 		return nil, errors.New("REDIS_ADDR must be set")
 	}
 	if config.DBURL == "" {
-		return nil, errors.New("DB_URL must be set")
+		// Construct DSN from individual components if DB_URL is missing
+		user := viper.GetString("POSTGRES_USER")
+		pass := viper.GetString("POSTGRES_PASSWORD")
+		host := viper.GetString("POSTGRES_HOST")
+		port := viper.GetString("POSTGRES_PORT")
+		dbName := viper.GetString("POSTGRES_DB")
+
+		if user != "" && host != "" {
+			// Safely encode password with special characters
+			userInfo := url.UserPassword(user, pass)
+			config.DBURL = fmt.Sprintf("postgres://%s@%s:%s/%s?sslmode=disable",
+				userInfo.String(), host, port, dbName)
+		} else {
+			return nil, errors.New("DB_URL or POSTGRES_* credentials must be set")
+		}
 	}
 	if config.ControlPort == config.ProxyPort || config.ControlPort == config.MonitorPort || config.ProxyPort == config.MonitorPort {
 		return nil, errors.New("CONTROL_PORT, PROXY_PORT and MONITOR_PORT must be different")

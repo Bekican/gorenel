@@ -1,0 +1,35 @@
+{
+    email bekircan3634@gmail.com
+}
+
+# Main domain — automatic HTTPS via Let's Encrypt
+gorenel.site {
+    # API routes → Go backend
+    handle /api/* {
+        reverse_proxy gorenel-server:9091
+    }
+    handle /health {
+        reverse_proxy gorenel-server:9091
+    }
+    handle /metrics {
+        reverse_proxy gorenel-server:9091
+    }
+    handle /info {
+        reverse_proxy gorenel-server:9091
+    }
+
+    # WebSocket upgrade support for real-time features
+    handle /ws/* {
+        reverse_proxy gorenel-server:9091
+    }
+
+    # Tunnel connections over WebSocket
+    handle /tunnel/connect {
+        reverse_proxy gorenel-server:9091
+    }
+
+    # Everything else → Dashboard (React SPA)
+    handle {
+        reverse_proxy gorenel-dashboard:80
+    }
+}
