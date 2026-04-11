@@ -2,9 +2,10 @@
     email bekircan3634@gmail.com
 }
 
-# Main domain — automatic HTTPS via Let's Encrypt
 gorenel.site {
-    # API routes → Go backend
+    log # Bağlantı detaylarını görmek için loglamayı açtık
+
+    # API yolları
     handle /api/* {
         reverse_proxy gorenel-server:9091
     }
@@ -18,17 +19,28 @@ gorenel.site {
         reverse_proxy gorenel-server:9091
     }
 
-    # WebSocket upgrade support for real-time features
-    handle /ws/* {
+    # Kurulum dosyaları
+    handle /install.sh {
+        reverse_proxy gorenel-server:9091
+    }
+    handle /install.ps1 {
+        reverse_proxy gorenel-server:9091
+    }
+    handle /downloads/* {
         reverse_proxy gorenel-server:9091
     }
 
-    # Tunnel connections over WebSocket
+    # WebSocket Tünel Bağlantısı (Kritik tünel ayarı)
     handle /tunnel/connect {
-        reverse_proxy gorenel-server:9091
+        reverse_proxy gorenel-server:9091 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up Upgrade {>Upgrade}
+            header_up Connection {>Connection}
+        }
     }
 
-    # Everything else → Dashboard (React SPA)
+    # Gerisi Dashboard (React)
     handle {
         reverse_proxy gorenel-dashboard:80
     }

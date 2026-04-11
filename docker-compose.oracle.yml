@@ -30,9 +30,9 @@ services:
       - GO_ENV=production
       - DB_URL=postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/gorenel?sslmode=disable
       - REDIS_ADDR=redis:6379
-      - ML_URL=http://ml-engine:5000
-      - CLICKHOUSE_ADDR=clickhouse:9000
-      - CLICKHOUSE_DB=gorenel
+#      - ML_URL=http://ml-engine:5000
+#      - CLICKHOUSE_ADDR=clickhouse:9000
+#      - CLICKHOUSE_DB=gorenel
     depends_on:
       redis:
         condition: service_healthy
@@ -42,7 +42,14 @@ services:
       - gorenel-net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./logs:/app/logs
+      - gorenel_logs:/home/appuser/logs
+      - ./bin:/home/appuser/bin
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
     restart: unless-stopped
 
   gorenel-dashboard:
@@ -52,18 +59,24 @@ services:
     ports:
       - "${DASHBOARD_PORT:-4000}:80"
     depends_on:
-      - gorenel-server
+      gorenel-server:
+        condition: service_healthy
     networks:
       - gorenel-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
-  ml-engine:
-    build:
-      context: ./services/ml
-      dockerfile: Dockerfile
-    networks:
-      - gorenel-net
-    restart: unless-stopped
+#  ml-engine:
+#    build:
+#      context: ./services/ml
+#      dockerfile: Dockerfile
+#    networks:
+#      - gorenel-net
+#    restart: unless-stopped
 
   redis:
     image: public.ecr.aws/docker/library/redis:7-alpine
@@ -89,16 +102,16 @@ services:
       - gorenel-net
     restart: unless-stopped
 
-  clickhouse:
-    image: clickhouse/clickhouse-server:23.8-alpine
-    environment:
-      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
-      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
-    volumes:
-      - clickhouse_data:/var/lib/clickhouse
-    networks:
-      - gorenel-net
-    restart: unless-stopped
+#  clickhouse:
+#    image: clickhouse/clickhouse-server:23.8-alpine
+#    environment:
+#      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+#      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+#    volumes:
+#      - clickhouse_data:/var/lib/clickhouse
+#    networks:
+#      - gorenel-net
+#    restart: unless-stopped
 
 networks:
   gorenel-net:
@@ -106,6 +119,7 @@ networks:
 
 volumes:
   postgres_data:
-  clickhouse_data:
+#  clickhouse_data:
   caddy_data:
   caddy_config:
+  gorenel_logs:

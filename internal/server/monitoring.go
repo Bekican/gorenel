@@ -1169,6 +1169,7 @@ var tunnelUpgrader = websocket.Upgrader{
 // This replaces the raw TCP control port (7000) so tunnels work over HTTPS (443).
 func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.Request) {
 	if m.tunnelHandler == nil {
+		m.logger.Error("Tunnel handler not configured on MonitoringServer")
 		http.Error(w, "Tunnel handler not configured", http.StatusServiceUnavailable)
 		return
 	}
@@ -1189,8 +1190,9 @@ func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.
 		}
 	}
 	if m.advancedRL != nil {
-		q := limiter.Quota{Limit: 10, WindowSize: 1 * time.Minute}
+		q := limiter.Quota{Limit: 100, WindowSize: 1 * time.Minute}
 		if !m.advancedRL.AllowWithQuota("wsconnect:"+clientIP, 1, q) {
+			m.logger.Warn("Tunnel connection rate limited", zap.String("client_ip", clientIP))
 			http.Error(w, "Too many tunnel connections", http.StatusTooManyRequests)
 			return
 		}
