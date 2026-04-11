@@ -30,14 +30,8 @@ gorenel.site {
         reverse_proxy gorenel-server:9091
     }
 
-    # WebSocket Tünel Bağlantısı (Kritik tünel ayarı)
     handle /tunnel/connect {
-        reverse_proxy gorenel-server:9091 {
-            header_up Host {host}
-            header_up X-Real-IP {remote_host}
-            header_up Upgrade {>Upgrade}
-            header_up Connection {>Connection}
-        }
+        reverse_proxy gorenel-server:9091
     }
 
     # Gerisi Dashboard (React)

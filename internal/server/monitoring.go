@@ -1221,12 +1221,17 @@ func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.
 
 	ws, err := tunnelUpgrader.Upgrade(w, r, nil)
 	if err != nil {
-		m.logger.Error("WebSocket upgrade failed", zap.Error(err))
+		m.logger.Error("WebSocket upgrade failed", 
+			zap.Error(err),
+			zap.String("client_ip", clientIP),
+			zap.String("user_agent", r.Header.Get("User-Agent")),
+		)
 		return
 	}
 
-	m.logger.Info("New WebSocket tunnel connection",
+	m.logger.Info("New WebSocket tunnel connection successful",
 		zap.String("remote_addr", r.RemoteAddr),
+		zap.String("client_ip", clientIP),
 		zap.String("x_forwarded_for", r.Header.Get("X-Forwarded-For")),
 	)
 
