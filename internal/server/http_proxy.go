@@ -373,9 +373,25 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("X-Forwarded-For") == "" {
 		r.Header.Set("X-Forwarded-For", clientIP)
 	}
-	if r.Header.Get("X-Forwarded-Proto") == "" {
-		r.Header.Set("X-Forwarded-Proto", "http")
+
+	// Dynamic protocol detection.
+	if proto := r.Header.Get("X-Forwarded-Proto"); proto == "" {
+		if r.TLS != nil {
+			r.Header.Set("X-Forwarded-Proto", "https")
+		} else {
+			// In production Caddy handles SSL, so it's most likely https if not specified.
+			r.Header.Set("X-Forwarded-Proto", "https")
+		}
 	}
+
+	if r.Header.Get("X-Forwarded-Port") == "" {
+		if r.Header.Get("X-Forwarded-Proto") == "https" {
+			r.Header.Set("X-Forwarded-Port", "443")
+		} else {
+			r.Header.Set("X-Forwarded-Port", "80")
+		}
+	}
+
 	r.Header.Set("X-Forwarded-Host", r.Host)
 
 	if err := r.Write(stream); err != nil {
