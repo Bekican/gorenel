@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"net/netip"
 	"strings"
 	"sync"
@@ -18,6 +19,7 @@ import (
 	"github.com/Bekican/gorenel/internal/limiter"
 	"github.com/Bekican/gorenel/internal/ml"
 	"github.com/google/uuid"
+	"github.com/hashicorp/yamux"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -313,8 +315,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.logger.Warn("Tunnel not found", zap.String("host", host))
 		http.Error(w, "Tunnel bulunamadı", statusCode)
 
-		// Tunnel bulunmasa bile (sampling'e göre) bounded body consume edip AI güvenlik taraması yap.
-		if captureEnabled && r.Body != nil && p.aiAnalyzer != nil {
+	if captureEnabled && r.Body != nil && p.aiAnalyzer != nil {
 			var reqBodyBuf bytes.Buffer
 			bw := &BoundedWriter{W: &reqBodyBuf, Limit: p.inspectorMaxBodyBytes}
 			r.Body = io.NopCloser(io.TeeReader(r.Body, bw))
@@ -332,21 +333,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if IsWebSocketUpgrade(r) {
-		p.HandleWebSocket(w, r, session, targetKey)
-		// Note: WebSocketConnections counter is managed inside HandleWebSocket (increment + defer decrement).
-		return
-	}
-
-	stream, err := session.Open()
-	if err != nil {
-		p.logger.Error("Stream open error", zap.Error(err))
-		http.Error(w, "Connection failed", http.StatusBadGateway)
-		return
-	}
-	defer stream.Close()
-
-	// Phase 5: Streaming Body Capture (bounded, sampling-gated)
+	// Phase 5: Request/Response Capture Preparation
 	var reqBodyBuf bytes.Buffer
 	if captureEnabled && r.Body != nil {
 		bw := &BoundedWriter{W: &reqBodyBuf, Limit: p.inspectorMaxBodyBytes}
@@ -359,8 +346,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Method:     r.Method,
 		Path:       r.URL.Path,
 		ReqHeaders: r.Header,
-		// ReqBody will be populated after forwarding
-		Timestamp: startTime,
+		Timestamp:  startTime,
 	}
 
 	maxCaptureBytes := int64(0)
@@ -369,140 +355,83 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	captureWriter := NewResponseCaptureWriter(w, maxCaptureBytes)
 
-	// Set proxy headers
-	if r.Header.Get("X-Forwarded-For") == "" {
-		r.Header.Set("X-Forwarded-For", clientIP)
-	}
-
-	// Dynamic protocol detection.
-	if proto := r.Header.Get("X-Forwarded-Proto"); proto == "" {
-		if r.TLS != nil {
-			r.Header.Set("X-Forwarded-Proto", "https")
-		} else {
-			// In production Caddy handles SSL, so it's most likely https if not specified.
-			r.Header.Set("X-Forwarded-Proto", "https")
-		}
-	}
-
-	if r.Header.Get("X-Forwarded-Port") == "" {
-		if r.Header.Get("X-Forwarded-Proto") == "https" {
-			r.Header.Set("X-Forwarded-Port", "443")
-		} else {
-			r.Header.Set("X-Forwarded-Port", "80")
-		}
-	}
-
-	r.Header.Set("X-Forwarded-Host", r.Host)
-
-	if err := r.Write(stream); err != nil {
-		statusCode = http.StatusBadGateway
-		p.logger.Error("Request forwarding failed", zap.Error(err))
-		http.Error(w, "Upstream error", statusCode)
-
-		// Upstream fail olsa bile (sampling'e göre) AI analizi ve inspector/ML kaydı yap.
-		if captureEnabled && p.inspector != nil && p.aiAnalyzer != nil {
-			captured.ReqBody = reqBodyBuf.Bytes()
-			aiMeta := p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, captured.ReqBody)
-			if aiMeta != nil {
-				captured.AIMetadata = aiMeta
-				p.logger.Info("AI Security scan on failed upstream",
-					zap.String("provider", aiMeta.Provider),
-					zap.Bool("is_risk", aiMeta.IsSecurityRisk),
-				)
+	// --- REFAC: httputil.ReverseProxy implementation ---
+	
+	proxy := &httputil.ReverseProxy{
+		Director: func(req *http.Request) {
+			req.URL.Scheme = "http"
+			req.URL.Host = host
+			
+			// Set proxy headers
+			if req.Header.Get("X-Forwarded-For") == "" {
+				req.Header.Set("X-Forwarded-For", clientIP)
 			}
-			p.inspector.Record(captured)
-			p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, time.Since(startTime), statusCode, 0, clientIP, targetKey, aiMeta)
-		}
-		return
-	}
-
-	// Now populate the captured req body
-	if captureEnabled {
-		captured.ReqBody = reqBodyBuf.Bytes()
-	}
-
-	// Phase 6: Proper HTTP Response Parsing from Tunnel
-	// Yamux stream provides raw HTTP bytes, we MUST parse them to set headers/status correctly.
-	respReader := bufio.NewReader(stream)
-	resp, err := http.ReadResponse(respReader, r)
-	if err != nil {
-		p.logger.Error("Failed to read response from tunnel", zap.Error(err))
-		http.Error(w, "Tunnel response error", http.StatusBadGateway)
-		return
-	}
-	defer resp.Body.Close()
-
-	// Copy headers from tunnel response to browser response
-	for k, vv := range resp.Header {
-		for _, v := range vv {
-			captureWriter.Header().Add(k, v)
-		}
-	}
-
-	// Apply per-tunnel response header edits BEFORE WriteHeader so they reach the client.
-	if pol, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok {
-		applyResponsePolicy(captureWriter, pol)
-	}
-
-	captureWriter.WriteHeader(resp.StatusCode)
-
-	// Stream actual body to browser
-	bytesReceived, err = io.Copy(captureWriter, resp.Body)
-	if err != nil {
-		p.logger.Error("Response body copy error", zap.Error(err))
-	}
-
-	bytesOut = bytesReceived
-	statusCode = resp.StatusCode
-
-	captured.RespHeaders = captureWriter.Header()
-	captured.RespBody = captureWriter.Body.Bytes()
-	captured.StatusCode = captureWriter.StatusCode
-	captured.Duration = time.Since(startTime)
-
-	if captureEnabled {
-		select {
-		case p.inspectQueue <- captured:
-		default:
-			// If queue is full, avoid blocking request path; drop capture.
-			atomic.AddInt64(&InspectorQueueDropped, 1)
-		}
-	}
-
-	// Update Tunnel Stats (bytesIn = request body size, bytesOut = response body size)
-	p.tunnelManager.UpdateStats(targetKey, reqBytes, bytesReceived)
-
-	responseTime := time.Since(startTime)
-
-	// Redis'e Ham Trafik Verisini Gönder
-	if p.redisPublisher != nil {
-		trafficData := TrafficData{
-			Method:       r.Method,
-			Path:         r.URL.Path,
-			StatusCode:   captureWriter.StatusCode,
-			ResponseTime: responseTime.Milliseconds(),
-			RequestSize:  r.ContentLength,
-			ResponseSize: bytesReceived,
-			ClientIP:     clientIP,
-			Timestamp:    time.Now().Format(time.RFC3339),
-		}
-		go func() {
-			if err := p.redisPublisher.Publish(trafficData); err != nil {
-				p.logger.Error("Redis publish hatası", zap.Error(err))
+			if req.Header.Get("X-Forwarded-Proto") == "" {
+				req.Header.Set("X-Forwarded-Proto", "https")
 			}
-		}()
+			if req.Header.Get("X-Forwarded-Port") == "" {
+				req.Header.Set("X-Forwarded-Port", "443")
+			}
+			req.Header.Set("X-Forwarded-Host", req.Host)
+
+			// Apply per-tunnel request shaping (moved from outside for cleaner structure)
+			if pol, ok := p.tunnelManager.GetTunnelPolicy(host); ok {
+				applyRequestPolicy(req, pol)
+			} else if pol, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok {
+				applyRequestPolicy(req, pol)
+			}
+		},
+		Transport: &TunnelTransport{
+			Session: session,
+			Logger:  p.logger,
+		},
+		ModifyResponse: func(resp *http.Response) error {
+			// Update local metrics
+			statusCode = resp.StatusCode
+			bodyLen := resp.ContentLength
+			if bodyLen < 0 {
+				bodyLen = 0
+			}
+			atomic.AddInt64(&bytesReceived, bodyLen)
+			p.tunnelManager.UpdateStats(targetKey, reqBytes, bodyLen)
+
+			// REFIX: Apply response policy directly to resp.Header.
+			if pol, ok := p.tunnelManager.GetTunnelPolicy(targetKey); ok {
+				applyResponseHeaders(resp.Header, pol)
+			}
+
+			// Finalize Capture
+			if captureEnabled {
+				captured.ReqBody = reqBodyBuf.Bytes()
+				captured.StatusCode = resp.StatusCode
+				captured.RespHeaders = resp.Header
+				captured.Duration = time.Since(startTime)
+				
+				// AI Analysis
+				if p.aiAnalyzer != nil {
+					aiMeta := p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, captured.ReqBody)
+					captured.AIMetadata = aiMeta
+				}
+
+				select {
+				case p.inspectQueue <- captured:
+				default:
+					atomic.AddInt64(&InspectorQueueDropped, 1)
+				}
+				
+				p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, time.Since(startTime), resp.StatusCode, bodyLen, clientIP, targetKey, captured.AIMetadata)
+			}
+
+			return nil
+		},
+		ErrorHandler: func(rw http.ResponseWriter, req *http.Request, err error) {
+			p.logger.Error("Proxy error", zap.Error(err), zap.String("subdomain", targetKey))
+			statusCode = http.StatusBadGateway
+			http.Error(rw, "Tunnel proxy error: "+err.Error(), statusCode)
+		},
 	}
 
-	// ML Anomali Kontrolu
-	if captureEnabled {
-		p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, responseTime, captureWriter.StatusCode, bytesReceived, clientIP, targetKey, captured.AIMetadata)
-	}
-
-	p.logger.Debug("İstek tamamlandı",
-		zap.String("method", r.Method),
-		zap.String("path", r.URL.Path),
-		zap.Duration("duration", responseTime),
-	)
+	proxy.ServeHTTP(captureWriter, r)
 }
 
 func (p *HTTPProxy) triggerMLAnalysis(method, path, host string, requestSize int64, duration time.Duration, statusCode int, bytesReceived int64, clientIP string, targetKey string, aiMeta *AIMetadata) {
@@ -691,6 +620,60 @@ func (p *HTTPProxy) publishEvent(subdomain string, r *http.Request, clientIP str
 	p.eventStream.publish(event)
 }
 
+// TunnelTransport bridges Yamux streams with the standard http.RoundTripper
+type TunnelTransport struct {
+	Session *yamux.Session
+	Logger  *zap.Logger
+}
+
+func (t *TunnelTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	stream, err := t.Session.Open()
+	if err != nil {
+		return nil, err
+	}
+
+	// httputil.ReverseProxy will write the request to this stream if it follows the HTTP protocol.
+	if err := req.Write(stream); err != nil {
+		stream.Close()
+		return nil, err
+	}
+
+	resp, err := http.ReadResponse(bufio.NewReader(stream), req)
+	if err != nil {
+		stream.Close()
+		return nil, err
+	}
+
+	// If it's a WebSocket upgrade (101), track the connection
+	isWS := resp.StatusCode == http.StatusSwitchingProtocols
+	if isWS {
+		atomic.AddInt64(&WebSocketConnections, 1)
+	}
+
+	// Wrap response body to close the stream when done
+	resp.Body = &StreamBody{
+		ReadCloser: resp.Body,
+		Stream:     stream,
+		isWS:       isWS,
+	}
+	return resp, nil
+}
+
+type StreamBody struct {
+	io.ReadCloser
+	Stream net.Conn
+	isWS   bool
+}
+
+func (s *StreamBody) Close() error {
+	err := s.ReadCloser.Close()
+	if s.isWS {
+		atomic.AddInt64(&WebSocketConnections, -1)
+	}
+	s.Stream.Close()
+	return err
+}
+
 // BoundedWriter writes at most Limit bytes to the underlying writer,
 // discard the rest, but always returns the original length to keep streams flowing.
 type BoundedWriter struct {
@@ -737,19 +720,19 @@ func applyRequestPolicy(r *http.Request, policy TunnelPolicy) {
 	}
 }
 
-func applyResponsePolicy(w http.ResponseWriter, policy TunnelPolicy) {
+func applyResponseHeaders(h http.Header, policy TunnelPolicy) {
 	for k, v := range policy.AddResponseHeaders {
 		if strings.TrimSpace(k) == "" {
 			continue
 		}
-		w.Header().Set(k, v)
+		h.Set(k, v)
 	}
 	for _, k := range policy.RemoveResponseHeaders {
 		k = strings.TrimSpace(k)
 		if k == "" {
 			continue
 		}
-		w.Header().Del(k)
+		h.Del(k)
 	}
 }
 

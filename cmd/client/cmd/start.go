@@ -463,7 +463,6 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 
 	startTime := time.Now()
 	var method, path string
-	isWebSocket := false
 
 	// Create a buffered reader for sniffing the request
 	var requestReader io.Reader = stream
@@ -472,12 +471,6 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 		n, _ := stream.Read(buf)
 		if n > 0 {
 			lineStr := string(buf[:n])
-			
-			// Detect WebSocket
-			if strings.Contains(strings.ToLower(lineStr), "upgrade: websocket") {
-				isWebSocket = true
-			}
-
 			parts := strings.Split(lineStr, " ")
 			if len(parts) >= 2 {
 				method = parts[0]
@@ -485,17 +478,15 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 			}
 
 			modifiedBuf := buf[:n]
-			// Only rewrite Host for standard HTTP, WebSockets are sensitive to Host header
-			if !isWebSocket {
-				hostIdx := strings.Index(strings.ToLower(lineStr), "host: ")
-				if hostIdx != -1 {
-					endIdx := strings.Index(lineStr[hostIdx:], "\r\n")
-					if endIdx != -1 {
-						oldHostLine := lineStr[hostIdx : hostIdx+endIdx]
-						newHostLine := "Host: " + localAddr
-						lineStr = strings.Replace(lineStr, oldHostLine, newHostLine, 1)
-						modifiedBuf = []byte(lineStr)
-					}
+			// Rewrite Host header for the local server to avoid redirection/rejection issues
+			hostIdx := strings.Index(strings.ToLower(lineStr), "host: ")
+			if hostIdx != -1 {
+				endIdx := strings.Index(lineStr[hostIdx:], "\r\n")
+				if endIdx != -1 {
+					oldHostLine := lineStr[hostIdx : hostIdx+endIdx]
+					newHostLine := "Host: " + localAddr
+					lineStr = strings.Replace(lineStr, oldHostLine, newHostLine, 1)
+					modifiedBuf = []byte(lineStr)
 				}
 			}
 
@@ -544,7 +535,7 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 		n, _ := io.Copy(stream, responseReader)
 		atomic.AddInt64(&bytesSent, n)
 
-		// Final log output (Thread-safe via log package)
+		// Final log output
 		if tunnelType == "http" && method != "" {
 			dur := time.Since(startTime)
 			statusStr := fmt.Sprintf("%d", statusCode)
@@ -570,16 +561,6 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 	}()
 
 	<-done
-}
-
-// MultiConn wraps an io.Reader and a net.Conn
-type MultiConn struct {
-	io.Reader
-	net.Conn
-}
-
-func (c *MultiConn) Read(p []byte) (int, error) {
-	return c.Reader.Read(p)
 }
 
 // --- UTILITY FONKSİYONLARI ---

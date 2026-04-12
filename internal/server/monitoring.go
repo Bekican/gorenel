@@ -27,11 +27,13 @@ import (
 )
 
 var (
-	TotalRequests     int64
-	ActiveConnections int64
-	TotalBytesIn      int64
-	TotalBytesOut     int64
-	ServerStartTime   time.Time
+	TotalRequests        int64
+	ActiveConnections    int64
+	TotalBytesIn         int64
+	TotalBytesOut        int64
+	WebSocketConnections int64
+	WebSocketMessages    int64
+	ServerStartTime      time.Time
 )
 
 func init() {
