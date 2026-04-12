@@ -8,55 +8,27 @@
 
 # Main Site & API
 gorenel.site {
-    log {
-        output file /var/log/caddy/access.log
-    }
+    log
 
     # API yolları
-    handle /api/* {
-        reverse_proxy gorenel-server:9091
-    }
-    handle /health {
-        reverse_proxy gorenel-server:9091
-    }
-    handle /metrics {
-        reverse_proxy gorenel-server:9091
-    }
-    handle /info {
-        reverse_proxy gorenel-server:9091
-    }
-
-    # Kurulum dosyaları
-    handle /install.sh {
-        reverse_proxy gorenel-server:9091
-    }
-    handle /install.ps1 {
-        reverse_proxy gorenel-server:9091
-    }
-    handle /downloads/* {
-        reverse_proxy gorenel-server:9091
-    }
-
-    handle /tunnel/connect {
-        reverse_proxy gorenel-server:9091
-    }
+    reverse_proxy /api/* gorenel-server:9091
+    reverse_proxy /tunnel/connect gorenel-server:9091
+    reverse_proxy /health gorenel-server:9091
+    reverse_proxy /metrics gorenel-server:9091
+    reverse_proxy /info gorenel-server:9091
+    reverse_proxy /install.sh gorenel-server:9091
+    reverse_proxy /install.ps1 gorenel-server:9091
+    reverse_proxy /downloads/* gorenel-server:9091
 
     # Dashboard (React)
-    handle {
-        reverse_proxy gorenel-dashboard:80
-    }
+    reverse_proxy gorenel-dashboard:80
 }
 
 # Dynamic Tunnels (subdomains)
-# Using a more explicit site label for subdomains to ensure matching correctly
-https://*.gorenel.site {
+*.gorenel.site {
+    log
     tls {
         on_demand
     }
-    
-    log {
-        output file /var/log/caddy/subdomains.log
-    }
-
     reverse_proxy gorenel-server:8085
 }
