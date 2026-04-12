@@ -456,7 +456,6 @@ func proxyUDPStream(stream net.Conn, localPort int) {
 func proxyToLocalhost(stream net.Conn, localAddr string) {
 	defer stream.Close()
 
-	// 'localhost' yerine '127.0.0.1' kullanmak IPv6/IPv4 karmaşasını önler
 	targetAddr := localAddr
 	if strings.HasPrefix(targetAddr, "localhost:") {
 		targetAddr = strings.Replace(targetAddr, "localhost:", "127.0.0.1:", 1)
@@ -466,15 +465,15 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 	var method, path string
 	isWebSocket := false
 
-	// Sniff request if it's HTTP
+	// Create a buffered reader for sniffing the request
+	var requestReader io.Reader = stream
 	if tunnelType == "http" {
 		buf := make([]byte, 2048)
 		n, _ := stream.Read(buf)
 		if n > 0 {
-			line := buf[:n]
-			lineStr := string(line)
+			lineStr := string(buf[:n])
 			
-			// Detect if it's a WebSocket upgrade
+			// Detect WebSocket
 			if strings.Contains(strings.ToLower(lineStr), "upgrade: websocket") {
 				isWebSocket = true
 			}
@@ -485,84 +484,67 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 				path = parts[1]
 			}
 
-			// Host header rewriting
-			modifiedBuf := line
-			hostIdx := strings.Index(strings.ToLower(lineStr), "host: ")
-			if hostIdx != -1 {
-				endIdx := strings.Index(lineStr[hostIdx:], "\r\n")
-				if endIdx != -1 {
-					oldHostLine := lineStr[hostIdx : hostIdx+endIdx]
-					newHostLine := "Host: " + localAddr
-					lineStr = strings.Replace(lineStr, oldHostLine, newHostLine, 1)
-					modifiedBuf = []byte(lineStr)
+			modifiedBuf := buf[:n]
+			// Only rewrite Host for standard HTTP, WebSockets are sensitive to Host header
+			if !isWebSocket {
+				hostIdx := strings.Index(strings.ToLower(lineStr), "host: ")
+				if hostIdx != -1 {
+					endIdx := strings.Index(lineStr[hostIdx:], "\r\n")
+					if endIdx != -1 {
+						oldHostLine := lineStr[hostIdx : hostIdx+endIdx]
+						newHostLine := "Host: " + localAddr
+						lineStr = strings.Replace(lineStr, oldHostLine, newHostLine, 1)
+						modifiedBuf = []byte(lineStr)
+					}
 				}
 			}
 
-			// Wrap stream to not lose read data
-			stream = &MultiConn{
-				Reader: io.MultiReader(bytes.NewReader(modifiedBuf), stream),
-				Conn:   stream,
-			}
+			requestReader = io.MultiReader(bytes.NewReader(modifiedBuf), stream)
 		}
 	}
 
-	if Verbose {
-		log.Printf("Yerel servise bağlanılıyor: %s...", targetAddr)
-	}
 	localConn, err := net.DialTimeout("tcp", targetAddr, 5*time.Second)
 	if err != nil {
-		log.Printf("❌ Yerel servise BAĞLANILAMADI (%s): %v. Lütfen projenizin bu adreste çalıştığından emin olun.", targetAddr, err)
+		if Verbose {
+			log.Printf("❌ Yerel servis hatası (%s): %v", targetAddr, err)
+		}
 		return
 	}
 	defer localConn.Close()
-	
-	if Verbose {
-		log.Printf("✅ Yerel servise BAĞLANILDI: %s", targetAddr)
-	}
 
-	// Bidirectional copy
 	done := make(chan struct{}, 2)
 
-	// Stream → Localhost
+	// Stream (Browser) -> Localhost
 	go func() {
-		n, _ := io.Copy(localConn, stream)
-		atomic.AddInt64(&bytesReceived, n)
+		io.Copy(localConn, requestReader)
 		done <- struct{}{}
 	}()
 
-	// Localhost → Stream
+	// Localhost -> Stream (Browser)
 	go func() {
 		var statusCode int
-		
-		// If it's a WebSocket, we skip response sniffing to avoid interfering with the binary stream
-		if tunnelType == "http" && !isWebSocket {
-			buf := make([]byte, 1024)
+		var responseReader io.Reader = localConn
+
+		if tunnelType == "http" {
+			buf := make([]byte, 2048)
 			n, _ := localConn.Read(buf)
 			if n > 0 {
 				respHead := string(buf[:n])
-				// More robust status line parsing
 				lines := strings.SplitN(respHead, "\r\n", 2)
 				if len(lines) > 0 {
 					statusParts := strings.Split(lines[0], " ")
 					if len(statusParts) >= 2 {
-						// Format: HTTP/1.1 200 OK
 						fmt.Sscanf(statusParts[1], "%d", &statusCode)
 					}
 				}
-
-				// Wrap localConn to not lose read data
-				localConn = &MultiConn{
-					Reader: io.MultiReader(bytes.NewReader(buf[:n]), localConn),
-					Conn:   localConn,
-				}
+				responseReader = io.MultiReader(bytes.NewReader(buf[:n]), localConn)
 			}
-		} else if isWebSocket {
-			statusCode = 101
 		}
 
-		n, _ := io.Copy(stream, localConn)
+		n, _ := io.Copy(stream, responseReader)
 		atomic.AddInt64(&bytesSent, n)
 
+		// Final log output (Thread-safe via log package)
 		if tunnelType == "http" && method != "" {
 			dur := time.Since(startTime)
 			statusStr := fmt.Sprintf("%d", statusCode)
@@ -570,22 +552,20 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 				statusStr = "???"
 			}
 
-			// Colorize status
 			color := "\033[32m" // Green
 			if statusCode >= 400 {
 				color = "\033[31m"
-			} // Red
+			}
 			if statusCode >= 300 && statusCode < 400 {
 				color = "\033[33m"
-			} // Yellow
+			}
 			reset := "\033[0m"
 
-			log.Printf("[%s] %s %s -> %s%s%s (%v)",
+			log.Printf("[%s] %s %-30s -> %s%s%s (%v)",
 				time.Now().Format("15:04:05"),
 				method, path, color, statusStr, reset,
 				dur.Round(time.Millisecond))
 		}
-
 		done <- struct{}{}
 	}()
 
