@@ -464,24 +464,30 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 
 	startTime := time.Now()
 	var method, path string
+	isWebSocket := false
 
 	// Sniff request if it's HTTP
 	if tunnelType == "http" {
-		buf := make([]byte, 1024)
+		buf := make([]byte, 2048)
 		n, _ := stream.Read(buf)
 		if n > 0 {
 			line := buf[:n]
 			lineStr := string(line)
+			
+			// Detect if it's a WebSocket upgrade
+			if strings.Contains(strings.ToLower(lineStr), "upgrade: websocket") {
+				isWebSocket = true
+			}
+
 			parts := strings.Split(lineStr, " ")
 			if len(parts) >= 2 {
 				method = parts[0]
 				path = parts[1]
 			}
 
-			// --- ÖNEMLİ: Host header'ını localhost'a çevir ---
-			// Next.js vb. frameworkler Host header'ı uyuşmazsa redirect atabilir veya hata verebilir.
+			// Host header rewriting
 			modifiedBuf := line
-			hostIdx := strings.Index(lineStr, "Host: ")
+			hostIdx := strings.Index(strings.ToLower(lineStr), "host: ")
 			if hostIdx != -1 {
 				endIdx := strings.Index(lineStr[hostIdx:], "\r\n")
 				if endIdx != -1 {
@@ -500,16 +506,21 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 		}
 	}
 
-	log.Printf("Yerel servise bağlanılıyor: %s...", targetAddr)
+	if Verbose {
+		log.Printf("Yerel servise bağlanılıyor: %s...", targetAddr)
+	}
 	localConn, err := net.DialTimeout("tcp", targetAddr, 5*time.Second)
 	if err != nil {
 		log.Printf("❌ Yerel servise BAĞLANILAMADI (%s): %v. Lütfen projenizin bu adreste çalıştığından emin olun.", targetAddr, err)
 		return
 	}
 	defer localConn.Close()
-	log.Printf("✅ Yerel servise BAĞLANILDI: %s", targetAddr)
+	
+	if Verbose {
+		log.Printf("✅ Yerel servise BAĞLANILDI: %s", targetAddr)
+	}
 
-	// Bidirectional copy with metrics
+	// Bidirectional copy
 	done := make(chan struct{}, 2)
 
 	// Stream → Localhost
@@ -521,18 +532,22 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 
 	// Localhost → Stream
 	go func() {
-		// Attempt to sniff response status code if HTTP
 		var statusCode int
-		if tunnelType == "http" {
+		
+		// If it's a WebSocket, we skip response sniffing to avoid interfering with the binary stream
+		if tunnelType == "http" && !isWebSocket {
 			buf := make([]byte, 1024)
 			n, _ := localConn.Read(buf)
 			if n > 0 {
-				line := buf[:n]
-				parts := strings.Split(string(line), " ")
-				if len(parts) >= 2 && strings.HasPrefix(parts[1], "HTTP/") {
-					fmt.Sscanf(parts[1], "%d", &statusCode)
-				} else if len(parts) >= 2 && strings.HasPrefix(parts[0], "HTTP/") {
-					fmt.Sscanf(parts[1], "%d", &statusCode)
+				respHead := string(buf[:n])
+				// More robust status line parsing
+				lines := strings.SplitN(respHead, "\r\n", 2)
+				if len(lines) > 0 {
+					statusParts := strings.Split(lines[0], " ")
+					if len(statusParts) >= 2 {
+						// Format: HTTP/1.1 200 OK
+						fmt.Sscanf(statusParts[1], "%d", &statusCode)
+					}
 				}
 
 				// Wrap localConn to not lose read data
@@ -541,6 +556,8 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 					Conn:   localConn,
 				}
 			}
+		} else if isWebSocket {
+			statusCode = 101
 		}
 
 		n, _ := io.Copy(stream, localConn)

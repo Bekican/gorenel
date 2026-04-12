@@ -27,7 +27,7 @@ func IsWebSocketUpgrade(r *http.Request) bool {
 
 // HandleWebSocket: WebSocket bağlantısını yönetir.
 func (p *HTTPProxy) HandleWebSocket(w http.ResponseWriter, r *http.Request, session *yamux.Session, subdomain string) {
-	p.logger.Info("WebSocket upgrade isteği başlatılıyor", zap.String("subdomain", subdomain), zap.String("path", r.URL.Path))
+	p.logger.Info("WebSocket geçişi başlatılıyor", zap.String("subdomain", subdomain), zap.String("path", r.URL.Path))
 
 	// Enforce same tunnel policies for WS upgrades.
 	clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
@@ -67,16 +67,19 @@ func (p *HTTPProxy) HandleWebSocket(w http.ResponseWriter, r *http.Request, sess
 	atomic.AddInt64(&WebSocketConnections, 1)
 	defer atomic.AddInt64(&WebSocketConnections, -1)
 
-	// Set proxy headers for WS
+	// Set/Preserve proxy headers for WS
 	if r.Header.Get("X-Forwarded-For") == "" {
 		r.Header.Set("X-Forwarded-For", clientIP)
 	}
-	r.Header.Set("X-Forwarded-Proto", "https") // WebSocket upgrades over Caddy are always HTTPS
+	// Caddy/Cloudflare sets this. We ensure it's "https" because WS is over SSL here.
+	if r.Header.Get("X-Forwarded-Proto") == "" {
+		r.Header.Set("X-Forwarded-Proto", "https")
+	}
 	r.Header.Set("X-Forwarded-Host", r.Host)
 
 	// Write the upgrade request to the tunnel
 	if err := r.Write(stream); err != nil {
-		p.logger.Error("Tünele WebSocket isteği yazılamadı", zap.Error(err))
+		p.logger.Error("WebSocket isteği tünele iletilemedi", zap.Error(err))
 		return
 	}
 
@@ -84,19 +87,17 @@ func (p *HTTPProxy) HandleWebSocket(w http.ResponseWriter, r *http.Request, sess
 	respReader := bufio.NewReader(stream)
 	resp, err := http.ReadResponse(respReader, r)
 	if err != nil {
-		p.logger.Error("Tünelden WebSocket yanıtı okunamadı", zap.Error(err))
+		p.logger.Error("Tünelden WebSocket yanıtı (101) okunamadı", zap.Error(err))
 		return
 	}
-	defer resp.Body.Close()
-
-	// Forward the tunnel's response headers back to the client
-	// This sends the "101 Switching Protocols" and necessary Sec-WebSocket-Accept headers
+	
+	// Forward the tunnel's response headers back to the browser
 	if err := resp.Write(clientConn); err != nil {
-		p.logger.Error("İstemciye WebSocket yanıtı yazılamadı", zap.Error(err))
+		p.logger.Error("İstemciye (tarayıcı) WebSocket yanıtı yazılamadı", zap.Error(err))
 		return
 	}
 
-	// Buffer Drain (If there's any data already buffered in the client request)
+	// Handle data remaining in the hijack reader (Client -> Server data)
 	if bufrw.Reader.Buffered() > 0 {
 		buffered := make([]byte, bufrw.Reader.Buffered())
 		bufrw.Reader.Read(buffered)
@@ -105,21 +106,20 @@ func (p *HTTPProxy) HandleWebSocket(w http.ResponseWriter, r *http.Request, sess
 
 	done := make(chan struct{}, 2)
 
-	// Bidirectional tunnel
-	// Client -> Tünel
+	// Bidirectional tunnel:
+	// Browser -> Tunnel -> Localhost
 	go func() {
 		io.Copy(stream, clientConn)
 		done <- struct{}{}
 	}()
 
-	// Tünel -> Client
+	// Localhost -> Tunnel -> Browser
 	go func() {
-		// Note: We use the already existing respReader if it has buffered data from the body
-		// but Switch Protocols response usually doesn't have a body.
+		// Use the respReader because it might have already buffered some WebSocket frames
 		io.Copy(clientConn, respReader)
 		done <- struct{}{}
 	}()
 
 	<-done
-	p.logger.Info("WebSocket bağlantısı kapandı", zap.String("subdomain", subdomain))
+	p.logger.Info("WebSocket bağlantısı sonlandırıldı", zap.String("subdomain", subdomain))
 }
