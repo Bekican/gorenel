@@ -190,9 +190,20 @@ func (m *MonitoringServer) Start(port string) error {
 
 	// Caddy On-Demand TLS "ask" endpoint
 	mux.HandleFunc("/api/tls/ask", m.handleCaddyAsk)
+	
+	// Diagnostic endpoint for TLS connectivity
+	mux.HandleFunc("/api/health/tls-test", func(w http.ResponseWriter, r *http.Request) {
+		m.logger.Info("TLS connectivity test reached from client", zap.String("remote_addr", r.RemoteAddr))
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status": "ok",
+			"base_domain": m.baseDomain,
+			"msg": "Monitoring server is reachable",
+		})
+	})
 
 	l, _ := zap.NewProduction()
-	l.Info("Monitoring server başlatılıyor", zap.String("port", port))
+	l.Info("Monitoring server başlatılıyor", zap.String("port", port), zap.String("base_domain", m.baseDomain))
 	srv := &http.Server{
 		Addr:              port,
 		Handler:           mux,
@@ -1256,23 +1267,25 @@ func (m *MonitoringServer) handleTunnelWebSocket(w http.ResponseWriter, r *http.
 
 func (m *MonitoringServer) handleCaddyAsk(w http.ResponseWriter, r *http.Request) {
 	domain := r.URL.Query().Get("domain")
+	
+	// Enhanced logging for debugging
+	m.logger.Info("Caddy TLS ask request received",
+		zap.String("domain", domain),
+		zap.String("ip", r.RemoteAddr),
+		zap.Any("query", r.URL.Query()),
+	)
+
 	if domain == "" {
+		m.logger.Warn("Caddy TLS ask: Missing domain parameter")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	// Log the request for debugging
-	m.logger.Info("Caddy TLS ask request", zap.String("domain", domain))
-
 	// Allow ALL subdomains of our base domain.
-	// Previously we only approved domains with active tunnels, but Caddy's
-	// on_demand TLS ask fires during TLS handshake — before the HTTP layer.
-	// A race between tunnel registration and the first browser request caused
-	// ERR_SSL_PROTOCOL_ERROR because Caddy got 404 and refused to provision
-	// a certificate. The proxy layer already returns "Tunnel bulunamadı" (404)
-	// for unknown subdomains, so security is not weakened.
 	if strings.HasSuffix(domain, "."+m.baseDomain) {
-		m.logger.Info("Caddy TLS ask: Domain allowed (wildcard)", zap.String("domain", domain))
+		m.logger.Info("Caddy TLS ask: Domain allowed (wildcard match)", 
+			zap.String("domain", domain), 
+			zap.String("base", m.baseDomain))
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -1284,6 +1297,8 @@ func (m *MonitoringServer) handleCaddyAsk(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	m.logger.Warn("Caddy TLS ask: Domain denied (not a subdomain of base)", zap.String("domain", domain))
+	m.logger.Warn("Caddy TLS ask: Domain denied", 
+		zap.String("domain", domain), 
+		zap.String("expected_suffix", "."+m.baseDomain))
 	w.WriteHeader(http.StatusNotFound)
 }
