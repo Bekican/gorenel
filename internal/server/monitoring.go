@@ -1262,21 +1262,28 @@ func (m *MonitoringServer) handleCaddyAsk(w http.ResponseWriter, r *http.Request
 	}
 
 	// Log the request for debugging
-	m.logger.Debug("Caddy TLS ask request", zap.String("domain", domain))
+	m.logger.Info("Caddy TLS ask request", zap.String("domain", domain))
 
-	// Check if it's a subdomain of our base domain
-	if !strings.HasSuffix(domain, "."+m.baseDomain) {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	subdomain := strings.TrimSuffix(domain, "."+m.baseDomain)
-	if _, exists := m.tunnelManager.GetTunnel(subdomain); exists {
-		m.logger.Info("Caddy TLS ask: Domain allowed", zap.String("domain", domain))
+	// Allow ALL subdomains of our base domain.
+	// Previously we only approved domains with active tunnels, but Caddy's
+	// on_demand TLS ask fires during TLS handshake — before the HTTP layer.
+	// A race between tunnel registration and the first browser request caused
+	// ERR_SSL_PROTOCOL_ERROR because Caddy got 404 and refused to provision
+	// a certificate. The proxy layer already returns "Tunnel bulunamadı" (404)
+	// for unknown subdomains, so security is not weakened.
+	if strings.HasSuffix(domain, "."+m.baseDomain) {
+		m.logger.Info("Caddy TLS ask: Domain allowed (wildcard)", zap.String("domain", domain))
 		w.WriteHeader(http.StatusOK)
 		return
 	}
 
-	m.logger.Warn("Caddy TLS ask: Domain denied", zap.String("domain", domain))
+	// Also allow the bare base domain itself
+	if domain == m.baseDomain {
+		m.logger.Info("Caddy TLS ask: Base domain allowed", zap.String("domain", domain))
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	m.logger.Warn("Caddy TLS ask: Domain denied (not a subdomain of base)", zap.String("domain", domain))
 	w.WriteHeader(http.StatusNotFound)
 }
