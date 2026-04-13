@@ -1030,12 +1030,13 @@ func (m *MonitoringServer) handleInstallSh(w http.ResponseWriter, r *http.Reques
 	}
 	baseURL := "https://" + domain
 
-	script := `#!/bin/bash
+	script := fmt.Sprintf(`#!/bin/bash
 set -e
 
 # Gorenel Magic Install Script (Linux/Mac)
-# Usage: curl -sSL ` + baseURL + `/install.sh | bash
+# Usage: curl -sSL %[1]s/install.sh | bash
 
+GORENEL_URL="%[1]s"
 INSTALL_DIR="$HOME/.gorenel/bin"
 mkdir -p "$INSTALL_DIR"
 
@@ -1049,7 +1050,7 @@ BINARY_NAME="gorenel-$OS-$ARCH"
 if [ "$OS" == "darwin" ]; then BINARY_NAME="gorenel-darwin-$ARCH"; fi
 
 echo "Downloading Gorenel for $OS/$ARCH..."
-curl -L -f -o "$INSTALL_DIR/gorenel" "` + baseURL + `/downloads/$BINARY_NAME" || { echo "Download failed!"; exit 1; }
+curl -L -f -o "$INSTALL_DIR/gorenel" "$GORENEL_URL/downloads/$BINARY_NAME" || { echo "Download failed!"; exit 1; }
 chmod +x "$INSTALL_DIR/gorenel"
 
 # Add to PATH via shell profile
@@ -1067,7 +1068,7 @@ export PATH="$INSTALL_DIR:$PATH"
 
 echo "Gorenel installed to $INSTALL_DIR/gorenel"
 
-API_KEY="` + apiKey + `"
+API_KEY="%[2]s"
 if [ -n "$API_KEY" ]; then
     "$INSTALL_DIR/gorenel" config set api_key "$API_KEY"
     echo "API Key configured automatically."
@@ -1078,7 +1079,7 @@ elif [ "$#" -gt 0 ]; then
 else
     echo "Run: gorenel config set api_key YOUR_API_KEY && gorenel connect --port 3000"
 fi
-`
+`, baseURL, apiKey)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(script))
 }
@@ -1096,9 +1097,11 @@ func (m *MonitoringServer) handleInstallPs1(w http.ResponseWriter, r *http.Reque
 	}
 	baseURL := "https://" + domain
 
-	script := `# Gorenel Magic Install Script (Windows)
-# Usage: iwr -useb ` + baseURL + `/install.ps1 | iex
+	// Build the script using fmt.Sprintf to avoid Go raw-string + PS string conflicts.
+	script := fmt.Sprintf(`# Gorenel Magic Install Script (Windows)
+# Usage: iwr -useb %[1]s/install.ps1 | iex
 
+$gorenelUrl = '%[1]s'
 $installDir = "$env:LOCALAPPDATA\gorenel"
 if (!(Test-Path $installDir)) { New-Item -ItemType Directory -Path $installDir | Out-Null }
 
@@ -1107,10 +1110,10 @@ $binaryPath = "$installDir\gorenel.exe"
 Write-Host "Downloading Gorenel for Windows/amd64..." -ForegroundColor Cyan
 
 try {
-    Invoke-WebRequest -Uri "` + baseURL + `/downloads/gorenel-windows-amd64.exe" -OutFile $binaryPath -ErrorAction Stop
+    Invoke-WebRequest -Uri "$gorenelUrl/downloads/gorenel-windows-amd64.exe" -OutFile $binaryPath -ErrorAction Stop
 } catch {
     Write-Host "Re-trying with alternative method..." -ForegroundColor Yellow
-    (New-Object System.Net.WebClient).DownloadFile("` + baseURL + `/downloads/gorenel-windows-amd64.exe", $binaryPath)
+    (New-Object System.Net.WebClient).DownloadFile("$gorenelUrl/downloads/gorenel-windows-amd64.exe", $binaryPath)
 }
 
 if (!(Test-Path $binaryPath) -or (Get-Item $binaryPath).Length -lt 1000) {
@@ -1150,7 +1153,7 @@ try {
         $profileDir = Split-Path -Parent $PROFILE
         if (!(Test-Path -LiteralPath $profileDir)) { New-Item -ItemType Directory -Path $profileDir -Force | Out-Null }
         if (!(Test-Path -LiteralPath $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
-        $marker = '# Gorenel CLI (' + ` + baseURL + ` + '/install.ps1)'
+        $marker = '# Gorenel CLI'
         $hasMarker = $false
         if ((Get-Item -LiteralPath $PROFILE).Length -gt 0) {
             $hasMarker = [bool](Select-String -LiteralPath $PROFILE -SimpleMatch $marker -Quiet -ErrorAction SilentlyContinue)
@@ -1169,7 +1172,7 @@ try {
 
 Write-Host "Gorenel installed to $binaryPath" -ForegroundColor Green
 
-$apiKey = "` + apiKey + `"
+$apiKey = "%[2]s"
 if ($apiKey) {
     & $binaryPath config set api_key $apiKey
     Write-Host "API Key configured automatically." -ForegroundColor Green
@@ -1177,9 +1180,9 @@ if ($apiKey) {
 } else {
     Write-Host "CMD / yeni PowerShell: PATH ile 'gorenel' (veya profil yuklendiyse 'gorenel')." -ForegroundColor DarkGray
     Write-Host "PATH sorununda tam yol: & '$binaryPath' connect --port 3000" -ForegroundColor DarkGray
-    Write-Host ('Yapistir (PowerShell): iwr -useb ' + ` + baseURL + ` + '/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA ''gorenel\gorenel.exe''; & $g config set api_key YOUR_API_KEY; & $g connect --port 3000') -ForegroundColor Yellow
+    Write-Host "Yapistir (PowerShell): iwr -useb $gorenelUrl/install.ps1 | iex; gorenel connect --port 3000" -ForegroundColor Yellow
 }
-`
+`, baseURL, apiKey)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(script))
 }
