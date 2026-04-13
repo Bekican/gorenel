@@ -1084,24 +1084,16 @@ fi
 	w.Write([]byte(script))
 }
 
-// handleInstallPs1 serves the PowerShell installation script
-func (m *MonitoringServer) handleInstallPs1(w http.ResponseWriter, r *http.Request) {
-	apiKey := strings.TrimSpace(r.URL.Query().Get("api_key"))
-	if apiKey != "" {
-		w.Header().Set("Content-Disposition", "attachment; filename=gorenel-setup.ps1")
-	}
+// psSingleQuoted escapes a string for safe embedding inside PowerShell single quotes ('').
+func psSingleQuoted(s string) string {
+	return strings.ReplaceAll(s, "'", "''")
+}
 
-	domain := m.baseDomain
-	if domain == "" {
-		domain = "gorenel.site"
-	}
-	baseURL := "https://" + domain
+// installPs1Template must not use fmt.Sprintf: any literal '%' in the script would corrupt output.
+const installPs1Template = `# Gorenel Magic Install Script (Windows)
+# Usage: iwr -useb __GORENEL_URL__/install.ps1 | iex
 
-	// Build the script using fmt.Sprintf to avoid Go raw-string + PS string conflicts.
-	script := fmt.Sprintf(`# Gorenel Magic Install Script (Windows)
-# Usage: iwr -useb %[1]s/install.ps1 | iex
-
-$gorenelUrl = '%[1]s'
+$gorenelUrl = '__GORENEL_URL__'
 $installDir = "$env:LOCALAPPDATA\gorenel"
 if (!(Test-Path $installDir)) { New-Item -ItemType Directory -Path $installDir | Out-Null }
 
@@ -1162,7 +1154,8 @@ try {
             Add-Content -LiteralPath $PROFILE -Value "" -Encoding UTF8
             Add-Content -LiteralPath $PROFILE -Value $marker -Encoding UTF8
             Add-Content -LiteralPath $PROFILE -Value "function global:gorenel {" -Encoding UTF8
-            Add-Content -LiteralPath $PROFILE -Value '  & (Join-Path $env:LOCALAPPDATA "gorenel\gorenel.exe") @args' -Encoding UTF8
+            Add-Content -LiteralPath $PROFILE -Value '  $exe = Join-Path $env:LOCALAPPDATA "gorenel\gorenel.exe"' -Encoding UTF8
+            Add-Content -LiteralPath $PROFILE -Value '  if (Test-Path -LiteralPath $exe) { & $exe @args } else { Write-Error "Gorenel CLI bulunamadi: $exe" }' -Encoding UTF8
             Add-Content -LiteralPath $PROFILE -Value "}" -Encoding UTF8
             Write-Host "PowerShell profiline 'gorenel' eklendi: $PROFILE" -ForegroundColor DarkCyan
             Write-Host 'Bu pencerede hemen kullanmak icin: . $PROFILE' -ForegroundColor DarkGray
@@ -1172,7 +1165,7 @@ try {
 
 Write-Host "Gorenel installed to $binaryPath" -ForegroundColor Green
 
-$apiKey = "%[2]s"
+$apiKey = '__API_KEY__'
 if ($apiKey) {
     & $binaryPath config set api_key $apiKey
     Write-Host "API Key configured automatically." -ForegroundColor Green
@@ -1180,9 +1173,25 @@ if ($apiKey) {
 } else {
     Write-Host "CMD / yeni PowerShell: PATH ile 'gorenel' (veya profil yuklendiyse 'gorenel')." -ForegroundColor DarkGray
     Write-Host "PATH sorununda tam yol: & '$binaryPath' connect --port 3000" -ForegroundColor DarkGray
-    Write-Host "Yapistir (PowerShell): iwr -useb $gorenelUrl/install.ps1 | iex; gorenel connect --port 3000" -ForegroundColor Yellow
+    Write-Host ('Yapistir (PowerShell): iwr -useb ' + $gorenelUrl + '/install.ps1 | iex; gorenel connect --port 3000') -ForegroundColor Yellow
 }
-`, baseURL, apiKey)
+`
+
+// handleInstallPs1 serves the PowerShell installation script
+func (m *MonitoringServer) handleInstallPs1(w http.ResponseWriter, r *http.Request) {
+	apiKey := strings.TrimSpace(r.URL.Query().Get("api_key"))
+	if apiKey != "" {
+		w.Header().Set("Content-Disposition", "attachment; filename=gorenel-setup.ps1")
+	}
+
+	domain := m.baseDomain
+	if domain == "" {
+		domain = "gorenel.site"
+	}
+	baseURL := "https://" + domain
+
+	script := strings.ReplaceAll(installPs1Template, "__GORENEL_URL__", psSingleQuoted(baseURL))
+	script = strings.ReplaceAll(script, "__API_KEY__", psSingleQuoted(apiKey))
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(script))
 }

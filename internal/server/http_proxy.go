@@ -315,7 +315,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		p.logger.Warn("Tunnel not found", zap.String("host", host))
 		http.Error(w, "Tunnel bulunamadı", statusCode)
 
-	if captureEnabled && r.Body != nil && p.aiAnalyzer != nil {
+		if captureEnabled && r.Body != nil && p.aiAnalyzer != nil {
 			var reqBodyBuf bytes.Buffer
 			bw := &BoundedWriter{W: &reqBodyBuf, Limit: p.inspectorMaxBodyBytes}
 			r.Body = io.NopCloser(io.TeeReader(r.Body, bw))
@@ -331,6 +331,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, time.Since(startTime), statusCode, 0, clientIP, targetKey, aiMeta)
 		}
 		return
+	}
+
+	localHostPort := "127.0.0.1:3000"
+	if info, ok := p.tunnelManager.GetTunnelInfo(targetKey); ok && info != nil && info.LocalPort > 0 {
+		localHostPort = fmt.Sprintf("127.0.0.1:%d", info.LocalPort)
 	}
 
 	// Phase 5: Request/Response Capture Preparation
@@ -359,9 +364,13 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
+			// Outbound request is forwarded over yamux to the CLI, which dials the user's local port.
+			// Use loopback + local port as Host so dev servers (Vite/WebSocket) accept the connection.
+			publicHost := host
 			req.URL.Scheme = "http"
-			req.URL.Host = host
-			
+			req.URL.Host = localHostPort
+			req.Host = localHostPort
+
 			// Set proxy headers
 			if req.Header.Get("X-Forwarded-For") == "" {
 				req.Header.Set("X-Forwarded-For", clientIP)
@@ -372,7 +381,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if req.Header.Get("X-Forwarded-Port") == "" {
 				req.Header.Set("X-Forwarded-Port", "443")
 			}
-			req.Header.Set("X-Forwarded-Host", req.Host)
+			req.Header.Set("X-Forwarded-Host", publicHost)
 
 			// Apply per-tunnel request shaping (moved from outside for cleaner structure)
 			if pol, ok := p.tunnelManager.GetTunnelPolicy(host); ok {

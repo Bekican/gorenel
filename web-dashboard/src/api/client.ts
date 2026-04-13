@@ -23,15 +23,15 @@ function defaultApiBaseUrl(): string {
   if (typeof window === 'undefined') return '';
   const host = window.location.hostname;
 
-  // If we are on a tunnel subdomain (e.g. user.gorenel.site), we must hit the main API.
-  // We point to gorenel.site, which Vercel will then proxy to api.gorenel.site.
+  // Tunnel subdomains (e.g. foo.gorenel.site): use same-origin /api so cookies + CORS work.
+  // Edge routes /api to the real backend (Caddy/nginx); the rest still goes through the tunnel.
   if (host.endsWith('.gorenel.site') && host !== 'gorenel.site' && host !== 'api.gorenel.site') {
-    return 'https://gorenel.site';
+    return '';
   }
 
   // Same for fly.dev fallbacks
   if (host.endsWith('.fly.dev') && host !== 'gorenel-app.fly.dev') {
-    return 'https://gorenel-app.fly.dev';
+    return '';
   }
   
   // Default to relative paths (works with Vercel rewrites or Vite proxy)

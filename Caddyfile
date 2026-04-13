@@ -30,5 +30,15 @@ gorenel.site {
     tls {
         on_demand
     }
+    # Auth/API must hit the real backend so login/register work on tunnel URLs (same-site cookies).
+    reverse_proxy /api/* gorenel-server:9091
+    reverse_proxy /tunnel/connect gorenel-server:9091
+    reverse_proxy /install.sh gorenel-server:9091
+    reverse_proxy /install.ps1 gorenel-server:9091
+    reverse_proxy /downloads/* gorenel-server:9091
+    reverse_proxy /health gorenel-server:9091
+    reverse_proxy /metrics gorenel-server:9091
+    reverse_proxy /info gorenel-server:9091
+    reverse_proxy /ws gorenel-server:9091
     reverse_proxy gorenel-server:8085
 }
