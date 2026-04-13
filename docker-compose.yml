@@ -38,7 +38,7 @@ services:
       - gorenel-net
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock # For DinD interaction if needed
-      - ./bin:/app/bin
+      - ./bin:/home/appuser/bin
       - ./logs:/app/logs
     restart: unless-stopped
 

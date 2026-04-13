@@ -18,15 +18,18 @@ yarn-debug.log*
 yarn-error.log*
 .fly/
 flyctl
-bin/
+# bin/ (Removed to allow serving CLI binaries)
+# bin/
 tmp/
-*.exe
+# *.exe (Removed to allow serving CLI binaries)
+# *.exe
 *.test
 *.out
 gorenel-server
 server
 client
-gorenel.exe
+# gorenel.exe (Removed to allow serving CLI binaries)
+# gorenel.exe
 server.exe
 flylogs.txt
 .vscode/

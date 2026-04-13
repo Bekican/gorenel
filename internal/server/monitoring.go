@@ -1024,11 +1024,17 @@ func (m *MonitoringServer) handleInstallSh(w http.ResponseWriter, r *http.Reques
 		w.Header().Set("Content-Disposition", "attachment; filename=gorenel-setup.sh")
 	}
 
+	domain := m.baseDomain
+	if domain == "" {
+		domain = "gorenel.site"
+	}
+	baseURL := "https://" + domain
+
 	script := `#!/bin/bash
 set -e
 
 # Gorenel Magic Install Script (Linux/Mac)
-# Usage: curl -sSL https://gorenel.site/install.sh | bash
+# Usage: curl -sSL ` + baseURL + `/install.sh | bash
 
 INSTALL_DIR="$HOME/.gorenel/bin"
 mkdir -p "$INSTALL_DIR"
@@ -1043,7 +1049,7 @@ BINARY_NAME="gorenel-$OS-$ARCH"
 if [ "$OS" == "darwin" ]; then BINARY_NAME="gorenel-darwin-$ARCH"; fi
 
 echo "Downloading Gorenel for $OS/$ARCH..."
-curl -L -f -o "$INSTALL_DIR/gorenel" "https://gorenel.site/downloads/$BINARY_NAME" || { echo "Download failed!"; exit 1; }
+curl -L -f -o "$INSTALL_DIR/gorenel" "` + baseURL + `/downloads/$BINARY_NAME" || { echo "Download failed!"; exit 1; }
 chmod +x "$INSTALL_DIR/gorenel"
 
 # Add to PATH via shell profile
@@ -1084,8 +1090,14 @@ func (m *MonitoringServer) handleInstallPs1(w http.ResponseWriter, r *http.Reque
 		w.Header().Set("Content-Disposition", "attachment; filename=gorenel-setup.ps1")
 	}
 
+	domain := m.baseDomain
+	if domain == "" {
+		domain = "gorenel.site"
+	}
+	baseURL := "https://" + domain
+
 	script := `# Gorenel Magic Install Script (Windows)
-# Usage: iwr -useb https://gorenel.site/install.ps1 | iex
+# Usage: iwr -useb ` + baseURL + `/install.ps1 | iex
 
 $installDir = "$env:LOCALAPPDATA\gorenel"
 if (!(Test-Path $installDir)) { New-Item -ItemType Directory -Path $installDir | Out-Null }
@@ -1095,10 +1107,10 @@ $binaryPath = "$installDir\gorenel.exe"
 Write-Host "Downloading Gorenel for Windows/amd64..." -ForegroundColor Cyan
 
 try {
-    Invoke-WebRequest -Uri "https://gorenel.site/downloads/gorenel-windows-amd64.exe" -OutFile $binaryPath -ErrorAction Stop
+    Invoke-WebRequest -Uri "` + baseURL + `/downloads/gorenel-windows-amd64.exe" -OutFile $binaryPath -ErrorAction Stop
 } catch {
     Write-Host "Re-trying with alternative method..." -ForegroundColor Yellow
-    (New-Object System.Net.WebClient).DownloadFile("https://gorenel.site/downloads/gorenel-windows-amd64.exe", $binaryPath)
+    (New-Object System.Net.WebClient).DownloadFile("` + baseURL + `/downloads/gorenel-windows-amd64.exe", $binaryPath)
 }
 
 if (!(Test-Path $binaryPath) -or (Get-Item $binaryPath).Length -lt 1000) {
@@ -1138,7 +1150,7 @@ try {
         $profileDir = Split-Path -Parent $PROFILE
         if (!(Test-Path -LiteralPath $profileDir)) { New-Item -ItemType Directory -Path $profileDir -Force | Out-Null }
         if (!(Test-Path -LiteralPath $PROFILE)) { New-Item -ItemType File -Path $PROFILE -Force | Out-Null }
-        $marker = '# Gorenel CLI (https://gorenel.site/install.ps1)'
+        $marker = '# Gorenel CLI (' + baseURL + '/install.ps1)'
         $hasMarker = $false
         if ((Get-Item -LiteralPath $PROFILE).Length -gt 0) {
             $hasMarker = [bool](Select-String -LiteralPath $PROFILE -SimpleMatch $marker -Quiet -ErrorAction SilentlyContinue)
@@ -1165,7 +1177,7 @@ if ($apiKey) {
 } else {
     Write-Host "CMD / yeni PowerShell: PATH ile 'gorenel' (veya profil yuklendiyse 'gorenel')." -ForegroundColor DarkGray
     Write-Host "PATH sorununda tam yol: & '$binaryPath' connect --port 3000" -ForegroundColor DarkGray
-    Write-Host 'Yapistir (PowerShell): iwr -useb https://gorenel.site/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA ''gorenel\gorenel.exe''; & $g config set api_key YOUR_API_KEY; & $g connect --port 3000' -ForegroundColor Yellow
+    Write-Host ('Yapistir (PowerShell): iwr -useb ' + baseURL + '/install.ps1 | iex; $g = Join-Path $env:LOCALAPPDATA ''gorenel\gorenel.exe''; & $g config set api_key YOUR_API_KEY; & $g connect --port 3000') -ForegroundColor Yellow
 }
 `
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
