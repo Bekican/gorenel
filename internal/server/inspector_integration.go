@@ -24,6 +24,12 @@ func NewResponseCaptureWriter(w http.ResponseWriter, maxBodyBytes int64) *Respon
 	}
 }
 
+// Unwrap returns the underlying ResponseWriter so [http.NewResponseController] can
+// delegate Hijack/Flush/deadlines (required for WebSocket upgrades via [httputil.ReverseProxy]).
+func (rw *ResponseCaptureWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
 func (rw *ResponseCaptureWriter) WriteHeader(code int) {
 	rw.StatusCode = code
 	rw.ResponseWriter.WriteHeader(code)

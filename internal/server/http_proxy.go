@@ -674,6 +674,12 @@ type StreamBody struct {
 	isWS   bool
 }
 
+// Write implements [io.Writer] so [httputil.ReverseProxy] can treat the 101 response body as
+// [io.ReadWriteCloser] when switching protocols (WebSocket, etc.).
+func (s *StreamBody) Write(p []byte) (int, error) {
+	return s.Stream.Write(p)
+}
+
 func (s *StreamBody) Close() error {
 	err := s.ReadCloser.Close()
 	if s.isWS {
