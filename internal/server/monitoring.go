@@ -100,6 +100,8 @@ func (m *MonitoringServer) Start(port string) error {
 	mux.HandleFunc("/info", m.corsMiddleware(m.infoHandler))
 	mux.HandleFunc("/analytics", m.corsMiddleware(rl(m.analyticsHandler)))
 	mux.HandleFunc("/api/analytics/realtime", m.corsMiddleware(rl(m.realtimeAnalyticsHandler)))
+	// CLI-only helper: ensure stable/reserved subdomains via API key auth.
+	mux.HandleFunc("/api/reservations/ensure", m.corsMiddleware(serverErrors.ErrorWrapper(m.reservationsEnsureHandler)))
 
 	// Register Auth Endpoints with CORS
 	if m.authHandler != nil {
@@ -226,6 +228,10 @@ type reservationAssignRequest struct {
 	APIKey string `json:"api_key"`
 }
 
+type reservationEnsureRequest struct {
+	Subdomain string `json:"subdomain"`
+}
+
 func (m *MonitoringServer) reservationsHandler(w http.ResponseWriter, r *http.Request) error {
 	if m.reservationRepo == nil {
 		http.Error(w, "reservations unavailable", http.StatusServiceUnavailable)
@@ -323,6 +329,90 @@ func (m *MonitoringServer) reservationsHandler(w http.ResponseWriter, r *http.Re
 
 	http.Error(w, "Not found", http.StatusNotFound)
 	return nil
+}
+
+// reservationsEnsureHandler allows CLI clients (API-key authenticated) to ensure a subdomain
+// reservation exists for the key owner. This is intentionally idempotent to support
+// "stable subdomain" workflows.
+//
+// Route:
+// - POST /api/reservations/ensure (body.subdomain required, auth via X-API-Key)
+func (m *MonitoringServer) reservationsEnsureHandler(w http.ResponseWriter, r *http.Request) error {
+	if m.reservationRepo == nil || m.authManager == nil {
+		http.Error(w, "reservations unavailable", http.StatusServiceUnavailable)
+		return nil
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return nil
+	}
+
+	apiKey := strings.TrimSpace(r.Header.Get("X-API-Key"))
+	if apiKey == "" {
+		apiKey = strings.TrimSpace(r.URL.Query().Get("api_key"))
+	}
+	if apiKey == "" {
+		http.Error(w, "API key required (send X-API-Key)", http.StatusUnauthorized)
+		return nil
+	}
+
+	keyInfo, err := m.authManager.ValidateKey(apiKey)
+	if err != nil || keyInfo == nil {
+		http.Error(w, "invalid API key", http.StatusUnauthorized)
+		return nil
+	}
+
+	var req reservationEnsureRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid payload", http.StatusBadRequest)
+		return nil
+	}
+	req.Subdomain = strings.TrimSpace(req.Subdomain)
+	if req.Subdomain == "" {
+		http.Error(w, "subdomain required", http.StatusBadRequest)
+		return nil
+	}
+
+	rec, err := m.reservationRepo.Get(req.Subdomain)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return nil
+	}
+
+	if rec == nil {
+		created, err := m.reservationRepo.Create(keyInfo.UserID, req.Subdomain)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return nil
+		}
+		rec = created
+	} else if rec.UserID != keyInfo.UserID {
+		http.Error(w, "subdomain is reserved for a different user", http.StatusForbidden)
+		return nil
+	}
+
+	// Enforce/attach API key binding when configured.
+	keyHash := authmgr.HashKey(apiKey)
+	if rec.AssignedAPIKeyHash != nil && strings.TrimSpace(*rec.AssignedAPIKeyHash) != "" && *rec.AssignedAPIKeyHash != keyHash {
+		http.Error(w, "subdomain is assigned to a different API key", http.StatusForbidden)
+		return nil
+	}
+	// If unassigned, bind it to this key (idempotent).
+	if rec.AssignedAPIKeyHash == nil || strings.TrimSpace(*rec.AssignedAPIKeyHash) == "" {
+		if err := m.reservationRepo.Assign(keyInfo.UserID, req.Subdomain, &keyHash); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return nil
+		}
+	}
+
+	// Refresh and return the record.
+	out, err := m.reservationRepo.Get(req.Subdomain)
+	if err != nil {
+		http.Error(w, "failed to load reservation", http.StatusInternalServerError)
+		return nil
+	}
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(out)
 }
 
 type tunnelPolicyUpdateRequest struct {

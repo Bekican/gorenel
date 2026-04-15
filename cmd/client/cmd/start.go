@@ -9,8 +9,10 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -38,6 +40,8 @@ var (
 	ipWhitelist     []string
 	corsEnabled     bool
 	preferRegion    string
+	stableSubdomain bool
+	projectName     string
 
 	// Metrikler (atomic - thread-safe)
 	requestCount  int64
@@ -74,6 +78,8 @@ func init() {
 	startCmd.Flags().StringArrayVar(&ipWhitelist, "ip-whitelist", []string{}, "Allowed client IP/CIDR (repeatable). Example: --ip-whitelist 1.2.3.4 --ip-whitelist 10.0.0.0/24")
 	startCmd.Flags().BoolVar(&corsEnabled, "cors", false, "Enable built-in Smart CORS handling at the proxy level")
 	startCmd.Flags().StringVar(&preferRegion, "region", "", "Prefer a Fly.io region for tunnel control-plane (sets Fly-Prefer-Region header, e.g. fra, ams, iad)")
+	startCmd.Flags().BoolVar(&stableSubdomain, "stable", false, "Sabit subdomain kullan (proje+port'a göre). İlk çalıştırmada rezervasyon otomatik oluşturulur.")
+	startCmd.Flags().StringVar(&projectName, "project", "", "Stable subdomain için proje adı (default: current folder name)")
 
 	// Viper ile config dosyasından değerleri bağla
 	viper.BindPFlag("server", startCmd.Flags().Lookup("server"))
@@ -82,6 +88,8 @@ func init() {
 	viper.BindPFlag("domain", startCmd.Flags().Lookup("domain"))
 	viper.BindPFlag("type", startCmd.Flags().Lookup("type"))
 	viper.BindPFlag("region", startCmd.Flags().Lookup("region"))
+	viper.BindPFlag("stable", startCmd.Flags().Lookup("stable"))
+	viper.BindPFlag("project", startCmd.Flags().Lookup("project"))
 }
 
 func runStart(cmd *cobra.Command, args []string) {
@@ -117,6 +125,12 @@ func runStart(cmd *cobra.Command, args []string) {
 	if !cmd.Flags().Changed("region") {
 		preferRegion = viper.GetString("region")
 	}
+	if !cmd.Flags().Changed("stable") {
+		stableSubdomain = viper.GetBool("stable")
+	}
+	if !cmd.Flags().Changed("project") {
+		projectName = viper.GetString("project")
+	}
 
 	serverAddr = strings.TrimSpace(serverAddr)
 	apiKey = strings.TrimSpace(apiKey)
@@ -132,6 +146,17 @@ func runStart(cmd *cobra.Command, args []string) {
 	}
 	if serverAddr == "" {
 		serverAddr = "wss://gorenel.site/tunnel/connect"
+	}
+
+	// Stable subdomain: if user didn't specify a subdomain, derive one from project+port.
+	if stableSubdomain && strings.TrimSpace(customSubdomain) == "" && tunnelType == "http" {
+		p := strings.TrimSpace(projectName)
+		if p == "" {
+			if wd, err := os.Getwd(); err == nil {
+				p = filepath.Base(wd)
+			}
+		}
+		customSubdomain = makeStableSubdomain(p, localPort)
 	}
 
 	// Banner
@@ -169,7 +194,7 @@ func runStart(cmd *cobra.Command, args []string) {
 			default:
 			}
 
-			err := startTunnel(ctx, serverAddr, localPort, customDomain, tunnelType)
+			err := startTunnel(ctx, serverAddr, localPort, customDomain, tunnelType, stableSubdomain)
 			if err != nil {
 				if ctx.Err() != nil {
 					return
@@ -211,7 +236,14 @@ func runStart(cmd *cobra.Command, args []string) {
 }
 
 // startTunnel - Ana tunnel mantığı
-func startTunnel(ctx context.Context, serverAddr string, localPort int, domain string, tType string) error {
+func startTunnel(ctx context.Context, serverAddr string, localPort int, domain string, tType string, ensureReservation bool) error {
+	// Optional: ensure the requested subdomain is reserved & bound to this API key.
+	if ensureReservation && strings.TrimSpace(customSubdomain) != "" && tType == "http" {
+		if err := ensureReservedSubdomain(ctx, serverAddr, apiKey, strings.TrimSpace(customSubdomain)); err != nil {
+			return err
+		}
+	}
+
 	// 1. Server'a bağlan (WebSocket üzerinden)
 	var conn net.Conn
 	var err error
@@ -343,6 +375,123 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 		}
 		return fmt.Errorf("tunnel stream kapandı")
 	}
+}
+
+func makeStableSubdomain(project string, port int) string {
+	p := slugify(project)
+	if p == "" {
+		p = "app"
+	}
+	// Keep it short-ish: most DNS label limits are 63 chars. Reserve some room for "-<port>".
+	maxProjectLen := 63 - (1 + len(fmt.Sprintf("%d", port)))
+	if maxProjectLen < 3 {
+		maxProjectLen = 3
+	}
+	if len(p) > maxProjectLen {
+		p = p[:maxProjectLen]
+		p = strings.Trim(p, "-")
+		if p == "" {
+			p = "app"
+		}
+	}
+	return fmt.Sprintf("%s-%d", p, port)
+}
+
+func slugify(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	var b strings.Builder
+	b.Grow(len(s))
+	prevDash := false
+	for _, r := range s {
+		isAZ := r >= 'a' && r <= 'z'
+		is09 := r >= '0' && r <= '9'
+		if isAZ || is09 {
+			b.WriteRune(r)
+			prevDash = false
+			continue
+		}
+		if r == '-' || r == '_' || r == ' ' || r == '.' || r == '/' || r == '\\' {
+			if !prevDash && b.Len() > 0 {
+				b.WriteByte('-')
+				prevDash = true
+			}
+			continue
+		}
+		// drop other characters
+	}
+	out := strings.Trim(b.String(), "-")
+	for strings.Contains(out, "--") {
+		out = strings.ReplaceAll(out, "--", "-")
+	}
+	return out
+}
+
+func ensureReservedSubdomain(ctx context.Context, serverAddr, apiKey, subdomain string) error {
+	base, err := reservationsBaseURLFromServerAddr(serverAddr)
+	if err != nil {
+		return err
+	}
+	u := base + "/api/reservations/ensure"
+
+	body, _ := json.Marshal(map[string]string{"subdomain": subdomain})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u, bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-API-Key", strings.TrimSpace(apiKey))
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("reservation ensure request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		msg := strings.TrimSpace(string(b))
+		if msg == "" {
+			msg = resp.Status
+		}
+		return fmt.Errorf("reservation ensure failed (%d): %s", resp.StatusCode, msg)
+	}
+	return nil
+}
+
+func reservationsBaseURLFromServerAddr(serverAddr string) (string, error) {
+	serverAddr = strings.TrimSpace(serverAddr)
+	if serverAddr == "" {
+		return "", fmt.Errorf("server address is empty")
+	}
+
+	if strings.HasPrefix(serverAddr, "ws://") || strings.HasPrefix(serverAddr, "wss://") {
+		pu, err := url.Parse(serverAddr)
+		if err != nil {
+			return "", fmt.Errorf("invalid server url: %w", err)
+		}
+		switch pu.Scheme {
+		case "wss":
+			pu.Scheme = "https"
+		case "ws":
+			pu.Scheme = "http"
+		}
+		pu.Path = ""
+		pu.RawQuery = ""
+		pu.Fragment = ""
+		return strings.TrimRight(pu.String(), "/"), nil
+	}
+
+	// Legacy raw TCP form: host:port
+	host := serverAddr
+	host = strings.TrimPrefix(host, "http://")
+	host = strings.TrimPrefix(host, "https://")
+	if !strings.Contains(host, ":") {
+		// best-effort: assume https
+		return "https://" + host, nil
+	}
+	// If a port is provided, assume http (local/dev)
+	return "http://" + host, nil
 }
 
 // handleStreams - Gelen stream'leri localhost'a yönlendir

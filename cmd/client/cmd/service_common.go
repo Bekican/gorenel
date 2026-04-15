@@ -41,6 +41,14 @@ var serviceRunCmd = &cobra.Command{
 		}
 		customDomain := strings.TrimSpace(viper.GetString("service.domain"))
 		customSubdomain = strings.TrimSpace(viper.GetString("service.subdomain"))
+		stableSubdomain = viper.GetBool("service.stable")
+		if !stableSubdomain {
+			stableSubdomain = viper.GetBool("stable")
+		}
+		projectName = strings.TrimSpace(viper.GetString("service.project"))
+		if projectName == "" {
+			projectName = strings.TrimSpace(viper.GetString("project"))
+		}
 		keyAuthToken = strings.TrimSpace(viper.GetString("service.key_auth"))
 		ipWhitelist = viper.GetStringSlice("service.ip_whitelist")
 
@@ -55,11 +63,20 @@ var serviceRunCmd = &cobra.Command{
 			tType = "http"
 		}
 
+		// Stable subdomain: if enabled and subdomain not set, derive one from project+port.
+		if stableSubdomain && strings.TrimSpace(customSubdomain) == "" && tType == "http" {
+			p := strings.TrimSpace(projectName)
+			if p == "" {
+				p = "app"
+			}
+			customSubdomain = makeStableSubdomain(p, localPort)
+		}
+
 		delay := 1 * time.Second
 		maxDelay := 30 * time.Second
 		for {
 			ctx := context.Background()
-			err := startTunnel(ctx, server, localPort, customDomain, tType)
+			err := startTunnel(ctx, server, localPort, customDomain, tType, stableSubdomain)
 			if err != nil {
 				fmt.Println("service tunnel error:", err)
 				time.Sleep(delay)
