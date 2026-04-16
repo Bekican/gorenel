@@ -361,7 +361,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	captureWriter := NewResponseCaptureWriter(w, maxCaptureBytes)
 
 	// --- REFAC: httputil.ReverseProxy implementation ---
-	
+
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {
 			// Outbound request is forwarded over yamux to the CLI, which dials the user's local port.
@@ -381,7 +381,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if req.Header.Get("X-Forwarded-For") == "" {
 				req.Header.Set("X-Forwarded-For", clientIP)
 			}
-			
+
 			// Always pass through or set the Proto to keep HTTPS context for dev servers
 			if req.Header.Get("X-Forwarded-Proto") == "" {
 				req.Header.Set("X-Forwarded-Proto", "https")
@@ -432,7 +432,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				captured.StatusCode = resp.StatusCode
 				captured.RespHeaders = resp.Header
 				captured.Duration = time.Since(startTime)
-				
+
 				// AI Analysis
 				if p.aiAnalyzer != nil {
 					aiMeta := p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, captured.ReqBody)
@@ -444,7 +444,7 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				default:
 					atomic.AddInt64(&InspectorQueueDropped, 1)
 				}
-				
+
 				p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, time.Since(startTime), resp.StatusCode, bodyLen, clientIP, targetKey, captured.AIMetadata)
 			}
 
