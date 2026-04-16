@@ -371,10 +371,18 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			req.URL.Host = localHostPort
 			req.Host = localHostPort
 
+			// Detect WebSocket upgrade requests
+			isWebSocket := false
+			if strings.EqualFold(req.Header.Get("Upgrade"), "websocket") {
+				isWebSocket = true
+			}
+
 			// Set proxy headers
 			if req.Header.Get("X-Forwarded-For") == "" {
 				req.Header.Set("X-Forwarded-For", clientIP)
 			}
+			
+			// Always pass through or set the Proto to keep HTTPS context for dev servers
 			if req.Header.Get("X-Forwarded-Proto") == "" {
 				req.Header.Set("X-Forwarded-Proto", "https")
 			}
@@ -382,6 +390,15 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				req.Header.Set("X-Forwarded-Port", "443")
 			}
 			req.Header.Set("X-Forwarded-Host", publicHost)
+
+			// WebSocket Specific: httputil.ReverseProxy strips hop-by-hop headers.
+			// Re-add them here so they reach the RoundTrip (and thus the tunnel target).
+			if isWebSocket {
+				req.Header.Set("Upgrade", "websocket")
+				req.Header.Set("Connection", "upgrade")
+				// Some dev servers check the Origin header against the Host header.
+				// We keep the original Origin but ensure Host is localHostPort to avoid 403s on some setups.
+			}
 
 			// Apply per-tunnel request shaping (moved from outside for cleaner structure)
 			if pol, ok := p.tunnelManager.GetTunnelPolicy(host); ok {
