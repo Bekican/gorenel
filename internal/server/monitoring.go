@@ -1254,7 +1254,7 @@ Write-Host "Next Steps:" -ForegroundColor White
 Write-Host "1. Run 'gorenel login' to securely link your account." -ForegroundColor Cyan
 Write-Host "2. Run 'gorenel connect --port 3000' to start a tunnel." -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Restart your terminal or run: . `$PROFILE" -ForegroundColor DarkGray
+Write-Host 'Restart your terminal or run: . $PROFILE' -ForegroundColor DarkGray
 `
 
 // handleInstallPs1 serves the PowerShell installation script
