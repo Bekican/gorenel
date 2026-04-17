@@ -24,15 +24,14 @@ export function tunnelQuickCommandFull(opts: {
   protocol: string;
 }): string {
   const base = installBaseUrl(opts.hostname, opts.protocol);
-  const srv = connectServerSuffix(opts.hostname);
+  // We no longer embed the API key in the URL to keep it out of shell history.
+  // The user will run 'gorenel login' after installation.
 
   if (opts.os === 'windows') {
-    // Magic one-liner for Windows PowerShell
-    return `iwr -useb ${base}/install.ps1?api_key=${opts.apiKey} | iex; gorenel connect --port 3000${srv}`;
+    return `iwr -useb ${base}/install.ps1 | iex; gorenel login`;
   }
 
-  // Magic one-liner for Unix (Linux/macOS)
-  return `curl -sSL "${base}/install.sh?api_key=${opts.apiKey}" | bash && gorenel connect --port 3000${srv}`;
+  return `curl -sSL ${base}/install.sh | bash && gorenel login`;
 }
 
 /** Shorter line when CLI is already installed and in PATH. */
@@ -43,7 +42,8 @@ export function tunnelQuickCommandMinimal(opts: {
 }): string {
   const srv = connectServerSuffix(opts.hostname);
   const sep = opts.os === 'windows' ? ';' : '&&';
-  return `gorenel config set api_key ${opts.apiKey} ${sep} gorenel connect --port 3000${srv}`;
+  // Use interactive login instead of 'config set' with plain text key
+  return `gorenel login ${sep} gorenel connect --port 3000${srv}`;
 }
 
 /** URL for "Magic Install" download with API key. */
@@ -55,7 +55,5 @@ export function tunnelMagicDownloadUrl(opts: {
 }): string {
   const base = installBaseUrl(opts.hostname, opts.protocol);
   const path = opts.os === 'windows' ? '/install.ps1' : '/install.sh';
-  const url = new URL(path, base);
-  url.searchParams.set('api_key', opts.apiKey);
-  return url.toString();
+  return new URL(path, base).toString();
 }

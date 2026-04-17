@@ -1109,24 +1109,24 @@ func (m *MonitoringServer) handleAutoInstall(w http.ResponseWriter, r *http.Requ
 
 // handleInstallSh serves the Bash installation script
 func (m *MonitoringServer) handleInstallSh(w http.ResponseWriter, r *http.Request) {
-	apiKey := strings.TrimSpace(r.URL.Query().Get("api_key"))
-	if apiKey != "" {
-		w.Header().Set("Content-Disposition", "attachment; filename=gorenel-setup.sh")
-	}
-
 	domain := m.baseDomain
 	if domain == "" {
 		domain = "gorenel.site"
 	}
 	baseURL := "https://" + domain
 
-	script := fmt.Sprintf(`#!/bin/bash
+	script := strings.ReplaceAll(installShTemplate, "__GORENEL_URL__", baseURL)
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Write([]byte(script))
+}
+
+const installShTemplate = `#!/bin/bash
 set -e
 
-# Gorenel Magic Install Script (Linux/Mac)
-# Usage: curl -sSL %[1]s/install.sh | bash
+# Gorenel Installation Script (Linux/Mac)
+# Securely install and configure Gorenel CLI
 
-GORENEL_URL="%[1]s"
+GORENEL_URL="__GORENEL_URL__"
 INSTALL_DIR="$HOME/.gorenel/bin"
 mkdir -p "$INSTALL_DIR"
 
@@ -1152,27 +1152,20 @@ fi
 
 if [ -n "$SHELL_PROFILE" ] && ! grep -q ".gorenel/bin" "$SHELL_PROFILE" 2>/dev/null; then
     echo 'export PATH="$HOME/.gorenel/bin:$PATH"' >> "$SHELL_PROFILE"
-    echo "Added to PATH in $SHELL_PROFILE (restart terminal or run: source $SHELL_PROFILE)"
+    echo "Added to PATH in $SHELL_PROFILE"
 fi
 export PATH="$INSTALL_DIR:$PATH"
 
-echo "Gorenel installed to $INSTALL_DIR/gorenel"
-
-API_KEY="%[2]s"
-if [ -n "$API_KEY" ]; then
-    "$INSTALL_DIR/gorenel" config set api_key "$API_KEY"
-    echo "API Key configured automatically."
-    echo "You can now run: gorenel connect --port 3000"
-elif [ "$#" -gt 0 ]; then
-    echo "Executing: gorenel $*"
-    "$INSTALL_DIR/gorenel" "$@"
-else
-    echo "Run: gorenel config set api_key YOUR_API_KEY && gorenel connect --port 3000"
-fi
-`, baseURL, apiKey)
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.Write([]byte(script))
-}
+echo "---------------------------------------------------------"
+echo "Gorenel successfully installed to $INSTALL_DIR/gorenel"
+echo "---------------------------------------------------------"
+echo ""
+echo "Next Steps:"
+echo "1. Run 'gorenel login' to securely link your account."
+echo "2. Run 'gorenel connect --port 3000' to start a tunnel."
+echo ""
+echo "Restart your terminal or run: source $SHELL_PROFILE"
+`
 
 // psSingleQuoted escapes a string for safe embedding inside PowerShell single quotes ('').
 func psSingleQuoted(s string) string {
@@ -1253,27 +1246,19 @@ try {
     }
 } catch { }
 
-Write-Host "Gorenel installed to $binaryPath" -ForegroundColor Green
-
-$apiKey = '__API_KEY__'
-if ($apiKey) {
-    & $binaryPath config set api_key $apiKey
-    Write-Host "API Key configured automatically." -ForegroundColor Green
-    Write-Host "You can now run: gorenel connect --port 3000" -ForegroundColor Cyan
-} else {
-    Write-Host "CMD / yeni PowerShell: PATH ile 'gorenel' (veya profil yuklendiyse 'gorenel')." -ForegroundColor DarkGray
-    Write-Host "PATH sorununda tam yol: & '$binaryPath' connect --port 3000" -ForegroundColor DarkGray
-    Write-Host ('Yapistir (PowerShell): iwr -useb ' + $gorenelUrl + '/install.ps1 | iex; gorenel connect --port 3000') -ForegroundColor Yellow
-}
+Write-Host "---------------------------------------------------------" -ForegroundColor Green
+Write-Host "Gorenel successfully installed to $binaryPath" -ForegroundColor Green
+Write-Host "---------------------------------------------------------" -ForegroundColor Green
+Write-Host ""
+Write-Host "Next Steps:" -ForegroundColor White
+Write-Host "1. Run 'gorenel login' to securely link your account." -ForegroundColor Cyan
+Write-Host "2. Run 'gorenel connect --port 3000' to start a tunnel." -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Restart your terminal or run: . `$PROFILE" -ForegroundColor DarkGray
 `
 
 // handleInstallPs1 serves the PowerShell installation script
 func (m *MonitoringServer) handleInstallPs1(w http.ResponseWriter, r *http.Request) {
-	apiKey := strings.TrimSpace(r.URL.Query().Get("api_key"))
-	if apiKey != "" {
-		w.Header().Set("Content-Disposition", "attachment; filename=gorenel-setup.ps1")
-	}
-
 	domain := m.baseDomain
 	if domain == "" {
 		domain = "gorenel.site"
@@ -1281,7 +1266,6 @@ func (m *MonitoringServer) handleInstallPs1(w http.ResponseWriter, r *http.Reque
 	baseURL := "https://" + domain
 
 	script := strings.ReplaceAll(installPs1Template, "__GORENEL_URL__", psSingleQuoted(baseURL))
-	script = strings.ReplaceAll(script, "__API_KEY__", psSingleQuoted(apiKey))
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(script))
 }

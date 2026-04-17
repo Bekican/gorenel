@@ -441,13 +441,20 @@ function App() {
               <div className="space-y-6 animate-fade-in-up">
                 {/* Metrics */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <MetricCard title={t('dashboard.active_tunnels_metric', 'Active Tunnels')} value={metrics?.tunnels.active_count || 0} icon={Globe} color="emerald" />
-                  <MetricCard title={t('dashboard.total_requests_metric', 'Total Requests')} value={analytics?.total_requests || 0} icon={TrendingUp} color="blue" />
-                  <MetricCard title={t('dashboard.system_load_metric', 'System Load')} value={`${metrics?.system.goroutines || 0}`} icon={Activity} color="violet" />
-                  <MetricCard title={t('dashboard.avg_latency_metric', 'Avg Latency')} value={`${((analytics?.avg_response_time_ms ?? 0) / 1000000).toFixed(0)} ms`} icon={Activity} color="rose" />
+                  <MetricCard title={t('dashboard.active_tunnels_metric', 'Active Tunnels')} value={metrics ? metrics.tunnels.active_count : '—'} icon={Globe} color="emerald" />
+                  <MetricCard title={t('dashboard.total_requests_metric', 'Total Requests')} value={analytics ? analytics.total_requests : '—'} icon={TrendingUp} color="blue" />
+                  <MetricCard title={t('dashboard.system_load_metric', 'System Load')} value={metrics ? `${metrics.system.goroutines}` : '—'} icon={Activity} color="violet" />
+                  <MetricCard 
+                    title={t('dashboard.avg_latency_metric', 'Avg Latency')} 
+                    value={analytics && analytics.total_requests > 0 
+                      ? `${((analytics.avg_response_time_ms ?? 0) / 1000000).toFixed(1)} ms` 
+                      : '—'} 
+                    icon={Activity} 
+                    color="rose" 
+                  />
                 </div>
 
-                {/* Quick Start */}
+                {/* Quick Start / Empty State */}
                 <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-7 md:p-8 relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
                     <Zap className="w-48 h-48 text-emerald-500" />
@@ -455,13 +462,19 @@ function App() {
                   
                   <div className="relative z-10 space-y-6">
                     <div>
-                      <h3 className="text-lg md:text-xl font-semibold mb-1.5">{t('dashboard.quick_start')}</h3>
-                      <p className="text-sm text-white/40 max-w-xl">{t('landing.description')}</p>
+                      <h3 className="text-lg md:text-xl font-semibold mb-1.5">
+                        {tunnels.length === 0 ? t('tunnels.empty_title', 'Ready to launch?') : t('dashboard.quick_start')}
+                      </h3>
+                      <p className="text-sm text-white/40 max-w-xl">
+                        {tunnels.length === 0 
+                          ? t('tunnels.empty_subtitle', 'Securely expose your local applications to the world in seconds.') 
+                          : t('landing.description')}
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                       {[1, 2, 3].map((step) => (
-                        <div key={step} className="space-y-3">
+                        <div key={step} className="space-y-3 transition-opacity duration-500" style={{ opacity: tunnels.length > 0 ? 0.6 : 1 }}>
                           <div className="w-9 h-9 rounded-lg bg-white/[0.04] border border-white/[0.06] flex items-center justify-center font-semibold text-sm text-emerald-400">
                             {step}
                           </div>
@@ -472,6 +485,15 @@ function App() {
                         </div>
                       ))}
                     </div>
+
+                    {tunnels.length === 0 && (
+                      <div className="pt-4">
+                        <Button variant="primary" size="sm" onClick={() => setIsConnectOpen(true)}>
+                          {t('tunnels.cta', 'Start First Tunnel')}
+                          <ChevronRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
 

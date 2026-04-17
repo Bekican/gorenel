@@ -246,7 +246,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 <div className="p-8 space-y-6 font-mono text-[13px]">
                                     <div className="flex gap-3">
                                         <span className="text-emerald-500 select-none">❯</span>
-                                        <span className="text-white/80">gorenel expose 3000</span>
+                                        <span className="text-white/80">gorenel login</span>
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <span className="text-emerald-500 select-none">❯</span>
+                                        <span className="text-white/80">gorenel connect --port 3000</span>
                                     </div>
                                     <div className="space-y-2 pl-6">
                                         <p className="text-white/40 flex items-center gap-2">
@@ -255,7 +259,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                         </p>
                                         <p className="text-white/40 flex items-center gap-2">
                                             <Check size={14} className="text-emerald-500" />
-                                            AI Monitoring consensus: <span className="text-emerald-500/60 font-bold uppercase text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">Active</span>
+                                            Protocol Analysis consensus: <span className="text-emerald-500/60 font-bold uppercase text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">Active</span>
                                         </p>
                                         <p className="text-white/40 flex items-center gap-2">
                                             <Check size={14} className="text-emerald-500" />
@@ -330,7 +334,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 <div className="space-y-8">
                                     {[
                                         { id: '01', title: t('landing.how_it_works_step1'), desc: 'One-line install for macOS, Linux, and Windows.' },
-                                        { id: '02', title: t('landing.how_it_works_step2'), desc: 'Authenticate with your dashboard API key.' },
+                                        { id: '02', title: t('landing.how_it_works_step2'), desc: 'Run `gorenel login` to securely link your device.' },
                                         { id: '03', title: t('landing.how_it_works_step3'), desc: 'Deploy your local port to a secure public URL instantly.' }
                                     ].map((step) => (
                                         <div key={step.id} className="flex gap-6 group">
@@ -367,13 +371,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                     </div>
 
                                     <div className="space-y-4">
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/30">2. Command line auth</span>
-                                        <CodeBlock code="gorenel config set api_key gk_*****" />
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-white/30">2. Secure authentication</span>
+                                        <CodeBlock code="gorenel login" />
                                     </div>
 
                                     <div className="space-y-4">
                                         <span className="text-[10px] font-black uppercase tracking-widest text-white/30">3. Connect port 3000</span>
-                                        <CodeBlock code="gorenel expose 3000" />
+                                        <CodeBlock code="gorenel connect --port 3000" />
                                     </div>
 
                                     <div className="pt-6 border-t border-white/[0.04] flex items-center gap-4 text-white/30">
@@ -591,7 +595,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 { icon: Code2, title: 'Webhook Debugging', desc: t('landing.use_cases_webhooks') },
                                 { icon: Monitor, title: 'Client Presentations', desc: t('landing.use_cases_demos') },
                                 { icon: Cpu, title: 'IoT & Remote Access', desc: t('landing.use_cases_iot') },
-                                { icon: Brain, title: 'AI/LLM Gateway Proxy', desc: t('landing.use_cases_ai') }
+                                { icon: Shield, title: 'Secure API Gateway', desc: t('landing.use_cases_ai') }
                             ].map((useCase, idx) => (
                                 <div key={idx} className="group p-8 rounded-3xl border border-white/[0.06] bg-[#0c0e14] hover:border-blue-500/30 transition-all text-left flex gap-6 items-start">
                                     <div className="w-12 h-12 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
@@ -622,7 +626,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                     {t('landing.pricing_subtitle')}
                                 </h2>
                                 <p className="text-lg text-white/40 max-w-2xl mx-auto italic">
-                                    "We believe developers shouldn't pay to share their work. Gorenel is, and always will be, free for the community."
+                                    "We believe developers shouldn't pay to share their work. Gorenel is open-source and free for the community."
                                 </p>
                             </div>
 
@@ -635,9 +639,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                 <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 opacity-40">
                                     {[
                                         'Unlimited Access',
-                                        'No Pro Tier',
+                                        'Open Source',
                                         'E2E Encryption',
-                                        'Commercial Ready'
+                                        'Production Ready'
                                     ].map((f, i) => (
                                         <div key={i} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
                                             <CheckCircle2 size={14} className="text-emerald-500" />
@@ -696,8 +700,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                         <div className="space-y-6">
                             <h4 className="text-[10px] font-black uppercase tracking-widest text-white/20">Legal</h4>
                             <ul className="space-y-4 text-sm text-white/50">
-                                <li><a href="#" className="hover:text-emerald-400 transition-colors">Privacy Policy</a></li>
-                                <li><a href="#" className="hover:text-emerald-400 transition-colors">Terms of Service</a></li>
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">{t('landing.privacy')}</a></li>
+                                <li><a href="#" className="hover:text-emerald-400 transition-colors">{t('landing.terms')}</a></li>
                                 <li><a href="#" className="hover:text-emerald-400 transition-colors">GDPR</a></li>
                             </ul>
                         </div>
