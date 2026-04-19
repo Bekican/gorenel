@@ -202,7 +202,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                     {isLoggedIn ? t('common.to_dashboard') : t('landing.cta_primary')}
                                     <ArrowRight size={18} className="ml-2" />
                                 </Button>
-                                </a>
                             </div>
 
                             {/* Trust Bar */}
