@@ -1,8 +1,13 @@
 {
   "name": "gorenel",
-  "version": "1.2.4",
+  "version": "1.2.5",
   "description": "Secure, AI-powered tunneling for local developers. Expose your localhost in seconds.",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "install.js",
+    "bin/*"
+  ],
   "bin": {
     "gorenel": "index.js"
   },

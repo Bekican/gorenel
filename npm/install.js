@@ -1,10 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const https = require('https');
 const os = require('os');
 
-const VERSION = '1.2.4';
-const REPO = 'Bekican/gorenel';
+const VERSION = '1.2.5';
 
 function getBinaryName() {
     const platform = os.platform();
@@ -32,52 +30,34 @@ function getBinaryName() {
     return `gorenel-${p}-${a}${ext}`;
 }
 
-async function download() {
+async function setup() {
     const binaryName = getBinaryName();
-    const url = `https://github.com/${REPO}/releases/download/v${VERSION}/${binaryName}`;
-    const destDir = path.join(__dirname, 'bin');
-    const destPath = path.join(destDir, binaryName === getBinaryName() ? (os.platform() === 'win32' ? 'gorenel.exe' : 'gorenel') : 'gorenel');
+    const binDir = path.join(__dirname, 'bin');
+    const binPath = path.join(binDir, binaryName);
 
-    if (!fs.existsSync(destDir)) {
-        fs.mkdirSync(destDir);
+    console.log(`⚡ Setting up Gorenel CLI v${VERSION} for ${os.platform()} ${os.arch()}...`);
+
+    if (!fs.existsSync(binPath)) {
+        console.error(`❌ Binary not found for your platform: ${binaryName}`);
+        console.error(`Check the 'npm/bin' directory for bundled files.`);
+        process.exit(1);
     }
 
-    console.log(`⚡ Downloading Gorenel CLI v${VERSION} for ${os.platform()} ${os.arch()}...`);
-    console.log(`🔗 Source: ${url}`);
-
-    const file = fs.createWriteStream(destPath);
-
-    https.get(url, (response) => {
-        if (response.statusCode === 302 || response.statusCode === 301) {
-            // Handle redirect (GitHub Releases redirects to S3/Azure)
-            https.get(response.headers.location, (redirectResponse) => {
-                redirectResponse.pipe(file);
-            });
-        } else if (response.statusCode !== 200) {
-            console.error(`❌ Failed to download binary. Status: ${response.statusCode}`);
-            console.error(`Please ensure v${VERSION} is released on GitHub.`);
-            process.exit(1);
-        } else {
-            response.pipe(file);
+    // Set executable permissions for Unix/Mac
+    if (os.platform() !== 'win32') {
+        try {
+            fs.chmodSync(binPath, 0o755);
+            console.log('✅ Executable permissions set.');
+        } catch (err) {
+            console.warn(`⚠️ Failed to set permissions: ${err.message}`);
         }
+    }
 
-        file.on('finish', () => {
-            file.close();
-            if (os.platform() !== 'win32') {
-                fs.chmodSync(destPath, 0o755);
-            }
-            console.log('✅ Gorenel CLI installed successfully!');
-        });
-    }).on('error', (err) => {
-        fs.unlink(destPath, () => {});
-        console.error(`❌ Error downloading binary: ${err.message}`);
-        process.exit(1);
-    });
+    console.log('✅ Gorenel CLI setup complete!');
 }
 
-// Only run if not being required
 if (require.main === module) {
-    download().catch(err => {
+    setup().catch(err => {
         console.error(err);
         process.exit(1);
     });
