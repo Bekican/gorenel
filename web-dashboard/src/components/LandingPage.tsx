@@ -150,6 +150,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
 
                     <div className="hidden lg:flex items-center gap-8 text-[13px] font-medium text-white/50">
                         <a href="#features" className="hover:text-white transition-colors">{t('landing.trust_ai')}</a>
+                        <a href="#quickstart" className="hover:text-white transition-colors">{t('dashboard.quick_start')}</a>
                         <a href="#how-it-works" className="hover:text-white transition-colors">{t('landing.how_it_works_title')}</a>
                         <a href="#comparison" className="hover:text-white transition-colors">{t('landing.comparison_title')}</a>
                         {/* GitHub Icon with Star count (mocked for now) */}
@@ -201,13 +202,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, isLoggedIn, o
                                     {isLoggedIn ? t('common.to_dashboard') : t('landing.cta_primary')}
                                     <ArrowRight size={18} className="ml-2" />
                                 </Button>
-                                <a
-                                    href="https://github.com/bekican/gorenel"
-                                    target="_blank"
-                                    className="flex items-center gap-2 h-14 px-8 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.05] transition-all font-bold w-full sm:w-auto justify-center"
-                                >
-                                    <Github size={20} />
-                                    {t('landing.cta_secondary')}
                                 </a>
                             </div>
 

@@ -13,13 +13,67 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [replaying, setReplaying] = useState<string | null>(null);
+    const [demoData, setDemoData] = useState<CapturedRequest[]>([]);
 
-    const filteredHistory = history.filter(req =>
+    const combinedHistory = [...demoData, ...history];
+
+    const filteredHistory = combinedHistory.filter(req =>
         req.path.toLowerCase().includes(searchTerm.toLowerCase()) ||
         req.subdomain.toLowerCase().includes(searchTerm.toLowerCase()) ||
         req.method.toLowerCase().includes(searchTerm.toLowerCase()) ||
         req.status_code.toString().includes(searchTerm)
     );
+
+    const loadDemo = () => {
+        const mock: CapturedRequest[] = [
+            {
+                id: 'demo-1',
+                subdomain: 'ai-helper',
+                method: 'POST',
+                path: '/v1/chat/completions',
+                status_code: 200,
+                duration: 1245000000,
+                timestamp: new Date().toISOString(),
+                req_headers: { 'Content-Type': ['application/json'], 'Authorization': ['Bearer gk_demo_123'] },
+                resp_headers: { 'Content-Type': ['application/json'] },
+                req_body: btoa(JSON.stringify({ model: 'gpt-4', messages: [{ role: 'user', content: 'How do I expose localhost?' }] })),
+                resp_body: btoa(JSON.stringify({ choices: [{ message: { content: 'Use Gorenel expose 3000!' } }] })),
+                ai_metadata: {
+                    model: 'gpt-4',
+                    tokens: { prompt: 15, completion: 8, total: 23 },
+                    prompt: 'How do I expose localhost?',
+                    completion: 'Use Gorenel expose 3000!'
+                }
+            },
+            {
+                id: 'demo-2',
+                subdomain: 'my-app',
+                method: 'GET',
+                path: '/api/users?limit=10',
+                status_code: 200,
+                duration: 45000000,
+                timestamp: new Date(Date.now() - 5000).toISOString(),
+                req_headers: { 'Accept': ['application/json'] },
+                resp_headers: { 'Content-Type': ['application/json'] },
+                req_body: '',
+                resp_body: btoa(JSON.stringify([{ id: 1, name: 'John Doe' }, { id: 2, name: 'Jane Smith' }]))
+            },
+            {
+                id: 'demo-3',
+                subdomain: 'webhook-tester',
+                method: 'POST',
+                path: '/webhook/stripe',
+                status_code: 400,
+                duration: 12000000,
+                timestamp: new Date(Date.now() - 15000).toISOString(),
+                req_headers: { 'X-Stripe-Signature': ['v1=...'] },
+                resp_headers: { 'Content-Type': ['application/json'] },
+                req_body: btoa(JSON.stringify({ type: 'checkout.session.completed', data: {} })),
+                resp_body: btoa(JSON.stringify({ error: 'Invalid signature' }))
+            }
+        ];
+        setDemoData(mock);
+    };
     const hasActiveFilter = searchTerm.trim().length > 0;
 
     const handleReplay = async (id: string, e: React.MouseEvent) => {
@@ -113,6 +167,14 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                     <p className="text-sm text-white/25">
                                         {hasActiveFilter ? t('traffic_inspector.no_results_desc', 'Try a different search.') : t('traffic_inspector.listening_desc')}
                                     </p>
+                                    {!hasActiveFilter && demoData.length === 0 && (
+                                        <button 
+                                            onClick={loadDemo}
+                                            className="mt-4 px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/15 rounded-xl text-xs font-medium transition-all"
+                                        >
+                                            {t('traffic_inspector.load_demo', 'Show me how it works (Load Demo Data)')}
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -234,6 +296,15 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                             <p className="text-sm text-white/25">
                                                 {hasActiveFilter ? t('traffic_inspector.no_results_desc', 'Try a different search.') : t('traffic_inspector.listening_desc')}
                                             </p>
+                                            {!hasActiveFilter && demoData.length === 0 && (
+                                                <button 
+                                                    onClick={loadDemo}
+                                                    className="mt-6 px-5 py-2.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/15 rounded-xl text-sm font-medium transition-all flex items-center gap-2 mx-auto"
+                                                >
+                                                    <Sparkles className="w-4 h-4" />
+                                                    {t('traffic_inspector.load_demo', 'Show me how it works (Load Demo Data)')}
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </td>
@@ -357,6 +428,34 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                     className="text-[10px] font-medium text-blue-400 hover:text-white transition-colors"
                                                                 >
                                                                     Copy as curl
+                                                                </button>
+                                                                <div className="h-3 w-px bg-white/[0.06]" />
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        const headers = Object.entries(req.req_headers).reduce((acc, [k, v]) => {
+                                                                            acc[k] = v.join(', ');
+                                                                            return acc;
+                                                                        }, {} as any);
+                                                                        
+                                                                        let body = '';
+                                                                        if (req.req_body) {
+                                                                            try {
+                                                                                body = atob(req.req_body);
+                                                                            } catch {
+                                                                                body = req.req_body;
+                                                                            }
+                                                                        }
+
+                                                                        const fetchSnippet = `fetch("https://${req.subdomain}.gorenel.site${req.path}", {
+  method: "${req.method}",
+  headers: ${JSON.stringify(headers, null, 2)}${body ? `,\n  body: ${JSON.stringify(body)}` : ''}
+});`;
+                                                                        navigator.clipboard.writeText(fetchSnippet);
+                                                                    }}
+                                                                    className="text-[10px] font-medium text-blue-400 hover:text-white transition-colors"
+                                                                >
+                                                                    Copy as fetch
                                                                 </button>
                                                             </div>
                                                             <div className="space-y-1.5 font-mono text-xs max-h-40 overflow-auto">

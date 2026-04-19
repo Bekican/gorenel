@@ -160,10 +160,10 @@ const resources = {
         "delete_btn": "Delete"
       },
       "landing": {
-        "hero_badge": "Secure Tunneling with Protocol Analysis",
-        "title": "Localhost is now",
-        "title_accent": "Production-Grade",
-        "subtitle": "Securely expose your local services with end-to-end encryption, real-time traffic inspection, and zero-trust edge policies.",
+        "hero_badge": "Secure Tunneling for Developers",
+        "title": "Expose your localhost",
+        "title_accent": "in seconds",
+        "subtitle": "Get a public HTTPS URL. Inspect traffic in real-time. Share your work with a single command.",
         "description": "Gorenel creates a secure bridge between your local environment and our global edge network, providing instant HTTPS access and deep observability.",
         "cta": "Explore Features",
         "cta_primary": "Get Started — It's Free",
@@ -399,10 +399,10 @@ const resources = {
         "delete_btn": "Sil"
       },
       "landing": {
-        "hero_badge": "Güvenli Tünelleme ve Protokol Analizi",
-        "title": "Localhost Artık",
-        "title_accent": "Prodüksiyon Seviyesinde",
-        "subtitle": "Uçtan uca şifreleme, gerçek zamanlı trafik izleme ve zero-trust güvenlik politikalarıyla yerel servislerinizi dünyaya açın.",
+        "hero_badge": "Geliştiriciler İçin Güvenli Tünel",
+        "title": "Localhost'unuzu dünyaya",
+        "title_accent": "saniyeler içinde açın",
+        "subtitle": "Genel bir HTTPS URL'si alın. Trafiği gerçek zamanlı izleyin. Tek bir komutla paylaşın.",
         "description": "Gorenel, yerel ortamınız ile global uç ağımız arasında güvenli bir köprü kurarak anında HTTPS erişimi ve derin gözlemlenebilirlik sağlar.",
         "cta": "Özellikleri Keşfet",
         "cta_primary": "Ücretsiz Başlayın",

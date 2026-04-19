@@ -22,6 +22,7 @@ type RegisterRequest struct {
 	KeyAuthToken string   `json:"key_auth_token,omitempty"`
 	IPWhitelist  []string `json:"ip_whitelist,omitempty"`
 	CORSEnabled  bool     `json:"cors_enabled,omitempty"`
+	Auth         string   `json:"auth,omitempty"`
 }
 
 type RegisterResponse struct {

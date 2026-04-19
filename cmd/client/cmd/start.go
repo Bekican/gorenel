@@ -42,6 +42,7 @@ var (
 	preferRegion    string
 	stableSubdomain bool
 	projectName     string
+	authCredentials string
 
 	// Metrikler (atomic - thread-safe)
 	requestCount  int64
@@ -80,6 +81,7 @@ func init() {
 	startCmd.Flags().StringVar(&preferRegion, "region", "", "Prefer a Fly.io region for tunnel control-plane (sets Fly-Prefer-Region header, e.g. fra, ams, iad)")
 	startCmd.Flags().BoolVar(&stableSubdomain, "stable", false, "Sabit subdomain kullan (proje+port'a göre). İlk çalıştırmada rezervasyon otomatik oluşturulur.")
 	startCmd.Flags().StringVar(&projectName, "project", "", "Stable subdomain için proje adı (default: current folder name)")
+	startCmd.Flags().StringVar(&authCredentials, "auth", "", "Password protect your tunnel (form: 'user:pass')")
 
 	// Viper ile config dosyasından değerleri bağla
 	viper.BindPFlag("server", startCmd.Flags().Lookup("server"))
@@ -130,6 +132,9 @@ func runStart(cmd *cobra.Command, args []string) {
 	}
 	if !cmd.Flags().Changed("project") {
 		projectName = viper.GetString("project")
+	}
+	if !cmd.Flags().Changed("auth") {
+		authCredentials = viper.GetString("auth")
 	}
 
 	serverAddr = strings.TrimSpace(serverAddr)
@@ -290,6 +295,7 @@ func startTunnel(ctx context.Context, serverAddr string, localPort int, domain s
 		KeyAuthToken:    strings.TrimSpace(keyAuthToken),
 		IPWhitelist:     ipWhitelist,
 		CORSEnabled:     corsEnabled,
+		Auth:            strings.TrimSpace(authCredentials),
 	}
 	reqPayload, err := json.Marshal(regReq)
 	if err != nil {
@@ -684,28 +690,30 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 		n, _ := io.Copy(stream, responseReader)
 		atomic.AddInt64(&bytesSent, n)
 
-		// Final log output
-		if tunnelType == "http" && method != "" {
-			dur := time.Since(startTime)
-			statusStr := fmt.Sprintf("%d", statusCode)
-			if statusCode == 0 {
-				statusStr = "???"
-			}
+			// Final log output
+			if tunnelType == "http" && method != "" {
+				dur := time.Since(startTime)
+				statusStr := fmt.Sprintf("%d", statusCode)
+				if statusCode == 0 {
+					statusStr = "???"
+				}
 
-			color := "\033[32m" // Green
-			if statusCode >= 400 {
-				color = "\033[31m"
-			}
-			if statusCode >= 300 && statusCode < 400 {
-				color = "\033[33m"
-			}
-			reset := "\033[0m"
+				color := "\033[32m" // Green
+				icon := "✓"
+				if statusCode >= 400 {
+					color = "\033[31m"
+					icon = "✗"
+				}
+				if statusCode >= 300 && statusCode < 400 {
+					color = "\033[33m"
+					icon = "→"
+				}
+				reset := "\033[0m"
 
-			log.Printf("[%s] %s %-30s -> %s%s%s (%v)",
-				time.Now().Format("15:04:05"),
-				method, path, color, statusStr, reset,
-				dur.Round(time.Millisecond))
-		}
+				fmt.Printf("%s %s %-6s %-30s %s%s%s (%v)%s\n",
+					color, icon, method, path, color, statusStr, reset,
+					dur.Round(time.Millisecond), reset)
+			}
 		done <- struct{}{}
 	}()
 
@@ -728,25 +736,27 @@ func printBanner() {
 }
 
 func printSuccessBanner(url string, port int) {
-	cizgi := strings.Repeat("=", 60)
+	cizgi := strings.Repeat("―", 60)
 	fmt.Println("\n" + cizgi)
-	fmt.Println("TÜNELİNİZ HAZIR!")
+	fmt.Println(" ✨  TÜNELİNİZ AKTİF!")
 	fmt.Println(cizgi)
-	fmt.Printf("Public URL:  %s\n", url)
-	fmt.Printf("Local Port:  localhost:%d\n", port)
+	fmt.Printf(" 🌍  Public URL:  \033[1;32m%s\033[0m\n", url)
+	fmt.Printf(" 🏠  Local Port:  localhost:%d\n", port)
 	fmt.Println(cizgi)
-	fmt.Println("Tunnel çalışıyor. Kapatmak için Ctrl+C basın..")
+	fmt.Println(" ⚡  powered by gorenel | Kapatmak için: Ctrl+C")
+	fmt.Println(cizgi + "\n")
 }
 
 func printRawSuccessBanner(tType string, publicPort int, localPort int) {
-	cizgi := strings.Repeat("=", 60)
+	cizgi := strings.Repeat("―", 60)
 	fmt.Println("\n" + cizgi)
-	fmt.Printf("%s TÜNELİNİZ HAZIR!\n", strings.ToUpper(tType))
+	fmt.Printf(" 🚀  %s TÜNELİNİZ AKTİF!\n", strings.ToUpper(tType))
 	fmt.Println(cizgi)
-	fmt.Printf("Public Address: gorenel.site:%d\n", publicPort)
-	fmt.Printf("Local Target:   localhost:%d\n", localPort)
+	fmt.Printf(" 🌍  Public Address: \033[1;32mgorenel.site:%d\033[0m\n", publicPort)
+	fmt.Printf(" 🏠  Local Target:   localhost:%d\n", localPort)
 	fmt.Println(cizgi)
-	fmt.Println("Tunnel çalışıyor. Kapatmak için Ctrl+C basın..")
+	fmt.Println(" ⚡  powered by gorenel | Kapatmak için: Ctrl+C")
+	fmt.Println(cizgi + "\n")
 }
 
 func printMetrics(ctx context.Context) {
