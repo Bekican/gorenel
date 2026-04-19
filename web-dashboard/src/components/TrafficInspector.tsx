@@ -40,6 +40,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                 resp_body: btoa(JSON.stringify({ choices: [{ message: { content: 'Use Gorenel expose 3000!' } }] })),
                 ai_metadata: {
                     model: 'gpt-4',
+                    provider: 'openai',
                     tokens: { prompt: 15, completion: 8, total: 23 },
                     prompt: 'How do I expose localhost?',
                     completion: 'Use Gorenel expose 3000!'
