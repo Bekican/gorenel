@@ -1,0 +1,29 @@
+{
+  "name": "gorenel",
+  "version": "1.2.4",
+  "description": "Secure, AI-powered tunneling for local developers. Expose your localhost in seconds.",
+  "main": "index.js",
+  "bin": {
+    "gorenel": "index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bekican/gorenel.git"
+  },
+  "keywords": [
+    "tunnel",
+    "localhost",
+    "expose",
+    "proxy",
+    "webhook",
+    "ngrok-alternative"
+  ],
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

@@ -229,6 +229,21 @@ release:
 	git push origin $version
 	@echo "${GREEN}✅ Release $version created${NC}"
 
+# NPM Package Management
+npm-build: build-client
+	@echo "${YELLOW}📦 Preparing NPM package...${NC}"
+	@mkdir -p npm/bin
+	@cp bin/${BINARY_NAME_CLIENT}-linux-amd64 npm/bin/gorenel-linux-x64 2>/dev/null || true
+	@cp bin/${BINARY_NAME_CLIENT}-darwin-amd64 npm/bin/gorenel-macos-x64 2>/dev/null || true
+	@cp bin/${BINARY_NAME_CLIENT}-darwin-arm64 npm/bin/gorenel-macos-arm64 2>/dev/null || true
+	@cp bin/${BINARY_NAME_CLIENT}-windows-amd64.exe npm/bin/gorenel-windows-x64.exe 2>/dev/null || true
+	@echo "${GREEN}✅ NPM package prepared in ./npm${NC}"
+
+npm-publish:
+	@echo "${YELLOW}🚀 Publishing to NPM...${NC}"
+	@cd npm && npm publish --access public
+	@echo "${GREEN}✅ Published to NPM${NC}"
+
 # Help command
 help:
 	@echo "${GREEN}Gorenel Build System${NC}"
@@ -237,6 +252,8 @@ help:
 	@echo "  make build-all           - Build both client and server"
 	@echo "  make build-client        - Build client binary"
 	@echo "  make build-server        - Build server binary"
+	@echo "  make npm-build           - Prepare NPM package locally"
+	@echo "  make npm-publish         - Publish to NPM registry"
 	@echo "  make install             - Install client to /usr/local/bin"
 	@echo "  make run-server          - Run server in development mode"
 	@echo "  make run-client          - Run client in development mode"
