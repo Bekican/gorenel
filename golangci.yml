@@ -1,0 +1,58 @@
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Reports suspicious constructs
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Go static analysis
+    - unused        # Check for unused code
+    - gofmt         # Check formatting
+    - goimports     # Check import formatting
+    - misspell      # Spell checking
+    - revive        # Fast, configurable linter
+    - gosec         # Security issues
+    - gocritic      # Go source code linter
+    - prealloc      # Find slice declarations that could be pre-allocated
+    - bodyclose     # Check HTTP response body is closed
+    - noctx         # Find HTTP requests without context
+    - rowserrcheck  # Check sql.Rows.Err is checked
+    - sqlclosecheck # Check sql.Rows/Stmt are closed
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  
+  govet:
+    check-shadowing: true
+  
+  gofmt:
+    simplify: true
+  
+  gosec:
+    excludes:
+      - G204  # Subprocess with variable (we need this for flexibility)
+  
+  revive:
+    rules:
+      - name: var-naming
+        severity: warning
+      - name: exported
+        severity: warning
+
+issues:
+  exclude-use-default: false
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  
+  exclude-rules:
+    # Exclude test files from certain checks
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec

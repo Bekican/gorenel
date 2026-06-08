@@ -1,0 +1,86 @@
+package server
+
+import (
+	"bufio"
+	"bytes"
+	"fmt"
+	"io"
+	"net"
+	"net/http"
+)
+
+type ResponseCaptureWriter struct {
+	http.ResponseWriter
+	StatusCode    int
+	Body          *bytes.Buffer
+	maxBodyBytes  int64
+	capturedBytes int64
+}
+
+func NewResponseCaptureWriter(w http.ResponseWriter, maxBodyBytes int64) *ResponseCaptureWriter {
+	return &ResponseCaptureWriter{
+		ResponseWriter: w,
+		StatusCode:     http.StatusOK,
+		Body:           &bytes.Buffer{},
+		maxBodyBytes:   maxBodyBytes,
+		capturedBytes:  0,
+	}
+}
+
+// Unwrap returns the underlying ResponseWriter so [http.NewResponseController] can
+// delegate Hijack/Flush/deadlines (required for WebSocket upgrades via [httputil.ReverseProxy]).
+func (rw *ResponseCaptureWriter) Unwrap() http.ResponseWriter {
+	return rw.ResponseWriter
+}
+
+func (rw *ResponseCaptureWriter) WriteHeader(code int) {
+	rw.StatusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+func (rw *ResponseCaptureWriter) Write(b []byte) (int, error) {
+	// Always write the full response to the client, but only capture up to maxBodyBytes
+	// for inspector/ML to avoid memory blowups.
+	if rw.maxBodyBytes > 0 && rw.capturedBytes < rw.maxBodyBytes {
+		remaining := rw.maxBodyBytes - rw.capturedBytes
+		toCapture := int64(len(b))
+		if toCapture > remaining {
+			toCapture = remaining
+		}
+		if toCapture > 0 {
+			n, _ := rw.Body.Write(b[:toCapture])
+			rw.capturedBytes += int64(n)
+		}
+	}
+
+	n, err := rw.ResponseWriter.Write(b)
+	return n, err
+}
+
+// Hijack implements [http.Hijacker] so [httputil.ReverseProxy] can take over the
+// raw TCP connection for 101 Switching Protocols (WebSocket upgrades).
+func (rw *ResponseCaptureWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hj, ok := rw.ResponseWriter.(http.Hijacker); ok {
+		return hj.Hijack()
+	}
+	return nil, nil, fmt.Errorf("ResponseCaptureWriter: underlying ResponseWriter does not implement http.Hijacker")
+}
+
+// Flush implements [http.Flusher] so SSE / streaming responses are pushed immediately.
+func (rw *ResponseCaptureWriter) Flush() {
+	if fl, ok := rw.ResponseWriter.(http.Flusher); ok {
+		fl.Flush()
+	}
+}
+
+func InterceptBody(r *http.Request) ([]byte, error) {
+	if r.Body == nil {
+		return nil, nil
+	}
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	r.Body = io.NopCloser(bytes.NewReader(body))
+	return body, nil
+}

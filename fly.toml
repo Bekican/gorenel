@@ -1,0 +1,31 @@
+app = "gorenel-app"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile.fly"
+
+[[mounts]]
+  source = "gorenel_storage"
+  destination = "/var/lib/docker"
+
+[http_service]
+  internal_port = 4002
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[http_service.checks]]
+  grace_period = "300s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/healthz"
+
+
+
+[[vm]]
+  size = "shared-cpu-4x"
+  memory = "8gb" # Further increased for DinD stability
+  cpu_kind = "shared"
+  cpus = 4

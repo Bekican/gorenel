@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gorenel is starting…</title>
+    <meta http-equiv="cache-control" content="no-store, no-cache, must-revalidate, max-age=0" />
+    <meta http-equiv="pragma" content="no-cache" />
+    <meta http-equiv="expires" content="0" />
+    <style>
+      body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#080a10; color:#fff; }
+      .wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+      .card { max-width:640px; width:100%; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03); border-radius:16px; padding:20px; }
+      h1 { font-size:18px; margin:0 0 8px; }
+      p { margin:0; color:rgba(255,255,255,.65); font-size:14px; line-height:1.5; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <h1>Gorenel is starting…</h1>
+        <p>The service is warming up (first boot may take a minute). Please refresh shortly.</p>
+      </div>
+    </div>
+    <script>
+      // Auto-refresh so users transition immediately when upstream is ready.
+      setTimeout(function () {
+        window.location.replace('/?warm=' + Date.now());
+      }, 3500);
+    </script>
+  </body>
+</html>
+

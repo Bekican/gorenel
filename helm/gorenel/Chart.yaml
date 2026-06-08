@@ -1,0 +1,38 @@
+apiVersion: v2
+name: gorenel
+description: Production-grade tunnel system with real-time analytics
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - tunnel
+  - proxy
+  - networking
+  - analytics
+  - big-data
+
+home: https://github.com/Bekican/gorenel
+sources:
+  - https://github.com/Bekican/gorenel
+
+maintainers:
+  - name: Bekican
+    email: bekircan3634@gmail.com
+    url: https://github.com/Bekican
+
+icon: https://raw.githubusercontent.com/Bekican/gorenel/main/docs/logo.png
+
+annotations:
+  category: Networking
+  licenses: MIT
+
+dependencies:
+  - name: redis
+    version: 18.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: clickhouse
+    version: 4.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: clickhouse.enabled

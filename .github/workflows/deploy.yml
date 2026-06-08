@@ -1,0 +1,98 @@
+name: CI/CD Pipeline - Docker Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - master # Projenizin ana dalı hangisiyse (main veya master) ona push yapıldığında çalışır
+
+jobs:
+  build-and-push:
+    name: Build Docker Images and Push to Docker Hub
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # 1. Backend Server Build & Push
+      - name: Build and Push Go Server Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USER }}/gorenel-server:latest
+            ${{ secrets.DOCKER_USER }}/gorenel-server:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 2. Frontend Dashboard Build & Push
+      - name: Build and Push React Dashboard Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web-dashboard
+          file: ./web-dashboard/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USER }}/gorenel-dashboard:latest
+            ${{ secrets.DOCKER_USER }}/gorenel-dashboard:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 3. ML Engine Build & Push
+      - name: Build and Push ML Engine Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/ml
+          file: ./services/ml/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USER }}/gorenel-ml-engine:latest
+            ${{ secrets.DOCKER_USER }}/gorenel-ml-engine:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Server via SSH
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Remote Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          # Eğer anahtar yerine şifre kullanıyorsanız alttaki satırın yorumunu kaldırın:
+          # password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
+            # Sunucudaki proje dizinine gidin (Dizin yolunu kendinize göre güncelleyebilirsiniz)
+            cd /home/bekican/gorenel || cd /root/gorenel || cd ~/gorenel
+            
+            # En güncel docker-compose dosyalarını ve konfigürasyonları çekmek için git pull yapalım
+            git pull origin main || git pull origin master || true
+            
+            # Docker Hub'dan en son derlenen güncel imajları çekelim (RAM tüketimi sıfıra yakındır)
+            docker compose -f docker-compose.prod.yml pull
+            
+            # Konteynerleri sıfır kesintiyle (zero-downtime) güncelleyelim ve arka planda başlatalım
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            
+            # Eski ve kullanılmayan Docker imajlarını/katmanlarını temizleyerek disk alanı kazanalım
+            docker image prune -f

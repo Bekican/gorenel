@@ -1,0 +1,30 @@
+# Her türlü sanal ortam ve kütüphane
+venv
+.venv
+env
+services/ml/venv
+node_modules
+web-dashboard/node_modules
+
+# Büyük modeller ve cache
+services/ml/trained_models
+services/ml/models
+services/ml/__pycache__
+__pycache__
+.pytest_cache
+
+# Git ve IDE
+.git
+.vscode
+.idea
+
+# Build çıktıları
+bin
+dist
+tmp
+web-dashboard/.next
+web-dashboard/out
+
+# Loglar
+*.log
+logs

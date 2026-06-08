@@ -1,0 +1,48 @@
+{
+    email admin@gorenel.site
+    debug
+}
+
+# Main Site & API
+gorenel.site {
+    log
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+
+    # WebSocket tunnel (needs streaming support)
+    reverse_proxy /tunnel/connect gorenel-server:9091 {
+        flush_interval -1
+    }
+
+    # API yolları
+    reverse_proxy /api/* gorenel-server:9091
+    reverse_proxy /health gorenel-server:9091
+    reverse_proxy /metrics gorenel-server:9091
+    reverse_proxy /info gorenel-server:9091
+    reverse_proxy /install.sh gorenel-server:9091
+    reverse_proxy /install.ps1 gorenel-server:9091
+    reverse_proxy /downloads/* gorenel-server:9091
+
+    # Dashboard (React)
+    reverse_proxy gorenel-dashboard:80
+}
+
+# Dynamic Tunnels (subdomains)
+*.gorenel.site {
+    log
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+
+    # API endpoints on subdomains should go to the monitoring server
+    # so login/register/me work even when accessed from a subdomain
+    reverse_proxy /api/* gorenel-server:9091
+
+    # All other traffic goes to the HTTP tunnel proxy.
+    # flush_interval -1 disables response buffering so WebSocket frames and SSE
+    # events are forwarded immediately without Caddy holding them.
+    reverse_proxy gorenel-server:8085 {
+        flush_interval -1
+    }
+}

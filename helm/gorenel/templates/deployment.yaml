@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gorenel.fullname" . }}
+  labels:
+    {{- include "gorenel.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+spec:
+  {{- if not .Values.server.autoscaling.enabled }}
+  replicas: {{ .Values.server.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "gorenel.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: server
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "gorenel.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: server
+    spec:
+      {{- with .Values.server.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "gorenel.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: gorenel-server
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.server.image.repository }}:{{ .Values.server.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.server.image.pullPolicy }}
+        ports:
+        - name: control
+          containerPort: 7000
+          protocol: TCP
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        - name: monitoring
+          containerPort: 9090
+          protocol: TCP
+        env:
+        - name: GORENEL_BASE_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "gorenel.fullname" . }}-config
+              key: base_domain
+        - name: GORENEL_LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "gorenel.fullname" . }}-config
+              key: log_level
+        - name: GORENEL_RETENTION_DAYS
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "gorenel.fullname" . }}-config
+              key: retention_days
+        - name: ML_URL
+          valueFrom:
+            configMapKeyRef:
+              name: {{ include "gorenel.fullname" . }}-config
+              key: ml_service_url
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: monitoring
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: monitoring
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.server.resources | nindent 12 }}
+        volumeMounts:
+        - name: logs
+          mountPath: /home/gorenel/logs
+        {{- if .Values.tls.enabled }}
+        - name: tls
+          mountPath: /etc/tls
+          readOnly: true
+        {{- end }}
+      volumes:
+      - name: logs
+        {{- if .Values.persistence.enabled }}
+        persistentVolumeClaim:
+          claimName: {{ include "gorenel.fullname" . }}-logs
+        {{- else }}
+        emptyDir: {}
+        {{- end }}
+      {{- if .Values.tls.enabled }}
+      - name: tls
+        secret:
+          secretName: {{ .Values.tls.secretName }}
+      {{- end }}
+      {{- with .Values.server.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.server.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.server.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

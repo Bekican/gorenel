@@ -1,0 +1,56 @@
+# Compiled binaries
+*.exe
+*.exe~
+*.test
+*.out
+bin/
+tmp_server
+
+# Logs
+*.log
+logs/
+*_logs*.txt
+fly_logs*.txt
+flylogs.txt
+server_stdout.log
+server_stderr.log
+gorenel-server
+
+
+# IDE
+.vscode/
+.idea/
+Thumbs.db
+
+# Environment files (contain secrets)
+.env
+!.env.example
+web-dashboard/.env
+cert.json
+cert.txt
+cert_final.json
+cert_utf8.txt
+certs.json
+certs_new.json
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Node/React
+node_modules/
+# web-dashboard/dist/ (Building locally for Fly.io speed)
+# web-dashboard/dist/
+web-dashboard/node_modules/
+
+# Temporary dev files
+test-ws.js
+bench.txt
+build_verify.txt
+gofmt_offenders.txt
+metrics.json
+claude.md

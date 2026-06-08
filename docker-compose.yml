@@ -1,0 +1,152 @@
+services:
+  gorenel-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "0.0.0.0:7005:7000" # Control Port (Fly.io routes external:7000 to internal:7005)
+      # 8085 (Proxy) and 9091 (Monitoring) are accessed via Docker network or internal routing
+    environment:
+      - GO_ENV=production
+      - JWT_SECRET=${JWT_SECRET}
+      - DB_URL=postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432/gorenel?sslmode=disable
+      - REDIS_ADDR=redis:6379
+      - ML_URL=http://ml-engine:5000
+      - CLICKHOUSE_ADDR=clickhouse:9000
+      - CLICKHOUSE_DB=gorenel
+      - BASE_DOMAIN=${BASE_DOMAIN}
+      - ACME_EMAIL=${ACME_EMAIL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL}
+      - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
+      - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+      - GITHUB_REDIRECT_URL=${GITHUB_REDIRECT_URL}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      ml-engine:
+        condition: service_healthy
+    networks:
+      - gorenel-net
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # For DinD interaction if needed
+      - ./logs:/app/logs
+    restart: unless-stopped
+
+  gorenel-dashboard:
+    build:
+      context: ./web-dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "${DASHBOARD_PORT:-4000}:80"
+    environment:
+      - API_URL=https://${BASE_DOMAIN}/api
+    depends_on:
+      - gorenel-server
+    networks:
+      - gorenel-net
+    restart: unless-stopped
+
+  ml-engine:
+    build:
+      context: ./services/ml
+      dockerfile: Dockerfile
+    # Internal only
+    environment:
+      - ML_WARMUP_DELAY_SEC=3
+      - ML_WARMUP_SAMPLES=280
+      - ML_WARMUP_AE_EPOCHS=6
+    volumes:
+      - ml_trained_models:/app/trained_models
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health')\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - gorenel-net
+    restart: unless-stopped
+
+  redis:
+    image: public.ecr.aws/docker/library/redis:7-alpine
+    # Internal only
+    networks:
+      - gorenel-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  postgres:
+    image: public.ecr.aws/docker/library/postgres:15-alpine
+    # Internal only
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=gorenel
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gorenel-net
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8-alpine
+    # Internal only
+    environment:
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER:-default}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    networks:
+      - gorenel-net
+    restart: unless-stopped
+
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - gorenel-net
+    depends_on:
+      - gorenel-server
+
+networks:
+  gorenel-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  clickhouse_data:
+  ml_trained_models:
+  caddy_data:
+  caddy_config:
