@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Copy, ExternalLink, Server, Plus, Zap, ArrowDown, ArrowUp, ArrowRight, Shield, KeyRound, Lock } from 'lucide-react';
+import { Copy, ExternalLink, Server, Plus, Zap, ArrowDown, ArrowUp, ArrowRight, Shield, KeyRound, Lock, Bot } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { Tunnel, TunnelSessionHistory } from '../api/client';
 import React, { useState } from 'react';
@@ -143,6 +143,11 @@ export const TunnelsList: React.FC<TunnelsListProps> = ({ tunnels, requesterId, 
                           </span>
                         ) : (
                           <>
+                            {tunnel.tunnelType === 'mcp' && (
+                              <span className="inline-flex items-center gap-1 rounded-md border border-purple-500/15 bg-purple-500/[0.06] px-2 py-0.5 text-[10px] font-medium text-purple-300/80">
+                                <Bot className="w-2.5 h-2.5" /> MCP Server
+                              </span>
+                            )}
                             {keyOn && (
                               <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/15 bg-emerald-500/[0.06] px-2 py-0.5 text-[10px] font-medium text-emerald-300/80">
                                 <KeyRound className="w-2.5 h-2.5" /> KeyAuth

@@ -167,7 +167,7 @@ func runStart(cmd *cobra.Command, args []string) {
 	apiKey = strings.TrimSpace(apiKey)
 	tunnelType = strings.ToLower(strings.TrimSpace(tunnelType))
 	preferRegion = strings.ToLower(strings.TrimSpace(preferRegion))
-	if tunnelType != "http" && tunnelType != "tcp" && tunnelType != "udp" {
+	if tunnelType != "http" && tunnelType != "tcp" && tunnelType != "udp" && tunnelType != "mcp" {
 		log.Printf("Invalid tunnel type '%s', defaulting to http", tunnelType)
 		tunnelType = "http"
 	}
@@ -180,7 +180,7 @@ func runStart(cmd *cobra.Command, args []string) {
 	}
 
 	// Stable subdomain: if user didn't specify a subdomain, derive one from project+port.
-	if stableSubdomain && strings.TrimSpace(customSubdomain) == "" && tunnelType == "http" {
+	if stableSubdomain && strings.TrimSpace(customSubdomain) == "" && (tunnelType == "http" || tunnelType == "mcp") {
 		p := strings.TrimSpace(projectName)
 		if p == "" {
 			if wd, err := os.Getwd(); err == nil {
@@ -269,7 +269,7 @@ func runStart(cmd *cobra.Command, args []string) {
 // startTunnel - Ana tunnel mantığı
 func startTunnel(ctx context.Context, serverAddr string, localPort int, domain string, tType string, ensureReservation bool) error {
 	// Optional: ensure the requested subdomain is reserved & bound to this API key.
-	if ensureReservation && strings.TrimSpace(customSubdomain) != "" && tType == "http" {
+	if ensureReservation && strings.TrimSpace(customSubdomain) != "" && (tType == "http" || tType == "mcp") {
 		if err := ensureReservedSubdomain(ctx, serverAddr, apiKey, strings.TrimSpace(customSubdomain)); err != nil {
 			return err
 		}
@@ -656,7 +656,7 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 	// Server'ın httputil.ReverseProxy'si zaten Host: 127.0.0.1:<port> set ediyor.
 	// CLI tarafında Host rewrite'a gerek yok — veriyi olduğu gibi geçiriyoruz.
 	var requestReader io.Reader = stream
-	if tunnelType == "http" {
+	if tunnelType == "http" || tunnelType == "mcp" {
 		br := bufio.NewReader(stream)
 		var headersBuf bytes.Buffer
 
@@ -758,7 +758,7 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 			}
 		}()
 
-		if tunnelType == "http" {
+		if tunnelType == "http" || tunnelType == "mcp" {
 			bufPtr := headerBufPool.Get().(*[]byte)
 			buf := *bufPtr
 			n, _ := localConn.Read(buf)
@@ -787,7 +787,7 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 		atomic.AddInt64(&bytesSent, n)
 
 		// Final log output
-		if tunnelType == "http" && method != "" {
+		if (tunnelType == "http" || tunnelType == "mcp") && method != "" {
 			dur := time.Since(startTime)
 			statusStr := fmt.Sprintf("%d", statusCode)
 			if statusCode == 0 {

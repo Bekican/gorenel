@@ -13,7 +13,8 @@ import {
   Languages,
   Menu,
   X,
-  Zap
+  Zap,
+  Bot
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +28,7 @@ const GeoMap = React.lazy(() => import('./components/GeoMap').then(module => ({ 
 const AnomalyAlerts = React.lazy(() => import('./components/AnomalyAlerts').then(module => ({ default: module.AnomalyAlerts })));
 const ModelComparison = React.lazy(() => import('./components/ModelComparison').then(module => ({ default: module.ModelComparison })));
 const TrafficInspector = React.lazy(() => import('./components/TrafficInspector').then(module => ({ default: module.TrafficInspector })));
+const McpInspector = React.lazy(() => import('./components/McpInspector').then(module => ({ default: module.McpInspector })));
 const ModificationRules = React.lazy(() => import('./components/ModificationRules').then(module => ({ default: module.ModificationRules })));
 const ThreatRadar = React.lazy(() => import('./components/ThreatRadar').then(module => ({ default: module.ThreatRadar })));
 const ApiKeyManager = React.lazy(() => import('./components/ApiKeyManager').then(module => ({ default: module.ApiKeyManager })));
@@ -37,7 +39,7 @@ import { ConnectModal } from './components/ConnectModal';
 import { ShareView } from './components/ShareView';
 const Reservations = React.lazy(() => import('./components/Reservations').then(module => ({ default: module.Reservations })));
 
-type NavTab = 'overview' | 'tunnels' | 'ai_gateway' | 'traffic' | 'settings' | 'api_keys' | 'reservations';
+type NavTab = 'overview' | 'tunnels' | 'ai_gateway' | 'traffic' | 'settings' | 'api_keys' | 'reservations' | 'mcp';
 
 function getAxiosStatus(err: unknown): number | undefined {
   if (!err || typeof err !== 'object') return undefined;
@@ -319,6 +321,7 @@ function App() {
         <NavItem id="overview" icon={LayoutDashboard} label="Overview" />
         <NavItem id="tunnels" icon={Globe} label="Tunnels" />
         <NavItem id="ai_gateway" icon={Cpu} label="AI Gateway" />
+        <NavItem id="mcp" icon={Bot} label="MCP" />
       </div>
       <div className="space-y-0.5">
         <div className="px-3 mb-2">
@@ -446,6 +449,7 @@ function App() {
                   {activeTab === 'ai_gateway' && t('dashboard.ai_gateway')}
                   {activeTab === 'traffic' && t('dashboard.traffic_inspector')}
                   {activeTab === 'api_keys' && t('dashboard.api_keys')}
+                  {activeTab === 'mcp' && t('dashboard.mcp', 'AI / MCP')}
                   {activeTab === 'reservations' && t('dashboard.reservations', 'Reservations')}
                   {activeTab === 'settings' && t('dashboard.global_rules')}
                 </h2>
@@ -455,6 +459,7 @@ function App() {
                   {activeTab === 'ai_gateway' && t('dashboard.ai_desc')}
                   {activeTab === 'traffic' && t('dashboard.traffic_desc')}
                   {activeTab === 'api_keys' && t('dashboard.keys_desc')}
+                  {activeTab === 'mcp' && t('dashboard.mcp_desc', 'Inspect JSON-RPC tool calls and declarations for local MCP servers.')}
                   {activeTab === 'reservations' && t('dashboard.reservations_desc', 'Reserve stable subdomains and bind them to API keys.')}
                   {activeTab === 'settings' && t('dashboard.rules_desc')}
                 </p>
@@ -637,6 +642,12 @@ function App() {
             {activeTab === 'traffic' && (
               <div className="animate-fade-in-up rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
                 <TrafficInspector history={history} />
+              </div>
+            )}
+
+            {activeTab === 'mcp' && (
+              <div className="animate-fade-in-up rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+                <McpInspector history={history} activeSubdomains={tunnels.filter(t => t.tunnelType === 'mcp').map(t => t.subdomain)} />
               </div>
             )}
 
