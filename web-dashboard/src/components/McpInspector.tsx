@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Search, Bot, Cpu, Terminal, Clock, ShieldCheck, AlertCircle, Play, ChevronRight, Activity, Database, FileText } from 'lucide-react';
+import { Search, Bot, Cpu, Terminal, Clock, ShieldCheck, AlertCircle, ChevronRight, Database } from 'lucide-react';
 import { format } from 'date-fns';
 import type { CapturedRequest } from '../api/client';
 
@@ -30,7 +29,6 @@ interface ToolCallRecord {
 }
 
 export const McpInspector: React.FC<McpInspectorProps> = ({ history, activeSubdomains }) => {
-  const { t } = useTranslation();
   const [selectedSubdomain, setSelectedSubdomain] = useState<string>(activeSubdomains[0] || '');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
