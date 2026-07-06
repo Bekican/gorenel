@@ -446,26 +446,17 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				resp.Header.Set("Connection", "Upgrade")
 			}
 
-			// Finalize Capture
+			// Finalize Capture metadata from response headers
 			if captureEnabled {
 				captured.ReqBody = reqBodyBuf.Bytes()
 				captured.StatusCode = resp.StatusCode
 				captured.RespHeaders = resp.Header
-				captured.Duration = time.Since(startTime)
 
 				// AI Analysis
 				if p.aiAnalyzer != nil {
 					aiMeta := p.aiAnalyzer.AnalyzeRequest(r.Host, r.URL.Path, captured.ReqBody)
 					captured.AIMetadata = aiMeta
 				}
-
-				select {
-				case p.inspectQueue <- captured:
-				default:
-					atomic.AddInt64(&InspectorQueueDropped, 1)
-				}
-
-				p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, time.Since(startTime), resp.StatusCode, bodyLen, clientIP, targetKey, userID, captured.AIMetadata)
 			}
 
 			return nil
@@ -478,6 +469,21 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	proxy.ServeHTTP(captureWriter, r)
+
+	// Post-proxy capture finalization: capture response body and queue
+	if captureEnabled && exists {
+		captured.RespBody = captureWriter.Body.Bytes()
+		captured.StatusCode = captureWriter.StatusCode
+		captured.Duration = time.Since(startTime)
+
+		select {
+		case p.inspectQueue <- captured:
+		default:
+			atomic.AddInt64(&InspectorQueueDropped, 1)
+		}
+
+		p.triggerMLAnalysis(r.Method, r.URL.Path, r.Host, r.ContentLength, captured.Duration, captured.StatusCode, int64(len(captured.RespBody)), clientIP, targetKey, userID, captured.AIMetadata)
+	}
 }
 
 func getClientIP(r *http.Request) string {
