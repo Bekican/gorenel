@@ -709,9 +709,26 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 
 	localConn, err := net.DialTimeout("tcp", targetAddr, 5*time.Second)
 	if err != nil {
-		if Verbose {
-			log.Printf("❌ Yerel servis hatası (%s): %v", targetAddr, err)
-		}
+		log.Printf("❌ Yerel sunucuya baglanilamadi (%s): %v. Yerel sunucunuzun bu portta acik ve calisir durumda oldugundan emin olun.", targetAddr, err)
+		
+		// Write a friendly 502 Bad Gateway HTML response to the stream
+		friendlyResp := "HTTP/1.1 502 Bad Gateway\r\n" +
+			"Content-Type: text/html; charset=utf-8\r\n" +
+			"Connection: close\r\n" +
+			"\r\n" +
+			"<!DOCTYPE html>\n" +
+			"<html>\n" +
+			"<head><title>Gorenel - 502 Bad Gateway</title></head>\n" +
+			"<body style=\"font-family: system-ui, sans-serif; background-color: #0c0e14; color: #f3f4f6; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0;\">\n" +
+			"  <div style=\"text-align: center; max-width: 500px; padding: 2rem; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; box-shadow: 0 4px 30px rgba(0,0,0,0.5);\">\n" +
+			"    <h1 style=\"color: #f87171; font-size: 2rem; margin-top: 0;\">502 Bad Gateway</h1>\n" +
+			"    <p style=\"font-size: 1rem; line-height: 1.5; color: #d1d5db;\">Gorenel yerel sunucunuza (<b>" + targetAddr + "</b>) baglanamadi.</p>\n" +
+			"    <p style=\"font-size: 0.875rem; color: #9ca3af; margin-bottom: 2rem;\">Lutfen yerel web sunucunuzun veya uygulamanizin bu portta calistigindan emin olun.</p>\n" +
+			"    <code style=\"display: block; padding: 0.75rem; background: #000; border-radius: 8px; font-family: monospace; font-size: 0.8rem; color: #f3f4f6; border: 1px solid rgba(255,255,255,0.04);\">" + err.Error() + "</code>\n" +
+			"  </div>\n" +
+			"</body>\n" +
+			"</html>"
+		_, _ = stream.Write([]byte(friendlyResp))
 		return
 	}
 	defer localConn.Close()
