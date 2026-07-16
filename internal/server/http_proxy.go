@@ -1045,28 +1045,54 @@ func (p *HTTPProxy) injectWebSocketPatch(resp *http.Response) error {
 	domainMatch := "." + p.baseDomain
 	jsCode := fmt.Sprintf(`<script id="gorenel-ws-patch">
 (function() {
-  const OriginalWebSocket = window.WebSocket;
+  // --- Layer 1: WebSocket URL rewriting ---
+  var OrigWS = window.WebSocket;
   window.WebSocket = function(url, protocols) {
     if (typeof url === 'string') {
-      const isGorenel = url.includes('%s');
-      const isLocal = url.includes('localhost') || url.includes('127.0.0.1') || url.includes('[::1]');
-      if ((isGorenel || isLocal) && !url.includes(':443') && !url.includes(':80')) {
+      var isGorenel = url.includes('%s');
+      var isLocal = /localhost|127\.0\.0\.1|\[::1\]/.test(url);
+      if ((isGorenel || isLocal) && !/:(443|80)(\/|$)/.test(url)) {
         try {
-          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-          const hostname = window.location.host;
-          const urlObj = new URL(url);
-          urlObj.protocol = protocol;
-          urlObj.host = hostname;
-          url = urlObj.toString();
-        } catch (e) {
-          url = url.replace(/:\d+/, '');
-        }
+          var u = new URL(url);
+          u.protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+          u.host = location.host;
+          url = u.toString();
+        } catch(e) { url = url.replace(/:\d+/, ''); }
       }
     }
-    return new OriginalWebSocket(url, protocols);
+    return new OrigWS(url, protocols);
   };
-  Object.assign(window.WebSocket, OriginalWebSocket);
-  window.WebSocket.prototype = OriginalWebSocket.prototype;
+  window.WebSocket.CONNECTING = 0;
+  window.WebSocket.OPEN = 1;
+  window.WebSocket.CLOSING = 2;
+  window.WebSocket.CLOSED = 3;
+  window.WebSocket.prototype = OrigWS.prototype;
+
+  // --- Layer 2: Reload-loop prevention ---
+  // Track rapid page loads via sessionStorage. After 3+ reloads in 5s,
+  // intercept fetch('/__vite_ping') so Vite thinks the server is down
+  // and stops triggering full-page reloads.
+  try {
+    var K = '__gorenel_rl';
+    var raw = sessionStorage.getItem(K);
+    var d = raw ? JSON.parse(raw) : {t:0,c:0};
+    var now = Date.now();
+    d.c = (now - d.t < 5000) ? d.c + 1 : 1;
+    d.t = now;
+    sessionStorage.setItem(K, JSON.stringify(d));
+    if (d.c >= 3) {
+      var origFetch = window.fetch;
+      window.fetch = function(input) {
+        var u = typeof input === 'string' ? input : (input && input.url) || '';
+        if (u.includes('__vite_ping')) {
+          return new Promise(function(){}); // Never resolve → Vite waits quietly
+        }
+        return origFetch.apply(this, arguments);
+      };
+      sessionStorage.removeItem(K);
+      console.warn('[Gorenel] HMR reload loop detected and stopped. Page is stable. For live-reload, use localhost directly.');
+    }
+  } catch(e) {}
 })();
 </script>`, domainMatch)
 	patchScript := []byte(jsCode)
