@@ -410,6 +410,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				// REFIX: httputil.ReverseProxy will strip Upgrade/Connection after Director.
 				// We set a custom header to signal RoundTrip to re-add them.
 				req.Header.Set("X-Gorenel-Preserve-Upgrade", "websocket")
+
+				// Rewrite Origin to match local Host to bypass Vite's strict CORS/WebSocket origin validation
+				if req.Header.Get("Origin") != "" {
+					req.Header.Set("Origin", "http://"+localHostPort)
+				}
 			}
 
 			// Apply per-tunnel request shaping (moved from outside for cleaner structure)
