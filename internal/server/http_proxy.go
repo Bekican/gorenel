@@ -375,6 +375,12 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			req.URL.Host = localHostPort
 			req.Host = localHostPort
 
+			// Force fresh HTML responses to allow transparent WebSocket patching (disable 304 cache for HTML)
+			if strings.Contains(strings.ToLower(req.Header.Get("Accept")), "text/html") {
+				req.Header.Del("If-None-Match")
+				req.Header.Del("If-Modified-Since")
+			}
+
 			// Detect WebSocket upgrade requests
 			isWebSocket := false
 			if strings.EqualFold(req.Header.Get("Upgrade"), "websocket") {
