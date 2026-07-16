@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/netip"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -438,6 +440,11 @@ func (p *HTTPProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			// Rewrite Set-Cookie headers for domain/secure alignment
 			rewriteCookies(resp, host)
+
+			// Inject WebSocket HMR patch for Vite/Next.js/etc. in HTML responses
+			if err := p.injectWebSocketPatch(resp); err != nil {
+				p.logger.Warn("Failed to inject WebSocket HMR patch", zap.Error(err), zap.String("subdomain", targetKey))
+			}
 
 			// WebSocket Specific: httputil.ReverseProxy strips hop-by-hop headers from response.
 			// Re-add them if we are switching protocols (WebSocket upgrade).
@@ -983,4 +990,103 @@ func rewriteCookies(resp *http.Response, publicHost string) {
 		newCookies = append(newCookies, strings.Join(parts, ";"))
 	}
 	resp.Header["Set-Cookie"] = newCookies
+}
+
+func (p *HTTPProxy) injectWebSocketPatch(resp *http.Response) error {
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" || !strings.Contains(strings.ToLower(contentType), "text/html") {
+		return nil
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	resp.Body.Close()
+
+	// Check if gzip encoded
+	var isGzipped bool
+	if strings.Contains(strings.ToLower(resp.Header.Get("Content-Encoding")), "gzip") {
+		isGzipped = true
+	}
+
+	var rawBytes []byte
+	if isGzipped {
+		reader, err := gzip.NewReader(bytes.NewReader(bodyBytes))
+		if err != nil {
+			rawBytes = bodyBytes
+			isGzipped = false
+		} else {
+			rawBytes, err = io.ReadAll(reader)
+			reader.Close()
+			if err != nil {
+				rawBytes = bodyBytes
+				isGzipped = false
+			}
+		}
+	} else {
+		rawBytes = bodyBytes
+	}
+
+	domainMatch := "." + p.baseDomain + ":"
+	jsCode := fmt.Sprintf(`<script id="gorenel-ws-patch">
+(function() {
+  const OriginalWebSocket = window.WebSocket;
+  window.WebSocket = function(url, protocols) {
+    if (typeof url === 'string' && url.includes('%s') && !url.includes(':443') && !url.includes(':80')) {
+      url = url.replace(/:\d+/, '');
+    }
+    return new OriginalWebSocket(url, protocols);
+  };
+  Object.assign(window.WebSocket, OriginalWebSocket);
+  window.WebSocket.prototype = OriginalWebSocket.prototype;
+})();
+</script>`, domainMatch)
+	patchScript := []byte(jsCode)
+
+	// Inject right after <head> or <html> or at the very beginning of the document
+	var newBytes []byte
+	headIndex := bytes.Index(rawBytes, []byte("<head>"))
+	if headIndex != -1 {
+		insertPos := headIndex + len("<head>")
+		newBytes = make([]byte, 0, len(rawBytes)+len(patchScript))
+		newBytes = append(newBytes, rawBytes[:insertPos]...)
+		newBytes = append(newBytes, patchScript...)
+		newBytes = append(newBytes, rawBytes[insertPos:]...)
+	} else {
+		htmlIndex := bytes.Index(rawBytes, []byte("<html>"))
+		if htmlIndex != -1 {
+			insertPos := htmlIndex + len("<html>")
+			newBytes = make([]byte, 0, len(rawBytes)+len(patchScript))
+			newBytes = append(newBytes, rawBytes[:insertPos]...)
+			newBytes = append(newBytes, patchScript...)
+			newBytes = append(newBytes, rawBytes[insertPos:]...)
+		} else {
+			newBytes = append(patchScript, rawBytes...)
+		}
+	}
+
+	// Re-compress if originally gzipped
+	var finalBytes []byte
+	if isGzipped {
+		var buf bytes.Buffer
+		writer := gzip.NewWriter(&buf)
+		_, err = writer.Write(newBytes)
+		writer.Close()
+		if err == nil {
+			finalBytes = buf.Bytes()
+		} else {
+			finalBytes = newBytes
+			resp.Header.Del("Content-Encoding")
+		}
+	} else {
+		finalBytes = newBytes
+	}
+
+	resp.Body = io.NopCloser(bytes.NewReader(finalBytes))
+	resp.Header.Set("Content-Length", strconv.Itoa(len(finalBytes)))
+	return nil
 }
