@@ -1042,13 +1042,26 @@ func (p *HTTPProxy) injectWebSocketPatch(resp *http.Response) error {
 		rawBytes = bodyBytes
 	}
 
-	domainMatch := "." + p.baseDomain + ":"
+	domainMatch := "." + p.baseDomain
 	jsCode := fmt.Sprintf(`<script id="gorenel-ws-patch">
 (function() {
   const OriginalWebSocket = window.WebSocket;
   window.WebSocket = function(url, protocols) {
-    if (typeof url === 'string' && url.includes('%s') && !url.includes(':443') && !url.includes(':80')) {
-      url = url.replace(/:\d+/, '');
+    if (typeof url === 'string') {
+      const isGorenel = url.includes('%s');
+      const isLocal = url.includes('localhost') || url.includes('127.0.0.1') || url.includes('[::1]');
+      if ((isGorenel || isLocal) && !url.includes(':443') && !url.includes(':80')) {
+        try {
+          const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+          const hostname = window.location.host;
+          const urlObj = new URL(url);
+          urlObj.protocol = protocol;
+          urlObj.host = hostname;
+          url = urlObj.toString();
+        } catch (e) {
+          url = url.replace(/:\d+/, '');
+        }
+      }
     }
     return new OriginalWebSocket(url, protocols);
   };
