@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -12,6 +13,7 @@ import (
 	"os/exec"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Bridge translates stdio MCP server communication to SSE/HTTP transport.
@@ -29,15 +31,19 @@ type Bridge struct {
 
 	subscribers map[string]chan string
 	subMu       sync.RWMutex
+
+	pendingRequests map[string]chan string
+	pendingMu       sync.Mutex
 }
 
 // NewBridge creates a new instance of Bridge.
 func NewBridge(command string, args []string) *Bridge {
 	return &Bridge{
-		Command:     command,
-		Args:        args,
-		subscribers: make(map[string]chan string),
-		stopChan:    make(chan struct{}),
+		Command:         command,
+		Args:            args,
+		subscribers:     make(map[string]chan string),
+		pendingRequests: make(map[string]chan string),
+		stopChan:        make(chan struct{}),
 	}
 }
 
@@ -146,6 +152,23 @@ func (b *Bridge) Done() <-chan struct{} {
 
 // broadcast sends a line to all active SSE subscribers.
 func (b *Bridge) broadcast(line string) {
+	// Resolve pending synchronous request-response if ID is present
+	var msg struct {
+		ID interface{} `json:"id"`
+	}
+	if err := json.Unmarshal([]byte(line), &msg); err == nil && msg.ID != nil {
+		idKey := fmt.Sprintf("%v", msg.ID)
+		b.pendingMu.Lock()
+		ch, found := b.pendingRequests[idKey]
+		b.pendingMu.Unlock()
+		if found {
+			select {
+			case ch <- line:
+			default:
+			}
+		}
+	}
+
 	b.subMu.RLock()
 	defer b.subMu.RUnlock()
 
@@ -254,10 +277,32 @@ func (b *Bridge) handleMessage(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	b.stdinMu.Lock()
-	defer b.stdinMu.Unlock()
+	// Parse JSON-RPC ID to see if we should wait for a response
+	var msg struct {
+		ID interface{} `json:"id"`
+	}
+	var idKey string
+	var ch chan string
+	isRequest := false
 
+	if err := json.Unmarshal(body, &msg); err == nil && msg.ID != nil {
+		idKey = fmt.Sprintf("%v", msg.ID)
+		ch = make(chan string, 1)
+		b.pendingMu.Lock()
+		b.pendingRequests[idKey] = ch
+		b.pendingMu.Unlock()
+		isRequest = true
+
+		defer func() {
+			b.pendingMu.Lock()
+			delete(b.pendingRequests, idKey)
+			b.pendingMu.Unlock()
+		}()
+	}
+
+	b.stdinMu.Lock()
 	if b.stdin == nil {
+		b.stdinMu.Unlock()
 		http.Error(w, "MCP process not running", http.StatusServiceUnavailable)
 		return
 	}
@@ -269,6 +314,7 @@ func (b *Bridge) handleMessage(w http.ResponseWriter, r *http.Request) {
 	} else if _, err := b.stdin.Write([]byte("\n")); err != nil {
 		writeErr = err
 	}
+	b.stdinMu.Unlock()
 
 	if writeErr != nil {
 		log.Printf("Failed to write to MCP stdin: %v", writeErr)
@@ -276,5 +322,20 @@ func (b *Bridge) handleMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	// For requests, wait for the response and write it directly to the HTTP response
+	if isRequest {
+		select {
+		case resp := <-ch:
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(resp))
+		case <-time.After(10 * time.Second):
+			http.Error(w, "Timeout waiting for response from MCP server", http.StatusGatewayTimeout)
+		case <-r.Context().Done():
+			// Client disconnected
+		}
+	} else {
+		// Notifications don't expect a response
+		w.WriteHeader(http.StatusOK)
+	}
 }
