@@ -223,6 +223,17 @@ MIT — Built as an academic research & SaaS demo project.
 
 
 
+## 🤖 Model Context Protocol (MCP) Support
+
+Gorenel features a built-in stdio-to-SSE bridge, allowing developers to securely expose local MCP servers to remote AI agents (like Claude Code or Cursor) over encrypted tunnels.
+
+```bash
+# Expose a local Node.js MCP server
+go run cmd/client/main.go mcp --command "node mcp_server.js"
+```
+
+For a detailed architectural overview, Windows-specific configuration fixes, and our future roadmap, refer to [mcp_roadmap.md](file:///c:/Users/Bekir%20Can/Desktop/advancedbackend/gorenel/mcp_roadmap.md).
+
 ## Client Command Standard
 
 Use config-first flow:
