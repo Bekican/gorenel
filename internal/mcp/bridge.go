@@ -117,8 +117,8 @@ func (b *Bridge) Start(ctx context.Context) error {
 
 	// Wait for process termination
 	go func() {
-		_ = cmd.Wait()
-		log.Println("MCP subprocess terminated")
+		err := cmd.Wait()
+		log.Printf("MCP subprocess terminated: %v", err)
 		b.Stop()
 	}()
 
