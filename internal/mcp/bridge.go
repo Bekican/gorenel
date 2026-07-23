@@ -179,14 +179,17 @@ func (b *Bridge) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	switch r.URL.Path {
-	case "/sse":
-		b.handleSSE(w, r)
-	case "/message":
+	if r.Method == http.MethodPost {
 		b.handleMessage(w, r)
-	default:
-		http.Error(w, "Not Found", http.StatusNotFound)
+		return
 	}
+
+	if r.Method == http.MethodGet && r.URL.Path == "/sse" {
+		b.handleSSE(w, r)
+		return
+	}
+
+	http.Error(w, "Not Found", http.StatusNotFound)
 }
 
 func (b *Bridge) handleSSE(w http.ResponseWriter, r *http.Request) {
