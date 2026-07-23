@@ -708,6 +708,12 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 	}
 
 	localConn, err := net.DialTimeout("tcp", targetAddr, 5*time.Second)
+	if err != nil && strings.HasPrefix(targetAddr, "127.0.0.1:") {
+		// Fallback to IPv6 loopback [::1] (Vite/Next.js often default to IPv6 on Windows)
+		ipv6Addr := strings.Replace(targetAddr, "127.0.0.1:", "[::1]:", 1)
+		localConn, err = net.DialTimeout("tcp", ipv6Addr, 3*time.Second)
+	}
+
 	if err != nil {
 		log.Printf("❌ Yerel sunucuya baglanilamadi (%s): %v. Yerel sunucunuzun bu portta acik ve calisir durumda oldugundan emin olun.", targetAddr, err)
 		
@@ -729,6 +735,7 @@ func proxyToLocalhost(stream net.Conn, localAddr string) {
 			"</body>\n" +
 			"</html>"
 		_, _ = stream.Write([]byte(friendlyResp))
+		time.Sleep(100 * time.Millisecond)
 		return
 	}
 	defer localConn.Close()

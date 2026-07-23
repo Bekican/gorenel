@@ -28,6 +28,20 @@ interface ToolCallRecord {
   durationMs: number;
 }
 
+const decodeBase64Utf8 = (base64Str: string): string => {
+  try {
+    const binaryString = atob(base64Str);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return new TextDecoder('utf-8').decode(bytes);
+  } catch (e) {
+    return atob(base64Str);
+  }
+};
+
 export const McpInspector: React.FC<McpInspectorProps> = ({ history, activeSubdomains }) => {
   const [selectedSubdomain, setSelectedSubdomain] = useState<string>(activeSubdomains[0] || '');
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,7 +59,7 @@ export const McpInspector: React.FC<McpInspectorProps> = ({ history, activeSubdo
 
       // Try to check if request body contains JSON-RPC
       try {
-        const bodyStr = atob(req.req_body);
+        const bodyStr = decodeBase64Utf8(req.req_body);
         return bodyStr.includes('"jsonrpc"') || bodyStr.includes('"method"');
       } catch {
         return false;
@@ -59,9 +73,9 @@ export const McpInspector: React.FC<McpInspectorProps> = ({ history, activeSubdo
     for (let i = mcpRequests.length - 1; i >= 0; i--) {
       const req = mcpRequests[i];
       try {
-        const reqBody = JSON.parse(atob(req.req_body));
+        const reqBody = JSON.parse(decodeBase64Utf8(req.req_body));
         if (reqBody.method === 'tools/list') {
-          const respBody = JSON.parse(atob(req.resp_body));
+          const respBody = JSON.parse(decodeBase64Utf8(req.resp_body));
           if (respBody.result && Array.isArray(respBody.result.tools)) {
             return respBody.result.tools as McpTool[];
           }
@@ -78,9 +92,9 @@ export const McpInspector: React.FC<McpInspectorProps> = ({ history, activeSubdo
     const list: ToolCallRecord[] = [];
     mcpRequests.forEach(req => {
       try {
-        const reqBody = JSON.parse(atob(req.req_body));
+        const reqBody = JSON.parse(decodeBase64Utf8(req.req_body));
         if (reqBody.method === 'tools/call') {
-          const respBody = JSON.parse(atob(req.resp_body));
+          const respBody = JSON.parse(decodeBase64Utf8(req.resp_body));
           
           let result = null;
           let error = undefined;
@@ -355,8 +369,8 @@ export const McpInspector: React.FC<McpInspectorProps> = ({ history, activeSubdo
                   let reqParsed = {};
                   let respParsed = {};
                   try {
-                    reqParsed = JSON.parse(atob(req.req_body));
-                    respParsed = JSON.parse(atob(req.resp_body));
+                    reqParsed = JSON.parse(decodeBase64Utf8(req.req_body));
+                    respParsed = JSON.parse(decodeBase64Utf8(req.resp_body));
                   } catch {
                     // Fail gracefully
                   }

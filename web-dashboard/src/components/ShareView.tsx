@@ -7,6 +7,20 @@ interface ShareViewProps {
     shareId: string;
 }
 
+const decodeBase64Utf8 = (base64Str: string): string => {
+    try {
+        const binaryString = atob(base64Str);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return new TextDecoder('utf-8').decode(bytes);
+    } catch (e) {
+        return atob(base64Str);
+    }
+};
+
 export const ShareView: React.FC<ShareViewProps> = ({ shareId }) => {
     const [trace, setTrace] = useState<CapturedRequest | null>(null);
     const [loading, setLoading] = useState(true);
@@ -114,7 +128,7 @@ export const ShareView: React.FC<ShareViewProps> = ({ shareId }) => {
                                 ))}
                                 {trace.req_body && (
                                     <div className="mt-4 pt-4 border-t border-white/[0.04] text-white/50">
-                                        <pre className="whitespace-pre-wrap">{atob(trace.req_body)}</pre>
+                                        <pre className="whitespace-pre-wrap">{decodeBase64Utf8(trace.req_body)}</pre>
                                     </div>
                                 )}
                             </div>
@@ -133,7 +147,7 @@ export const ShareView: React.FC<ShareViewProps> = ({ shareId }) => {
                                 ))}
                                 {trace.resp_body && (
                                     <div className="mt-4 pt-4 border-t border-white/[0.04] text-white/50">
-                                        <pre className="whitespace-pre-wrap">{atob(trace.resp_body)}</pre>
+                                        <pre className="whitespace-pre-wrap">{decodeBase64Utf8(trace.resp_body)}</pre>
                                     </div>
                                 )}
                             </div>

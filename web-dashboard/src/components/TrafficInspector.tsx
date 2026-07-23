@@ -8,6 +8,20 @@ interface TrafficInspectorProps {
     history: CapturedRequest[];
 }
 
+const decodeBase64Utf8 = (base64Str: string): string => {
+    try {
+        const binaryString = atob(base64Str);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return new TextDecoder('utf-8').decode(bytes);
+    } catch (e) {
+        return atob(base64Str);
+    }
+};
+
 export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) => {
     const { t } = useTranslation();
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -418,7 +432,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                         let curl = `curl -X ${req.method} "${req.subdomain}.gorenel.site${req.path}" ${Object.entries(req.req_headers).map(([k, v]) => `-H "${k}: ${v.join(', ')}"`).join(' ')}`;
                                                                         if (req.req_body) {
                                                                             try {
-                                                                                const decoded = atob(req.req_body);
+                                                                                const decoded = decodeBase64Utf8(req.req_body);
                                                                                 curl += ` -d '${decoded.replace(/'/g, "'\\''")}'`;
                                                                             } catch {
                                                                                 curl += ` -d '${req.req_body.replace(/'/g, "'\\''")}'`;
@@ -442,7 +456,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                         let body = '';
                                                                         if (req.req_body) {
                                                                             try {
-                                                                                body = atob(req.req_body);
+                                                                                body = decodeBase64Utf8(req.req_body);
                                                                             } catch {
                                                                                 body = req.req_body;
                                                                             }
@@ -472,7 +486,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                     <pre className="whitespace-pre-wrap">
                                                                         {(() => {
                                                                             try {
-                                                                                const decoded = atob(req.req_body);
+                                                                                const decoded = decodeBase64Utf8(req.req_body);
                                                                                 try { return JSON.stringify(JSON.parse(decoded), null, 2); } catch { return decoded; }
                                                                             } catch { return req.req_body; }
                                                                         })()}
@@ -499,7 +513,7 @@ export const TrafficInspector: React.FC<TrafficInspectorProps> = ({ history }) =
                                                                     <pre className="whitespace-pre-wrap">
                                                                         {(() => {
                                                                             try {
-                                                                                const decoded = atob(req.resp_body);
+                                                                                const decoded = decodeBase64Utf8(req.resp_body);
                                                                                 try { return JSON.stringify(JSON.parse(decoded), null, 2); } catch { return decoded; }
                                                                             } catch { return req.resp_body; }
                                                                         })()}
